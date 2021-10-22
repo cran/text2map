@@ -20,7 +20,7 @@ each row of which is parallel to vector.
 "Project" each word in a word embedding matrix of \eqn{D} dimension along a
 vector of \eqn{D} dimensions, extracted from the same embedding space.
 The vector can be a single word, or a concept vector obtained from
-\code{get_centroid()}, \code{get_direction()}, or \code{get_regions()}.
+\code{\link[=get_centroid]{get_centroid()}}, \code{\link[=get_direction]{get_direction()}}, or \code{\link[=get_regions]{get_regions()}}.
 }
 \details{
 All the vectors in the matrix \eqn{A} are projected onto the a vector,

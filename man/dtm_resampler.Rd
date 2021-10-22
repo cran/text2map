@@ -4,15 +4,20 @@
 \alias{dtm_resampler}
 \title{Resamples an input DTM to generate new DTMs}
 \usage{
-dtm_resampler(dtm, alpha = 1)
+dtm_resampler(dtm, alpha = NULL, n = NULL)
 }
 \arguments{
-\item{dtm}{Document-term matrix with words as columns. Works with DTMs
+\item{dtm}{Document-term matrix with terms as columns. Works with DTMs
 produced by any popular text analysis package, or you can use the
 \code{dtm_builder()} function.}
 
-\item{alpha}{a proportion of document tokens. Default = 1, or the full
-document lengths.}
+\item{alpha}{Number indicating proportion of document lengths, e.g.,
+\code{alpha = 1} returns resampled rows that are the same lengths
+as the original DTM.}
+
+\item{n}{Integer indicating the length of documents to be returned, e.g.,
+\code{n = 100L} will bring documents shorter than 100 tokens up to 100,
+while bringing documents longer than 100 tokens down to 100.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"
@@ -26,4 +31,14 @@ with replacement up to a certain proportion of the row count (set by alpha).
 This function can be used with iteration to "bootstrap" a DTM without
 returning to the raw text. It does not iterate, however, so operations can
 be performed on one DTM at a time without storing multiple DTMs in memory.
+
+If \code{alpha} is less than 1, then a proportion of each documents' lengths is
+returned. For example, \code{alpha = 0.50} will return a resampled DTM where each
+row has half the tokens of the original DTM. If \code{alpha = 2}, than each row in
+the resampled DTM twice the number of tokens of the original DTM.
+If an integer is provided to \code{n} then all documents will be resampled to that
+length. For example, \code{n = 2000L} will resample each document until they are
+2000 tokens long -- meaning those shorter than 2000 will be increased in
+length, while those longer than 2000 will be decreased in length. \code{alpha}
+and \code{n} should not be specified at the same time.
 }

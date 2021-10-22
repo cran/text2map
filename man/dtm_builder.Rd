@@ -4,14 +4,14 @@
 \alias{dtm_builder}
 \title{A fast unigram DTM builder}
 \usage{
-dtm_builder(df, text, doc_id, vocab = NULL, chunk = NULL)
+dtm_builder(data, text, doc_id, vocab = NULL, chunk = NULL)
 }
 \arguments{
-\item{df}{Data.frame with one column of texts and one column of document ids}
+\item{data}{Data.frame with column of texts and column of document ids}
 
 \item{text}{Name of the column with documents' text}
 
-\item{doc_id}{Name of the column with documents' unique ids}
+\item{doc_id}{Name of the column with documents' unique ids.}
 
 \item{vocab}{Default is \code{NULL}, if a list of terms is provided, the function
 will return a DTM with terms restricted to this vocabulary.
@@ -20,7 +20,7 @@ Columns will also be in the same order as the list of terms.}
 \item{chunk}{Default is \code{NULL}, if an integer is provided, the function will
 "re-chunk" the corpus into new documents of a particular length.
 For example, \code{100L} will divide the corpus into new documents
-with 100 words (with the final document likely including
+with 100 terms (with the final document likely including
 slightly less than 100).}
 }
 \value{
@@ -36,15 +36,16 @@ The function is fast because it has few bells and whistles:
 \item No weighting schemes other than raw counts
 \item Tokenizes by the fixed, single whitespace
 \item Only tokenizes unigrams, no bigrams, trigrams, etc..
-\item Columns are in the order unique words are discovered
+\item Columns are in the order unique terms are discovered
 \item No preprocessing during building
 \item Outputs a basic sparse matrix
 }
 
-Weighting or stopping words can be done efficiently after the fact with
+Weighting or stopping terms can be done efficiently after the fact with
 simple matrix operations, rather than achieved implicitly within the
-function itself. Prior to creating the DTM, texts should have whitespace
-trimmed, punctuation removed, and, if desired, words should be lowercased.
+function itself. For example, using the \code{dtm_stopper()} function.
+Prior to creating the DTM, texts should have whitespace trimmed, if
+desired, punctuation removed and terms lowercased.
 
 Like \code{tidytext}'s DTM functions, \code{dtm_builder()} is optimized for use in a
 pipeline, but unlike \code{tidytext}, it does not build an intermediary
@@ -53,10 +54,14 @@ efficient.
 
 The function can also \code{chunk} the corpus into documents of a given length
 (default is \code{NULL}). If the integer provided is \code{200L}, this will divide the
-corpus into new documents with 200 words (with the final document likely
-including slightly less than 200). If the total words in the corpus
+corpus into new documents with 200 terms (with the final document likely
+including slightly less than 200). If the total terms in the corpus
 were less than or equal to \code{chunk} integer, this would produce a
 DTM with one document (most will probably not want this).
+
+If the vocabulary is already known, or standardizing vocabulary across
+several DTMs is desired, a list of terms can be provided to the \code{vocab}
+argument. Columns of the DTM will be in the order of the list of terms.
 }
 \examples{
 
@@ -65,7 +70,7 @@ library(dplyr)
 my.corpus <- data.frame(
   text = c(
     "I hear babies crying I watch them grow",
-    "They’ll learn much more than I'll ever know",
+    "They'll learn much more than I'll ever know",
     "And I think to myself",
     "What a wonderful world",
     "Yes I think to myself",
@@ -73,29 +78,46 @@ my.corpus <- data.frame(
   ),
   line_id = paste0("line", 1:6)
 )
-
 ## some text preprocessing
-my.corpus$clean_text <- tolower(gsub("'|’", "", my.corpus$text))
+my.corpus$clean_text <- tolower(gsub("'", "", my.corpus$text))
 
-# example 1
+# example 1 with R 4.1 pipe
+\donttest{
 dtm <- my.corpus |>
   dtm_builder(clean_text, line_id)
+}
 
-# example 2
-dtm <- dtm_builder(my.corpus, text = clean_text, doc_id = line_id)
+# example 2 without pipe
+dtm <- dtm_builder(
+  data = my.corpus,
+  text = clean_text,
+  doc_id = line_id
+)
 
-# example 3
-dtm <- my.corpus |>
+# example 3 with dplyr pipe and mutate
+dtm <- my.corpus \%>\%
   mutate(
-    clean_text = gsub("'|’", "", text),
+    clean_text = gsub("'", "", text),
     clean_text = tolower(clean_text)
-  ) |>
+  ) \%>\%
   dtm_builder(clean_text, line_id)
 
-# example 4
-dtm <- my.corpus |>
-  dtm_builder(clean_text, line_id, chunk = 3L)
+# example 4 with dplyr and chunk of 3 terms
+dtm <- my.corpus \%>\%
+  dtm_builder(clean_text,
+    line_id,
+    chunk = 3L
+  )
 
+# example 5 with user defined vocabulary
+my.vocab <- c("wonderful", "world", "haiku", "think")
+
+dtm <- dtm_builder(
+  data = my.corpus,
+  text = clean_text,
+  doc_id = line_id,
+  vocab = my.vocab
+)
 }
 \author{
 Dustin Stoltz

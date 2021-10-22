@@ -32,7 +32,7 @@ returns a one row matrix
 \description{
 \code{get_direction()} outputs a vector corresponding to one pole of a
 "semantic direction" built from sets of antonyms or juxtaposed terms.
-The output can be used as an input to \code{CMDist()} and \code{CoCA()}.
+The output can be used as an input to \code{\link[=CMDist]{CMDist()}} and \code{\link[=CoCA]{CoCA()}}.
 }
 \details{
 Semantic directions can be estimated in using a few methods:
@@ -70,7 +70,6 @@ dir <- get_direction(
   anchors = gen, wv = ft_wv_sample,
   method = "PCA", n = 1L
 )
-
 }
 \references{
 Bolukbasi, T., Chang, K. W., Zou, J., Saligrama, V., and Kalai, A. (2016).
@@ -79,14 +78,14 @@ Quantifying and reducing stereotypes in word embeddings. arXiv preprint
 Bolukbasi, Tolga, Kai-Wei Chang, James Zou, Venkatesh Saligrama,
 Adam Kalai (2016). 'Man Is to Computer Programmer as Woman Is to Homemaker?
 Debiasing Word Embeddings.' Proceedings of the 30th International Conference
-on Neural Information Processing Systems. 4356–4364.
+on Neural Information Processing Systems. 4356-4364.
 \url{https://dl.acm.org/doi/10.5555/3157382.3157584}.\cr
 Taylor, Marshall A., and Dustin S. Stoltz. (2020)
 'Concept Class Analysis: A Method for Identifying Cultural
 Schemas in Texts.' \emph{Sociological Science} 7:544-569.
 \doi{10.15195/v7.a23}.\cr
 Taylor, Marshall A., and Dustin S. Stoltz. (2020) 'Integrating semantic
-directions with concept mover’s distance to measure binary concept
+directions with concept mover's distance to measure binary concept
 engagement.' \emph{Journal of Computational Social Science} 1-12.
 \doi{10.1007/s42001-020-00075-8}.\cr
 Kozlowski, Austin C., Matt Taddy, and James A. Evans. (2019). 'The geometry

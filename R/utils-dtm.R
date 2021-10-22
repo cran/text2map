@@ -9,14 +9,15 @@
 #' * No weighting schemes other than raw counts
 #' * Tokenizes by the fixed, single whitespace
 #' * Only tokenizes unigrams, no bigrams, trigrams, etc..
-#' * Columns are in the order unique words are discovered
+#' * Columns are in the order unique terms are discovered
 #' * No preprocessing during building
 #' * Outputs a basic sparse matrix
 #'
-#' Weighting or stopping words can be done efficiently after the fact with
+#' Weighting or stopping terms can be done efficiently after the fact with
 #' simple matrix operations, rather than achieved implicitly within the
-#' function itself. Prior to creating the DTM, texts should have whitespace
-#' trimmed, punctuation removed, and, if desired, words should be lowercased.
+#' function itself. For example, using the `dtm_stopper()` function.
+#' Prior to creating the DTM, texts should have whitespace trimmed, if
+#' desired, punctuation removed and terms lowercased.
 #'
 #' Like `tidytext`'s DTM functions, `dtm_builder()` is optimized for use in a
 #' pipeline, but unlike `tidytext`, it does not build an intermediary
@@ -25,10 +26,14 @@
 #'
 #' The function can also `chunk` the corpus into documents of a given length
 #' (default is `NULL`). If the integer provided is `200L`, this will divide the
-#' corpus into new documents with 200 words (with the final document likely
-#' including slightly less than 200). If the total words in the corpus
+#' corpus into new documents with 200 terms (with the final document likely
+#' including slightly less than 200). If the total terms in the corpus
 #' were less than or equal to `chunk` integer, this would produce a
 #' DTM with one document (most will probably not want this).
+#'
+#' If the vocabulary is already known, or standardizing vocabulary across
+#' several DTMs is desired, a list of terms can be provided to the `vocab`
+#' argument. Columns of the DTM will be in the order of the list of terms.
 #'
 #' @importFrom stringi stri_split
 #' @importFrom dplyr pull
@@ -42,16 +47,16 @@
 #' @name dtm_builder
 #' @author Dustin Stoltz
 #'
-#' @param df Data.frame with one column of texts and one column of document ids
+#' @param data Data.frame with column of texts and column of document ids
 #' @param text Name of the column with documents' text
-#' @param doc_id Name of the column with documents' unique ids
+#' @param doc_id Name of the column with documents' unique ids.
 #' @param vocab Default is `NULL`, if a list of terms is provided, the function
 #'              will return a DTM with terms restricted to this vocabulary.
 #'              Columns will also be in the same order as the list of terms.
 #' @param chunk Default is `NULL`, if an integer is provided, the function will
 #'              "re-chunk" the corpus into new documents of a particular length.
 #'              For example, `100L` will divide the corpus into new documents
-#'              with 100 words (with the final document likely including
+#'              with 100 terms (with the final document likely including
 #'              slightly less than 100).
 #'
 #' @return returns a document-term matrix of class "dgCMatrix"
@@ -63,7 +68,7 @@
 #' my.corpus <- data.frame(
 #'   text = c(
 #'     "I hear babies crying I watch them grow",
-#'     "They’ll learn much more than I'll ever know",
+#'     "They'll learn much more than I'll ever know",
 #'     "And I think to myself",
 #'     "What a wonderful world",
 #'     "Yes I think to myself",
@@ -71,36 +76,57 @@
 #'   ),
 #'   line_id = paste0("line", 1:6)
 #' )
-#'
 #' ## some text preprocessing
-#' my.corpus$clean_text <- tolower(gsub("'|’", "", my.corpus$text))
+#' my.corpus$clean_text <- tolower(gsub("'", "", my.corpus$text))
 #'
-#' # example 1
+#' # example 1 with R 4.1 pipe
+#' \donttest{
 #' dtm <- my.corpus |>
 #'   dtm_builder(clean_text, line_id)
+#' }
 #'
-#' # example 2
-#' dtm <- dtm_builder(my.corpus, text = clean_text, doc_id = line_id)
+#' # example 2 without pipe
+#' dtm <- dtm_builder(
+#'   data = my.corpus,
+#'   text = clean_text,
+#'   doc_id = line_id
+#' )
 #'
-#' # example 3
-#' dtm <- my.corpus |>
+#' # example 3 with dplyr pipe and mutate
+#' dtm <- my.corpus %>%
 #'   mutate(
-#'     clean_text = gsub("'|’", "", text),
+#'     clean_text = gsub("'", "", text),
 #'     clean_text = tolower(clean_text)
-#'   ) |>
+#'   ) %>%
 #'   dtm_builder(clean_text, line_id)
 #'
-#' # example 4
-#' dtm <- my.corpus |>
-#'   dtm_builder(clean_text, line_id, chunk = 3L)
+#' # example 4 with dplyr and chunk of 3 terms
+#' dtm <- my.corpus %>%
+#'   dtm_builder(clean_text,
+#'     line_id,
+#'     chunk = 3L
+#'   )
 #'
+#' # example 5 with user defined vocabulary
+#' my.vocab <- c("wonderful", "world", "haiku", "think")
+#'
+#' dtm <- dtm_builder(
+#'   data = my.corpus,
+#'   text = clean_text,
+#'   doc_id = line_id,
+#'   vocab = my.vocab
+#' )
 #' @export
-dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
+dtm_builder <- function(data,
+                        text,
+                        doc_id,
+                        vocab = NULL,
+                        chunk = NULL) {
 
-  # this will tokenize by the fixed space pattern
+  # this tokenizes by the fixed space pattern
   # outputs a nested list of tokens
   tokns <- stringi::stri_split(
-    dplyr::pull(df, {{ text }}),
+    dplyr::pull(data, {{ text }}),
     fixed = " ", omit_empty = TRUE
   )
 
@@ -113,7 +139,7 @@ dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
 
   if (is.null(vocab)) {
 
-    # get all the unique words in the corpus
+    # get all the unique terms in the corpus
     # they will be in the order they first appear
     vocab <- kit::funique(vects)
 
@@ -134,28 +160,11 @@ dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
             ),
             j = fastmatch::fmatch(vects, vocab, nomatch = 0L),
             x = 1L,
-            dimnames = list(dplyr::pull(df, {{ doc_id }}), vocab)
+            dimnames = list(dplyr::pull(data, {{ doc_id }}), vocab)
           )
         },
         error = function(e) {
-          err <- conditionMessage(e)
-
-          if (stringi::stri_detect_fixed(
-            err,
-            "length(Dimnames[1]) differs from Dim[1]"
-          )) {
-            message(
-              "`", rlang::quo_name(rlang::enquo(doc_id)), "`",
-              " is longer than the number of rows in the DTM.\n",
-              "This is likely because the last row of `",
-              rlang::quo_name(rlang::enquo(text)), "`",
-              " is empty.\n",
-              "The original error message: "
-            )
-            stop(e)
-          } else {
-            stop(e)
-          }
+          .dtm_error_handler(e)
         }
       )
     }
@@ -167,15 +176,17 @@ dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
     vocab <- c(vocab, "INT_VC_MISS")
     vects <- c(vects, "INT_VC_MISS")
     tokns <- append(tokns, "INT_VC_MISS")
-    docs <- c(dplyr::pull(df, {{ doc_id }}), "INT_DOC_EMPTY")
+    docs <- c(dplyr::pull(data, {{ doc_id }}), "INT_DOC_EMPTY")
 
     if (!is.null(chunk)) {
+      vects <- vects[vects %fin% vocab]
+
       dtm <- Matrix::sparseMatrix(
         i = ceiling(seq_along(vects) / as.integer(chunk)),
         j = fastmatch::fmatch(vects, vocab, nomatch = 0L),
-        x = 1L,
-        dimnames = list(NULL, vocab)
+        x = 1L
       )
+      dimnames(dtm) <- list(paste0("chunk_", 1:nrow(dtm)), vocab)
     } else {
       dtm <- tryCatch(
         {
@@ -190,24 +201,7 @@ dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
           )
         },
         error = function(e) {
-          err <- conditionMessage(e)
-
-          if (stringi::stri_detect_fixed(
-            err,
-            "length(Dimnames[1]) differs from Dim[1]"
-          )) {
-            message(
-              "`", rlang::quo_name(rlang::enquo(doc_id)), "`",
-              " is longer than the number of rows in the DTM.\n",
-              "This is likely because the last row of `",
-              rlang::quo_name(rlang::enquo(text)), "`",
-              " is empty.\n",
-              "The original error message: "
-            )
-            stop(e)
-          } else {
-            stop(e)
-          }
+          .dtm_error_handler(e)
         }
       )
     }
@@ -231,11 +225,11 @@ dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
 #' @importFrom Matrix rowSums
 #' @importFrom utils object.size
 #'
-#' @param dtm Document-term matrix with words as columns. Works with DTMs
+#' @param dtm Document-term matrix with terms as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
 #'            `dtm_builder()` function.
 #' @param richness Logical (default = TRUE), whether to include statistics
-#'                 about lexical richness, i.e. words that occur once,
+#'                 about lexical richness, i.e. terms that occur once,
 #'                 twice, and three times (hapax, dis, tris), and the total
 #'                 type-token ratio.
 #' @param distribution Logical (default = TRUE), whether to include statistics
@@ -250,8 +244,8 @@ dtm_builder <- function(df, text, doc_id, vocab = NULL, chunk = NULL) {
 #'                 data frame where each statistic is a column. Default returns
 #'                 a list of small data frames.
 #'
-#' @return An list of 1 to five data frames with summary statistics (if
-#'         `simplify==FALSE`), otherwise a single data frame where each
+#' @return A list of one to five data frames with summary statistics (if
+#'         `simplify=FALSE`), otherwise a single data frame where each
 #'         statistics is a column.
 #'
 #' @export
@@ -463,102 +457,189 @@ dtm_stats <- function(dtm,
 
 #' Removes terms from a DTM based on rules
 #'
-#' `dtm_stopper()` will "stop" terms from the analysis by removing columns
-#' that match terms to be stopped. Rules include using precompiled or custom
-#' list of terms, or terms meeting an upper or lower document frequency
-#' threshold.
+#' `dtm_stopper()` will "stop" terms from the analysis by removing columns in a
+#' DTM based on stop rules. Rules include matching terms in a precompiled or
+#' custom list, terms meeting an upper or lower document frequency threshold,
+#' or terms meeting an upper or lower term frequency threshold.
 #'
 #' Stopping terms by removing their respective columns in the DTM is
 #' significantly more efficient than searching raw text with string matching
-#' and deletion rules. The `stop_freq` and `stop_list` arguments are akin to
-#' the `tm` package's `removeSparseTerms` and `removeWords` functions,
-#' respectively. Behind the scenes, the function relies on the `fastmatch`
-#' package to quickly match/not-match terms.
+#' and deletion rules. Behind the scenes, the function relies on
+#' the `fastmatch` package to quickly match/not-match terms.
+#'
+#' The `stop_list` arguments takes a list of terms which are matched and
+#' removed from the DTM. If `ignore_case = TRUE` (the default) then word
+#' case will be ignored.
+#'
+#' The `stop_termfreq` argument provides rules based on a term's occurrences
+#' in the DTM as a whole -- regardless of its within document frequency. If
+#' real numbers between 0 and 1 are provided then terms will be removed by
+#' corpus proportion. For example `c(0.01, 0.99)`, terms that are either below
+#' 1% of the total tokens or above 99% of the total tokens will be removed. If
+#' integers are provided then terms will be removed by total count. For example
+#' `c(100, 9000)`, occurring less than 100 or more than 9000 times in the
+#' corpus will be removed. This also means that if `c(0, 1)` is provided, then
+#' the will only *keep* terms occurring once.
+#'
+#' The `stop_docfreq` argument provides rules based on a term's document
+#' frequency -- i.e. the number of documents within which it occurs, regardless
+#' of how many times it occurs. If real numbers between 0 and 1 are provided
+#' then terms will be removed by corpus proportion. For example `c(0.01, 0.99)`,
+#' terms in more than 99% of all documents or terms that are in less than 1% of
+#' all documents. For example `c(100, 9000)`, then words occurring in less than
+#' 100 documents or more than 9000 documents will be removed. This means that if
+#' `c(0, 1)` is provided, then the function will only *keep* terms occurring in
+#' exactly one document, and remove terms in more than one.
+#'
+#' The `stop_hapax` argument is a shortcut for removing terms occurring just one
+#' time in the corpus -- called hapax legomena. Typically, a size-able portion of
+#' the corpus tends to be hapax terms, and removing them is a quick solution to
+#' reducing the dimensions of a DTM. The `stop_null` argument removes terms that
+#' do not occur at all. In other words, there is a column for the term, but the
+#' entire column is zero. This can occur for a variety of reasons, such as
+#' starting with a predefined vocabulary (e.g., using [dtm_builder]'s `vocab`
+#' argument) or through some cleaning processes.
 #'
 #' @name dtm_stopper
 #' @author Dustin Stoltz
 #'
 #' @importFrom Matrix colSums
 #'
-#' @param dtm Document-term matrix with words as columns. Works with DTMs
+#' @param dtm Document-term matrix with terms as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
 #'            `dtm_builder()` function.
 #' @param stop_list Vector of terms, from either a precompiled stoplist or
 #'                  custom list such as `c("never", "gonna", "give")`, or a
 #'                  combination of the two.
-#' @param stop_freq Vector of two numbers indicating the lower and upper
-#'                  threshold for inclusion. If real numbers less than 1,
-#'                  for example `c(0.01, 0.99)`, then words will be removed by
-#'                  proportion, here words in more than 99% of all documents or
-#'                  words that are in less than 1% of all documents. If
-#'                  integers are provided, for example `c(100, 9000)`, then
-#'                  words will be removed by count, here words occurring less
-#'                  than 100 or more than 9000 times  in the corpus will
-#'                  be removed.
+#' @param stop_termfreq Vector of two numbers indicating the lower and upper
+#'                  term threshold for exclusion (see details).
+#' @param stop_docfreq Vector of two numbers indicating the lower and upper
+#'                  document threshold for exclusion (see details).
+#' @param stop_hapax Logical (default = FALSE) indicating whether to remove terms
+#'                   occurring one time (or zero times), a.k.a. hapax legomena
+#' @param stop_null Logical (default = FALSE) indicating whether to remove terms
+#'                  that occur zero times in the DTM.
 #' @param ignore_case Logical (default = TRUE) indicating whether to ignore
-#'                    capitalization when matching.
+#'                   capitalization when matching terms provided to `stop_list`.
 #'
 #' @return returns a document-term matrix of class "dgCMatrix"
 #'
 #' @export
 dtm_stopper <- function(dtm,
                         stop_list = NULL,
-                        stop_freq = NULL,
+                        stop_termfreq = NULL,
+                        stop_docfreq = NULL,
+                        stop_hapax = FALSE,
+                        stop_null = FALSE,
                         ignore_case = TRUE) {
 
   # convert all dtms to dgCMatrix class
   if (class(dtm)[[1]] != "dgCMatrix") {
     dtm <- .convert_dtm_to_dgCMatrix(dtm)
   }
-
-  # stop if both stop rules are NULL
-  if (is.null(stop_list) && is.null(stop_freq)) {
+  # stop if all stop rules are NULL
+  if (is.null(stop_list) &&
+    is.null(stop_termfreq) &&
+    is.null(stop_docfreq) &&
+    stop_hapax == FALSE &&
+    stop_null == FALSE) {
     stop("No stop rules were provided.")
   }
 
-
-  # if only stop_list is NULL
-  # initialize the object
-  if (is.null(stop_list)) {
-    stop_list <- character(0)
+  ## remove hapax (terms occurring once)
+  if (stop_hapax) {
+    term_freqs <- Matrix::colSums(dtm)
+    stop_haps <- names(term_freqs[term_freqs <= 1])
   }
 
-  if (is.numeric(stop_freq)) {
-
-    ## check if whole numbers
-    if (all(stop_freq %% 1 == 0) == TRUE) {
-      term_freqs <- Matrix::colSums(dtm != 0)
-    } else {
-
-      ## check if real numbers between 1 and 0
-      if (all(stop_freq >= 1 &&
-        stop_freq <= 0) == TRUE) {
-        n_decs <- max(
-          c(
-            .n_decimal_places(max(stop_freq)),
-            .n_decimal_places(min(stop_freq))
-          )
-        )
-
-        term_freqs <- round(Matrix::colSums(dtm != 0) / nrow(dtm), n_decs)
-      } else {
-        stop("`stop_freq` argument must be either two real numbers bound\n
+  if (!is.null(stop_termfreq)) {
+    if (!(is.numeric(stop_termfreq))) {
+      stop("`stop_termfreq` argument must be either two real numbers bound\n
                between 1 and 0, or two integers greater than 0.\n
                For example: c(0.01, 0.99) or c(100L, 9000L)")
-      }
-      ## find terms greater than or equal to the upper threshold
-      ## or less than or equal to the lower threshold
-      term_freqs <- names(
-        term_freqs[term_freqs >= max(stop_freq) |
-          term_freqs <= min(stop_freq)]
-      )
+    } else {
 
-      # merge with words in stop_list if provided
-      stop_list <- kit::funique(c(term_freqs, stop_list))
+      ## check if whole numbers
+      if (isTRUE(all.equal(stop_termfreq, as.integer(stop_termfreq)))) {
+        term_freqs <- Matrix::colSums(dtm)
+        stop_terms <- names(
+          term_freqs[term_freqs > max(stop_termfreq) |
+            term_freqs < min(stop_termfreq)]
+        )
+      } else {
+        ## check if real numbers between 1 and 0
+        if (isTRUE(max(stop_termfreq) <= 1 &&
+          min(stop_termfreq) >= 0)) {
+          n_decs <- max(
+            c(
+              .n_decimal_places(max(stop_termfreq)),
+              .n_decimal_places(min(stop_termfreq))
+            )
+          )
+          term_freqs <- round(Matrix::colSums(dtm) / sum(dtm), n_decs)
+          ## find terms greater than the upper threshold
+          ## OR less than the lower threshold
+          stop_terms <- names(
+            term_freqs[term_freqs > max(stop_termfreq) |
+              term_freqs < min(stop_termfreq)]
+          )
+        }
+      }
     }
   }
 
-  ## use fast-not-match to "stop" terms
+  if (!is.null(stop_docfreq)) {
+    if (!(is.numeric(stop_docfreq))) {
+      stop("`stop_termfreq` argument must be either two real numbers bound\n
+               between 1 and 0, or two integers greater than 0.\n
+               For example: c(0.01, 0.99) or c(100L, 9000L)")
+    } else {
+
+      ## check if whole numbers
+      if (isTRUE(all.equal(stop_docfreq, as.integer(stop_docfreq)))) {
+        doc_freqs <- Matrix::colSums(dtm != 0)
+        stop_docterms <- names(
+          doc_freqs[doc_freqs > max(stop_docfreq) |
+            doc_freqs < min(stop_docfreq)]
+        )
+      } else {
+        ## check if real numbers between 1 and 0
+        if (isTRUE(max(stop_docfreq) <= 1 &&
+          min(stop_docfreq) >= 0)) {
+          n_decs <- max(
+            c(
+              .n_decimal_places(max(stop_docfreq)),
+              .n_decimal_places(min(stop_docfreq))
+            )
+          )
+          doc_freqs <- round(Matrix::colSums(dtm != 0) / nrow(dtm), n_decs)
+          ## find terms greater than or equal to the upper threshold
+          ## or less than or equal to the lower threshold
+          stop_docterms <- names(
+            doc_freqs[doc_freqs > max(stop_docfreq) |
+              doc_freqs < min(stop_docfreq)]
+          )
+        }
+      }
+    }
+  }
+
+  # if only stop_list is NULL, initialize the object
+  if (is.null(stop_list)) {
+    stop_list <- character(0)
+  }
+  if (is.null(stop_termfreq)) {
+    stop_terms <- character(0)
+  }
+  if (is.null(stop_docfreq)) {
+    stop_docterms <- character(0)
+  }
+  if (stop_hapax == FALSE) {
+    stop_haps <- character(0)
+  }
+  # merge with terms in stop_list, if provided
+  stop_list <- kit::funique(c(stop_list, stop_terms, stop_docterms, stop_haps))
+  ## use fast-not-match to only keep words not in the final stop_list
   if (ignore_case == TRUE) {
     indx <- tolower(colnames(dtm)) %fnin% tolower(stop_list)
   } else {
@@ -568,33 +649,55 @@ dtm_stopper <- function(dtm,
   return(dtm[, indx])
 }
 
-
 #' Resamples an input DTM to generate new DTMs
 #'
 #' Takes any DTM and randomly resamples from each row, creating a new DTM
 #'
+#' @details
 #' Using the row counts as probabilities, each document's tokens are resampled
 #' with replacement up to a certain proportion of the row count (set by alpha).
 #' This function can be used with iteration to "bootstrap" a DTM without
 #' returning to the raw text. It does not iterate, however, so operations can
 #' be performed on one DTM at a time without storing multiple DTMs in memory.
 #'
+#' If `alpha` is less than 1, then a proportion of each documents' lengths is
+#' returned. For example, `alpha = 0.50` will return a resampled DTM where each
+#' row has half the tokens of the original DTM. If `alpha = 2`, than each row in
+#' the resampled DTM twice the number of tokens of the original DTM.
+#' If an integer is provided to `n` then all documents will be resampled to that
+#' length. For example, `n = 2000L` will resample each document until they are
+#' 2000 tokens long -- meaning those shorter than 2000 will be increased in
+#' length, while those longer than 2000 will be decreased in length. `alpha`
+#' and `n` should not be specified at the same time.
+#'
 #' @importFrom Matrix sparseMatrix
 #' @importFrom fastmatch fmatch
 #'
-#' @param dtm Document-term matrix with words as columns. Works with DTMs
+#' @param dtm Document-term matrix with terms as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
 #'            `dtm_builder()` function.
-#' @param alpha a proportion of document tokens. Default = 1, or the full
-#'              document lengths.
+#' @param alpha Number indicating proportion of document lengths, e.g.,
+#'              `alpha = 1` returns resampled rows that are the same lengths
+#'              as the original DTM.
+#' @param n Integer indicating the length of documents to be returned, e.g.,
+#'          `n = 100L` will bring documents shorter than 100 tokens up to 100,
+#'          while bringing documents longer than 100 tokens down to 100.
 #'
 #' @return returns a document-term matrix of class "dgCMatrix"
 #'
 #' @export
-dtm_resampler <- function(dtm, alpha = 1) {
+dtm_resampler <- function(dtm, alpha = NULL, n = NULL) {
 
   # explicitly declare class for input
   dtm <- .convert_dtm_to_dgCMatrix(dtm)
+
+  if (!is.null(n) && !is.null(alpha)) {
+    warning(paste0(
+      "`alpha` and `n` should not be both specified.",
+      " Only `alpha` will be used."
+    ))
+    n <- NULL
+  }
 
   # create token lists from a random sample from each row
   samp_tokns <- lapply(
@@ -602,12 +705,22 @@ dtm_resampler <- function(dtm, alpha = 1) {
     FUN = function(i) {
       i.row <- dtm[i, ]
 
+      if (!is.null(alpha)) {
+        size <- round(sum(i.row) * alpha)
+      } else {
+        if (!is.null(n)) {
+          size <- n
+        } else {
+          size <- sum(i.row)
+        }
+      }
+
       if (sum(i.row) == 0) {
         return(samp = NULL)
       } else {
         samp <- base::sample(
           colnames(dtm),
-          size = round(sum(i.row) * alpha),
+          size = size,
           replace = TRUE,
           prob = as.numeric(i.row / sum(i.row))
         )
@@ -633,7 +746,6 @@ dtm_resampler <- function(dtm, alpha = 1) {
     dimnames = dimnames(dtm)
   )
 
-
   # explicitly declare class for all DTMs
   sdtm <- methods::as(sdtm, "dgCMatrix")
 
@@ -644,11 +756,10 @@ dtm_resampler <- function(dtm, alpha = 1) {
 #'
 #' A streamlined function to take raw texts from a column of a data.frame and
 #' produce a list of all the unique tokens. Tokenizes by the fixed,
-#' single whitespace, and then extract the unique tokens. This can be used as
+#' single whitespace, and then extracts the unique tokens. This can be used as
 #' input to `dtm_builder()` to standardize the vocabulary (i.e. the columns)
 #' across multiple DTMs. Prior to building the vocabulary, texts should have
-#' whitespace trimmed, punctuation removed, and, if desired,
-#' words should be lowercased.
+#' whitespace trimmed, if desired, punctuation removed and terms lowercased.
 #'
 #'
 #' @importFrom stringi stri_split
@@ -659,18 +770,18 @@ dtm_resampler <- function(dtm, alpha = 1) {
 #' @name vocab_builder
 #' @author Dustin Stoltz
 #'
-#' @param df Data.frame with one column of texts
+#' @param data Data.frame with one column of texts
 #' @param text Name of the column with documents' text
 #'
 #' @return returns a list of unique terms in a corpus
 #'
 #' @export
-vocab_builder <- function(df, text) {
+vocab_builder <- function(data, text) {
 
   # this will tokenize by the fixed space pattern
   # outputs a nested list of tokens
   tokns <- stringi::stri_split(
-    dplyr::pull(df, {{ text }}),
+    dplyr::pull(data, {{ text }}),
     fixed = " ", omit_empty = TRUE
   )
 
@@ -681,7 +792,7 @@ vocab_builder <- function(df, text) {
     use.names = FALSE
   )
 
-  # get all the unique words in the corpus
+  # get all the unique terms in the corpus
   # they will be in the order they first appear
   vocab <- kit::funique(vects)
 
@@ -699,10 +810,11 @@ vocab_builder <- function(df, text) {
 #' simple_triplet_matrix), dfm package class (dfm), and base R dense matrix.
 #' It will also convert any other Matrix package class into a dgCMatrix
 #'
-#' @param dtm Document-term matrix with words as columns. Works with DTMs
+#' @param dtm Document-term matrix with terms as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
 #'            `dtm_builder()` function.
 #'
+#' @keywords internal
 #' @noRd
 .convert_dtm_to_dgCMatrix <- function(dtm) {
 
@@ -748,10 +860,11 @@ vocab_builder <- function(df, text) {
 #' the Matrix package being fussy.
 #'
 #'
-#' @param dtm Document-term matrix with words as columns. Works with DTMs
+#' @param dtm Document-term matrix with terms as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
 #'            `dtm_builder()` function.
 #'
+#' @keywords internal
 #' @noRd
 .remove_empty_rows <- function(dtm) {
   empty_docs <- Matrix::rowSums(dtm) == 0
@@ -767,5 +880,50 @@ vocab_builder <- function(df, text) {
     )
 
     return(dtm)
+  }
+}
+
+#' .dtm_error_handler
+#'
+#' @param e The caught error message
+#' @param doc_id The document ids
+#' @param text The text column
+#'
+#' @keywords internal
+#' @noRd
+.dtm_error_handler <- function(e, doc_id, text) {
+  err <- conditionMessage(e)
+
+  if (stringi::stri_detect_fixed(
+    err,
+    "length(Dimnames[1]) differs from Dim[1]"
+  )) {
+    message(
+      "`", rlang::quo_name(rlang::enquo(doc_id)), "`",
+      " is longer than the number of rows in the DTM.\n",
+      "This is likely because the last row of `",
+      rlang::quo_name(rlang::enquo(text)), "`",
+      " is empty.\n",
+      "\n",
+      "The original error message: "
+    )
+    stop(e)
+  } else {
+    if (stringi::stri_detect_fixed(
+      err,
+      "not found"
+    )) {
+      message(
+        "`", rlang::quo_name(rlang::enquo(doc_id)), "`",
+        " is not in the data frame. You may have a typo.\n ",
+        "If you do not have a `doc_id` defined, use:\n ",
+        "data$doc_id <- paste0('doc_', 1:nrow(data))\n ",
+        "\n",
+        "The original error message: "
+      )
+      stop(e)
+    } else {
+      stop(e)
+    }
   }
 }

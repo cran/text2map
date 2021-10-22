@@ -1,11 +1,11 @@
 #' Performs Concept Class Analysis (CoCA)
 #'
 #' CoCA outputs schematic classes derived from documents' engagement
-#' with multiple bi-polar concepts (in a Likert-style fashion)
+#' with multiple bi-polar concepts (in a Likert-style fashion).
 #' The function requires a (1) DTM of a corpus which can be obtained using any
-#' popular text analysis package, or from the `dtm_builder()` function, and (2)
-#' semantic directions as output from the `get_direction()`.
-#' `CMDist()` works under the hood. Code modified from the `corclass` package.
+#' popular text analysis package, or from the [dtm_builder()] function, and (2)
+#' semantic directions as output from the [get_direction()].
+#' [CMDist()] works under the hood. Code modified from the `corclass` package.
 #'
 #'
 #'
@@ -48,7 +48,7 @@
 #' \item cormat: correlation matrix
 #' }
 #'
-#' @seealso [CMDist()], [get_direction()]
+#' @seealso [CMDist], [get_direction]
 #'
 #' @examples
 #'
@@ -63,7 +63,7 @@
 #' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
 #'
 #' # create DTM
-#' dtm <- jfk_speech |> dtm_builder(sentence, sentence_id)
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 #'
 #' # create semantic directions
 #' gen <- data.frame(
@@ -72,8 +72,8 @@
 #' )
 #'
 #' die <- data.frame(
-#'    add = c("alive"),
-#'    subtract = c("die")
+#'   add = c("alive"),
+#'   subtract = c("die")
 #' )
 #'
 #' gen.dir <- get_direction(anchors = gen, wv = ft_wv_sample)
@@ -81,38 +81,42 @@
 #'
 #' sem_dirs <- rbind(gen.dir, die.dir)
 #'
-#' classes <- CoCA(dtm = dtm,
-#'                 wv = ft_wv_sample,
-#'                 directions = sem_dirs,
-#'                filter_sig = TRUE,
-#'                filter_value = 0.05,
-#'                zero_action = 'drop')
+#' classes <- CoCA(
+#'   dtm = dtm,
+#'   wv = ft_wv_sample,
+#'   directions = sem_dirs,
+#'   filter_sig = TRUE,
+#'   filter_value = 0.05,
+#'   zero_action = "drop"
+#' )
 #'
 #' print(classes)
-#'
 #' @export
 #'
 CoCA <- function(dtm, wv = NULL, directions = NULL,
                  filter_sig = TRUE, filter_value = 0.05,
                  zero_action = c("drop", "ownclass")) {
 
-        # get CMDs for multiple semantic directions
-        cmds <- CMDist(dtm = dtm,
-                       cv = directions,
-                       wv = wv,
-                       scale = TRUE)
+  # get CMDs for multiple semantic directions
+  cmds <- CMDist(
+    dtm = dtm,
+    cv = directions,
+    wv = wv,
+    scale = TRUE
+  )
 
-        # get correlational classes
-        classes <- .get_cor_class(cmds[,-1],
-                                 filter_sig,
-                                 filter_value,
-                                 zero_action)
+  # get correlational classes
+  classes <- .get_cor_class(
+    cmds[, -1],
+    filter_sig,
+    filter_value,
+    zero_action
+  )
 
-        class(classes) <- "CoCA"
+  class(classes) <- "CoCA"
 
-        return(classes)
-
-    }
+  return(classes)
+}
 
 
 ## Modified from Boutyline's print.cca method in the corclass package
@@ -126,21 +130,26 @@ CoCA <- function(dtm, wv = NULL, directions = NULL,
 #'
 #' @export
 print.CoCA <- function(x, ...) {
+  cat(
+    "CoCA found", length(unique(x$membership)),
+    "schematic classes in the corpus. Sizes:",
+    table(x$membership)
+  )
 
-    cat("CoCA found", length(unique(x$membership)),
-        "schematic classes in the corpus. Sizes:",
-        table(x$membership))
+  degen <- vapply(x$modules, function(m1) {
+    m1$degenerate
+  }, logical(1))
 
-    degen <- vapply(x$modules, function(m1){m1$degenerate}, logical(1))
-
-    if (any(degen)) {
-        cat("NOTE: result contains ", sum(degen),
-            " degenerate class(es): ",
-            paste("#", which(degen), sep = "",
-            collapse = " "), ".\n", sep="")
-
-    }
-
+  if (any(degen)) {
+    cat("NOTE: result contains ", sum(degen),
+      " degenerate class(es): ",
+      paste("#", which(degen),
+        sep = "",
+        collapse = " "
+      ), ".\n",
+      sep = ""
+    )
+  }
 }
 
 ## Modified from Boutyline's plot.cca function in the corclass package
@@ -148,7 +157,7 @@ print.CoCA <- function(x, ...) {
 #'
 #' @importFrom qgraph qgraph
 #'
-#' @param x CoCA object returned by `CoCA()`
+#' @param x CoCA object returned by [CoCA()]
 #' @param module index for which module to plot (default = NULL)
 #' @param cutoff minimum absolute value of correlations to plot
 #' @param repulse repulse radius in the spring layout
@@ -165,53 +174,50 @@ print.CoCA <- function(x, ...) {
 #' @export
 plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
                       min = .15, max = 1, main = NULL, ...) {
-    if (missing(module)) {
-        stop("Please specify the schematic class you'd
+  if (missing(module)) {
+    stop("Please specify the schematic class you'd
              like to plot using the 'module = ' argument.")
-    }
+  }
 
-    if(x$modules[[module]]$degenerate == TRUE) {
-        stop(paste("Module #", module,
-                   " is degenerate (one or more column
-                    correlations are undefined).", sep = ""))
-    }
+  if (x$modules[[module]]$degenerate == TRUE) {
+    stop(paste("Module #", module,
+      " is degenerate (one or more column
+                    correlations are undefined).",
+      sep = ""
+    ))
+  }
 
-    if (is.null(main)) {
-
+  if (is.null(main)) {
     samp <- nrow(x$modules[[module]]$cmds)
 
     qgraph::qgraph(x$modules[[module]]$cormat,
-       graph = "cor",
-       minimum = min, maximum = max, threshold="sig",
-       sampleSize = samp,
-       alpha = cutoff, layout = "spring", repulsion = repulse,
-       label.cex = 2,
-       posCol = "black", negCol = "black", negDashed = TRUE,
-       borders = TRUE, shape = "circle", label.prop = 0.75,
-       curveAll = FALSE, edge.labels = FALSE, edge.label.cex = 0.45, esize = 8,
-       title = paste("Class #", module),
-       labels = rownames(x$modules[[module]]$cormat)
+      graph = "cor",
+      minimum = min, maximum = max, threshold = "sig",
+      sampleSize = samp,
+      alpha = cutoff, layout = "spring", repulsion = repulse,
+      label.cex = 2,
+      posCol = "black", negCol = "black", negDashed = TRUE,
+      borders = TRUE, shape = "circle", label.prop = 0.75,
+      curveAll = FALSE, edge.labels = FALSE, edge.label.cex = 0.45, esize = 8,
+      title = paste("Class #", module),
+      labels = rownames(x$modules[[module]]$cormat)
     )
-
-    } else {
-
+  } else {
     samp <- nrow(x$modules[[module]]$cmds)
 
     qgraph::qgraph(x$modules[[module]]$cormat,
-       graph = "cor",
-       minimum = min, maximum = max, threshold="sig",
-       sampleSize = samp,
-       alpha = cutoff, layout = "spring", repulsion = repulse,
-       label.cex = 2,
-       posCol = "black", negCol = "black", negDashed = TRUE,
-       borders = TRUE, shape = "circle", label.prop = 0.75,
-       curveAll = FALSE, edge.labels = FALSE, edge.label.cex = 0.45, esize = 8,
-       title = main,
-       labels = rownames(x$modules[[module]]$cormat)
-        )
-
-    }
-
+      graph = "cor",
+      minimum = min, maximum = max, threshold = "sig",
+      sampleSize = samp,
+      alpha = cutoff, layout = "spring", repulsion = repulse,
+      label.cex = 2,
+      posCol = "black", negCol = "black", negDashed = TRUE,
+      borders = TRUE, shape = "circle", label.prop = 0.75,
+      curveAll = FALSE, edge.labels = FALSE, edge.label.cex = 0.45, esize = 8,
+      title = main,
+      labels = rownames(x$modules[[module]]$cormat)
+    )
+  }
 }
 
 # INTERNAL FUNCTIONS -----------------------------------------------------------
@@ -224,7 +230,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' @importFrom utils capture.output
 #'
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
-#'             as output from `CMDist`
+#'             as output from [CMDist()]
 #' @param filter_sig logical (default = TRUE), sets 'insignificant'
 #'                   ties to 0 to decrease noise and increase stability
 #' @param filter_value Minimum significance cutoff.
@@ -236,37 +242,39 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #'                    0-variance rows and all other rows is set 0, and the
 #'                    correlations between all pairs of 0-var rows are set to 1
 #' @noRd
-.get_cor_class <- function (
-                 cmds,
-                 filter_sig = TRUE,
-                 filter_value = 0.01,
-                 zero_action = c("drop", "ownclass")) {
+.get_cor_class <- function(cmds,
+                           filter_sig = TRUE,
+                           filter_value = 0.01,
+                           zero_action = c("drop", "ownclass")) {
+  cormat <- .make.cormat(cmds, zero_action)
 
-    cormat <- .make.cormat(cmds, zero_action)
+  if (filter_sig == TRUE) {
+    cormat <- .filter.insignif(cormat,
+      ncol(cmds),
+      filter_value = filter_value
+    )
+  }
 
-    if (filter_sig == TRUE) {
-        cormat <- .filter.insignif(cormat,
-                                   ncol(cmds),
-                                   filter_value = filter_value)
-    }
+  graph <- igraph::graph.adjacency(cormat,
+    mode = "undirected",
+    weighted = TRUE,
+    diag = FALSE
+  )
 
-    graph <- igraph::graph.adjacency(cormat,
-                                    mode="undirected",
-                                    weighted = TRUE,
-                                    diag = FALSE)
+  comm <- igraph::leading.eigenvector.community(graph)
 
-    comm <- igraph::leading.eigenvector.community(graph)
+  modules <- .separate(attr(cormat, "cmds"), membership = comm$membership)
 
-    modules <- .separate(attr(cormat, "cmds"), membership = comm$membership)
+  val <- list(
+    membership = comm$membership,
+    modules = modules,
+    cormat = cormat
+  )
+  class(val) <- "cca"
 
-    val <- list(membership = comm$membership,
-                modules = modules,
-                cormat = cormat)
-    class (val) <- "cca"
+  paste(utils::capture.output(print(val)), collapse = "\n")
 
-    paste(utils::capture.output(print(val)), collapse = "\n")
-
-    return (invisible(val))
+  return(invisible(val))
 }
 
 
@@ -276,40 +284,39 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' Make a correlation matrix from data frame
 #'
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
-#'             as output from `CMDist`
+#'             as output from [CMDist()]
 #' @param zero_action zero_action If "drop", CCA drops rows with
 #'                    0 variance from the analyses (default).
 #'                    If "ownclass", the correlations between
 #'                    0-variance rows and all other rows is set 0, and the
 #'                    correlations between all pairs of 0-var rows are set to 1
 #' @noRd
-.make.cormat <- function (cmds, zero_action) {
+.make.cormat <- function(cmds, zero_action) {
+  cmds2 <- cmds
+  # Floating point imprecision may make 0-variance rows
+  # appear to have variance slightly higher than 0.
+  zeros <- which(apply(cmds2, 1, stats::var) <= 0.000000001)
 
-    cmds2 <- cmds
-    # Floating point imprecision may make 0-variance rows
-    # appear to have variance slightly higher than 0.
-    zeros <- which(apply(cmds2, 1, stats::var) <= 0.000000001)
+  if (zero_action[1] == "drop" &
+    (length(zeros) > 0)) {
+    cmds2 <- cmds2[-zeros, ]
+  }
 
-    if (zero_action[1] == "drop" &
-        (length(zeros) > 0)) {
-        cmds2 <- cmds2[-zeros,]
-    }
+  rv <- abs(stats::cor(t(cmds2)))
 
-    rv <- abs(stats::cor(t(cmds2)))
+  attributes(rv)$zeros <- zeros
+  attributes(rv)$zero_action <- zero_action[1]
+  attributes(rv)$cmds <- cmds2
 
-    attributes(rv)$zeros <- zeros
-    attributes(rv)$zero_action <- zero_action[1]
-    attributes(rv)$cmds <- cmds2
+  if ((zero_action[1] == "ownclass") & length(zeros) > 0) {
+    rv[zeros, ] <- 0
+    rv[, zeros] <- 0
+    rv[zeros, zeros] <- 1
+  }
 
-    if ((zero_action[1] == "ownclass") & length(zeros) > 0) {
-        rv[zeros,] <- 0
-        rv[,zeros] <- 0
-        rv[zeros,zeros] <- 1
-    }
+  diag(rv) <- 0
 
-    diag(rv) <- 0
-
-    return (rv)
+  return(rv)
 }
 
 
@@ -324,28 +331,28 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' @param filter_value significance level below which to filter
 #'
 #' @noRd
-.filter.insignif <- function (cormat , n_vars, filter_value = 0.05) {
+.filter.insignif <- function(cormat, n_vars, filter_value = 0.05) {
+  suppressWarnings(tvalues <- cormat * sqrt((n_vars - 2) / (1 - cormat^2)))
 
-    suppressWarnings(tvalues <- cormat * sqrt ((n_vars-2) / (1 - cormat^2)))
+  if (any(is.infinite(tvalues))) {
+    tvalues[is.infinite(tvalues)] <- 99999 # a very big number
+  }
+  cutoff <- abs(stats::qt(filter_value / 2, n_vars))
 
-    if (any(is.infinite(tvalues))) {
-        tvalues[is.infinite(tvalues)] <- 99999 # a very big number
-    }
-    cutoff <- abs(stats::qt(filter_value / 2, n_vars))
+  isolates_pre <- sum(apply(cormat, 1, sum) == 0)
+  cormat[tvalues < cutoff] <- 0
+  isolates_post <- sum(apply(cormat, 1, sum) == 0)
 
-    isolates_pre <- sum(apply(cormat, 1, sum) == 0)
-    cormat[tvalues < cutoff] <- 0
-    isolates_post <- sum(apply(cormat, 1, sum) == 0)
+  if (isolates_post > isolates_pre) {
+    warn1 <- paste(
+      "Significance filtering left", isolates_post - isolates_pre,
+      "rows with no non-zero ties. The CCA result will contain at
+         least one small degenerate class."
+    )
+    warning(warn1)
+  }
 
-    if (isolates_post > isolates_pre) {
-        warn1 <- paste(
-        "Significance filtering left", isolates_post - isolates_pre,
-        "rows with no non-zero ties. The CCA result will contain at
-         least one small degenerate class.")
-        warning(warn1)
-    }
-
-    return (cormat)
+  return(cormat)
 }
 
 #' .separate
@@ -353,24 +360,22 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' Separate a data frame and cormat according to the membership vector
 #'
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
-#'             as output from `CMDist`
+#'             as output from [CMDist()]
 #' @param membership designates which class
 #'
 #' @noRd
-.separate <- function (cmds, membership) {
+.separate <- function(cmds, membership) {
+  ids <- sort(unique(membership))
+  modules <- list()
 
-    ids <- sort(unique(membership))
-    modules <- list()
+  for (i in seq_len(length(ids))) {
+    curmod <- list()
+    class(curmod) <- "cca.module"
+    curmod$cmds <- cmds[membership == ids[i], ]
+    curmod$cormat <- stats::cor(curmod$cmds)
+    curmod$degenerate <- any(is.na(curmod$cormat))
+    modules[[i]] <- curmod
+  }
 
-    for (i in seq_len(length(ids))) {
-        curmod <- list()
-        class(curmod) <- "cca.module"
-        curmod$cmds <- cmds[membership == ids[i],]
-        curmod$cormat <- stats::cor(curmod$cmds)
-        curmod$degenerate <- any(is.na(curmod$cormat))
-        modules[[i]] <- curmod
-    }
-
-    return (modules)
+  return(modules)
 }
-

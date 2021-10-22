@@ -1,16 +1,20 @@
 #' A dataset of stoplists
 #'
-#' A dataset containing eight English stoplists:
+#' A dataset containing eight English stoplist. Is used
+#' with the [get_stoplist()] function.
+#'
+#' @details
+#'
+#' The stoplists include:
+#'
 #' - "tiny2020": Tiny (2020) list of 33 words (Default)
-#' - "snowball2001": Snowball stemming package's (2001) list of 127 words
+#' - "snowball2001": Snowball (2001) list of 127 words
 #' - "snowball2014": Updated Snowball (2014) list of 175 words
-#' - "van1979": C. J. van Rijsbergen's (1979) list of 250 words
-#' - "fox1990": Christopher Fox’s (1990) list of 421 words
+#' - "van1979": van Rijsbergen's (1979) list of 250 words
+#' - "fox1990": Christopher Fox's (1990) list of 421 words
 #' - "smart1993": Original SMART (1993) list of 570 words
 #' - "onix2000": ONIX (2000) list of 196 words
 #' - "nltk2001": Python's NLTK (2009) list of 179 words
-#'
-#' @details
 #'
 #' Tiny 2020, is a very small stop list of the most frequent
 #' English conjunctions, articles, prepositions, and
@@ -41,18 +45,22 @@ NULL
 #'
 #' A dataset containing juxtaposing pairs of English words
 #' for 26 semantic relations. These anchors are used with
-#' the `get_anchor()` function, which can then be used with
-#' the `get_direction()` function.
+#' the [get_anchors()] function, which can then be used with
+#' the [get_direction()] function. These have been collected
+#' from previously published articles and should be used
+#' as a starting point for defining a given relation in
+#' a word embedding model.
 #'
 #' @section Variables:
 #' Variables:
 #' \itemize{
-#' \item add. words to added (or the positive direction)
+#' \item add. words to be added (or the positive direction)
 #' \item subtract. words to be subtract (or the negative direction)
 #' \item relation. the relation to be extracted, 26 relations available
 #' \item domain. 6 broader categories within which each relation falls
 #'
 #' }
+#' @seealso [CoCA], [get_direction], [get_centroid], [get_anchors]
 #'
 #' @docType data
 #' @name anchor_lists
@@ -65,7 +73,7 @@ NULL
 #'
 #' This is a data frame for the text of JFK's Rice Speech "We choose to go to
 #' the moon." Each row is a 10 word string of the speech -- roughly a sentence.
-#' It is intended to be used for example code.
+#' This is intended to be used for example code.
 #'
 #' @section Variables:
 #' Variables:

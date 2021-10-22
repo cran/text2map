@@ -8,17 +8,19 @@
 #'
 #' @details
 #'
-#' There is no such thing as a stopword! But, there are **tons** of precompiled
-#' lists of words that someone thinks we should remove from our texts. (See for
-#' example: https://github.com/igorbrigadir/stopwords) One of the first
-#' stoplists is from C.J. van Rijsbergen's "Information retrieval: theory and
-#' practice" (1979) and includes 250 words. `text2map`'s very own stoplist is a
-#' lean 34 words. Below are stoplists available with `get_stoplists()`:
+#' There is no such thing as a *stopword*! But, there are **tons** of
+#' precompiled lists of words that someone thinks we should remove from
+#' our texts. (See for example: https://github.com/igorbrigadir/stopwords)
+#' One of the first stoplists is from C.J. van Rijsbergen's "Information
+#' retrieval: theory and practice" (1979) and includes 250 words.
+#' `text2map`'s very own stoplist `tiny2020` is a lean 34 words.
+#'
+#' Below are stoplists available with [get_stoplist()]:
 #' - "tiny2020": Tiny (2020) list of 33 words (Default)
 #' - "snowball2001": Snowball stemming package's (2001) list of 127 words
 #' - "snowball2014": Updated Snowball (2014) list of 175 words
 #' - "van1979": C. J. van Rijsbergen's (1979) list of 250 words
-#' - "fox1990": Christopher Fox’s (1990) list of 421 words
+#' - "fox1990": Christopher Fox's (1990) list of 421 words
 #' - "smart1993": Original SMART (1993) list of 570 words
 #' - "onix2000": ONIX (2000) list of 196 words
 #' - "nltk2001": Python's NLTK (2009) list of 179 words
@@ -27,7 +29,7 @@
 #' in the `stopwords` package, which is used by `quanteda`, `tidytext` and
 #' `tokenizers` packages, followed closely by the Smart (1993) stoplist,
 #' the default in the `tm` package. The word counts for SMART (1993) and
-#' ONIX (2000) are slightly different than in other places because we found
+#' ONIX (2000) are slightly different than in other places because of
 #' duplicate words.
 #'
 #'
@@ -36,7 +38,7 @@
 #'
 #' @importFrom tibble tibble
 #'
-#' @param source Character indicating source, default = "tiny2020"
+#' @param source Character indicating source, default = `"tiny2020"`
 #' @param language Character (default = "en") indicating language of stopwords
 #'                 by ISO 639-1 code, currently only English is supported.
 #' @param tidy logical (default = `FALSE`), returns a tibble
@@ -168,7 +170,7 @@ tiny_gender_tagger <- function() {
 #' .kurtosis
 #'
 #' adapted from e1071 package type=3 in the kurtosis function:
-#' b_2 = m_4/s^4 − 3 = (g_2 + 3)(1 − 1/n)^2 − 3
+#' b_2 = m_4/s^4 - 3 = (g_2 + 3)(1 - 1/n)^2 - 3
 #'
 #' @param x a vector of numbers
 #'
@@ -184,7 +186,7 @@ tiny_gender_tagger <- function() {
 #' .kurtosis
 #'
 #' adapted from e1071 package type=3 in the skewness function:
-#' b_1 = m_3/s^3 = g_((n − 1)/n)^3/2
+#' b_1 = m_3/s^3 = g_((n - 1)/n)^3/2
 #'
 #' @param x a vector of numbers
 #'
@@ -209,7 +211,7 @@ tiny_gender_tagger <- function() {
   if (abs(x - round(x)) > .Machine$double.eps^0.5) {
     nchar(strsplit(sub(
       "0+$", "",
-      as.character(x)
+      as.character(format(x, scientific = FALSE))
     ), ".",
     fixed = TRUE
     )[[1]][[2]])

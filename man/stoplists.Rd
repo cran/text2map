@@ -11,19 +11,22 @@ A data frame with 1775 rows and 2 variables.
 stoplists
 }
 \description{
-A dataset containing eight English stoplists:
+A dataset containing eight English stoplist. Is used
+with the \code{\link[=get_stoplist]{get_stoplist()}} function.
+}
+\details{
+The stoplists include:
 \itemize{
 \item "tiny2020": Tiny (2020) list of 33 words (Default)
-\item "snowball2001": Snowball stemming package's (2001) list of 127 words
+\item "snowball2001": Snowball (2001) list of 127 words
 \item "snowball2014": Updated Snowball (2014) list of 175 words
-\item "van1979": C. J. van Rijsbergen's (1979) list of 250 words
-\item "fox1990": Christopher Fox’s (1990) list of 421 words
+\item "van1979": van Rijsbergen's (1979) list of 250 words
+\item "fox1990": Christopher Fox's (1990) list of 421 words
 \item "smart1993": Original SMART (1993) list of 570 words
 \item "onix2000": ONIX (2000) list of 196 words
 \item "nltk2001": Python's NLTK (2009) list of 179 words
 }
-}
-\details{
+
 Tiny 2020, is a very small stop list of the most frequent
 English conjunctions, articles, prepositions, and
 demonstratives (N=17). Also includes the 8 forms of the

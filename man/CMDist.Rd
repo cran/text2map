@@ -27,8 +27,8 @@ produced by any popular text analysis package, or you can use the
 \item{cw}{Vector with concept word(s) (e.g., \code{c("love", "money")},
 \code{c("critical thinking")})}
 
-\item{cv}{Concept vector(s) as output from \code{get_direction()},
-\code{get_centroid()}, or \code{get_region()}}
+\item{cv}{Concept vector(s) as output from \code{\link[=get_direction]{get_direction()}},
+\code{\link[=get_centroid]{get_centroid()}}, or \code{\link[=get_regions]{get_regions()}}}
 
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
 with rows as words.}
@@ -76,10 +76,11 @@ estimates will follow each unique CMD if \code{sens_interval = TRUE}.
 }
 \description{
 Concept Mover's Distance classifies documents of any length along a
-continuous measure of engagement with a given concept of interest.
+continuous measure of engagement with a given concept of interest
+using word embeddings.
 }
 \details{
-\code{CMDist} requires three things: a (1) document-term matrix (DTM), a (2)
+\code{CMDist()} requires three things: a (1) document-term matrix (DTM), a (2)
 matrix of word embedding vectors, and (3) concept words or concept vectors.
 The function uses \emph{word counts} from the DTM and  \emph{word similarities} as
 derived from the cosine similarity of their respective word vectors in a
@@ -87,7 +88,7 @@ word embedding model. A document is then conceived as a "cloud" of words
 in the embedding space. The "cost" of transporting all the words in a
 document to a single vector or a few vectors in this space denoting a
 concept of interest is the measure of engagement, with higher costs
-indicating less engagement. For intuitiveness the output of \code{CMDist}
+indicating less engagement. For intuitiveness the output of \code{CMDist()}
 is inverted such that higher numbers will indicate more engagement
 with a concept of interest.
 
@@ -103,8 +104,8 @@ Instead of selecting a word already in the embedding space, the function can
 also take a vector extracted from the embedding space in the form of a
 centroid (which averages the vectors of several words) a direction (which
 uses the offset of several juxtaposing words), or a region (which is built
-by clustering words into $k$ regions). The \code{get_centroid()},
-\code{get_direction()}, and \code{get_regions()} functions will extract these.
+by clustering words into $k$ regions). The \code{\link[=get_centroid]{get_centroid()}},
+\code{\link[=get_direction]{get_direction()}}, and \code{\link[=get_regions]{get_regions()}} functions will extract these.
 }
 \examples{
 
@@ -119,7 +120,7 @@ jfk_speech$sentence <- tolower(jfk_speech$sentence)
 jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
 
 # create DTM
-dtm <- jfk_speech |> dtm_builder(sentence, sentence_id)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 
 # example 1
 cm.dists <- CMDist(dtm,
@@ -129,14 +130,12 @@ cm.dists <- CMDist(dtm,
 
 # example 2
 space <- c("spacecraft", "rocket", "moon")
-
 cen <- get_centroid(anchors = space, wv = ft_wv_sample)
 
 cm.dists <- CMDist(dtm,
   cv = cen,
   wv = ft_wv_sample
 )
-
 }
 \references{
 Stoltz, Dustin S., and Marshall A. Taylor. (2019)
@@ -144,13 +143,16 @@ Stoltz, Dustin S., and Marshall A. Taylor. (2019)
 Social Science} 2(2):293-313.
 \doi{10.1007/s42001-019-00048-6}.\cr
 Taylor, Marshall A., and Dustin S. Stoltz. (2020) 'Integrating semantic
-directions with concept mover’s distance to measure binary concept
+directions with concept mover's distance to measure binary concept
 engagement.' \emph{Journal of Computational Social Science} 1-12.
 \doi{10.1007/s42001-020-00075-8}.\cr
 Taylor, Marshall A., and Dustin S. Stoltz.
 (2020) 'Concept Class Analysis: A Method for Identifying Cultural
 Schemas in Texts.' \emph{Sociological Science} 7:544-569.
 \doi{10.15195/v7.a23}.\cr
+}
+\seealso{
+\link{CoCA}, \link{get_direction}, \link{get_centroid}
 }
 \author{
 Dustin Stoltz and Marshall Taylor

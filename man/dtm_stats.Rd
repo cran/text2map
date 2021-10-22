@@ -14,12 +14,12 @@ dtm_stats(
 )
 }
 \arguments{
-\item{dtm}{Document-term matrix with words as columns. Works with DTMs
+\item{dtm}{Document-term matrix with terms as columns. Works with DTMs
 produced by any popular text analysis package, or you can use the
 \code{dtm_builder()} function.}
 
 \item{richness}{Logical (default = TRUE), whether to include statistics
-about lexical richness, i.e. words that occur once,
+about lexical richness, i.e. terms that occur once,
 twice, and three times (hapax, dis, tris), and the total
 type-token ratio.}
 
@@ -39,8 +39,8 @@ data frame where each statistic is a column. Default returns
 a list of small data frames.}
 }
 \value{
-An list of 1 to five data frames with summary statistics (if
-\code{simplify==FALSE}), otherwise a single data frame where each
+A list of one to five data frames with summary statistics (if
+\code{simplify=FALSE}), otherwise a single data frame where each
 statistics is a column.
 }
 \description{

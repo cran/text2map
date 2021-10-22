@@ -1,30 +1,46 @@
-#' Gets anchor terms from precompiled lists
+#' Gets anchor terms from precompiled anchor lists
 #'
 #' Produces a data.frame of juxtaposed word pairs used to extract
 #' a semantic direction in word embeddings. Can be used as input
-#' to `get_direction()`.
+#' to [get_direction()].
 #'
 #' @details
 #' Sets of juxtaposed "anchor" pairs are adapted from published work
 #' and associated with a particular semantic relation. These should
 #' be used as a starting point, not as "ground truth."
 #'
+#' Available relations include:
+#' - activity
+#' - affluence
+#' - age
+#' - attractiveness
+#' - borders
+#' - concreteness
+#' - cultivation
+#' - dominance
+#' - education
+#' - gender
+#' - government
+#' - purity
+#' - safety
+#' - sexuality
+#' - skills
+#' - status
+#' - valence
+#' - whiteness
+#'
 #' @name get_anchors
 #' @author Dustin Stoltz
 #'
 #' @param relation String indicating a semantic relation, 26 relations are
-#'                 available in the dataset but should be used as a starting
-#'                 point. Available relations include: activity, affluence,
-#'                 age, attractiveness, borders, concreteness, cultivation,
-#'                 dominance, education, gender, government, purity, safety,
-#'                 sexuality, skills, status, valence, whiteness
+#'                 available in the dataset (see details) but should be used
+#'                 as a starting point.
 #'
 #' @return returns a tibble with two columns
 #'
 #' @examples
 #'
 #' gen <- get_anchors(relation = "gender")
-#'
 #' @export
 get_anchors <- function(relation) {
 
@@ -39,7 +55,7 @@ get_anchors <- function(relation) {
 #'
 #' `get_direction()` outputs a vector corresponding to one pole of a
 #' "semantic direction" built from sets of antonyms or juxtaposed terms.
-#' The output can be used as an input to `CMDist()` and `CoCA()`.
+#' The output can be used as an input to [CMDist()] and [CoCA()].
 #'
 #' @details
 #' Semantic directions can be estimated in using a few methods:
@@ -65,14 +81,14 @@ get_anchors <- function(relation) {
 #' Bolukbasi, Tolga, Kai-Wei Chang, James Zou, Venkatesh Saligrama,
 #' Adam Kalai (2016). 'Man Is to Computer Programmer as Woman Is to Homemaker?
 #' Debiasing Word Embeddings.' Proceedings of the 30th International Conference
-#' on Neural Information Processing Systems. 4356–4364.
+#' on Neural Information Processing Systems. 4356-4364.
 #' \url{https://dl.acm.org/doi/10.5555/3157382.3157584}.\cr
 #' Taylor, Marshall A., and Dustin S. Stoltz. (2020)
 #' 'Concept Class Analysis: A Method for Identifying Cultural
 #' Schemas in Texts.' \emph{Sociological Science} 7:544-569.
 #' \doi{10.15195/v7.a23}.\cr
 #' Taylor, Marshall A., and Dustin S. Stoltz. (2020) 'Integrating semantic
-#' directions with concept mover’s distance to measure binary concept
+#' directions with concept mover's distance to measure binary concept
 #' engagement.' \emph{Journal of Computational Social Science} 1-12.
 #' \doi{10.1007/s42001-020-00075-8}.\cr
 #' Kozlowski, Austin C., Matt Taddy, and James A. Evans. (2019). 'The geometry
@@ -122,7 +138,6 @@ get_anchors <- function(relation) {
 #'   anchors = gen, wv = ft_wv_sample,
 #'   method = "PCA", n = 1L
 #' )
-#'
 #' @export
 get_direction <- function(anchors, wv,
                           method = "paired",
@@ -219,7 +234,7 @@ get_direction <- function(anchors, wv,
 #' The function outputs an averaged vector from a set of anchor terms' word
 #' vectors. This average is roughly equivalent to the intersection of the
 #' contexts in which each word is used. This semantic centroid can be used
-#' for a variety of ends, and specifically as input to `CMDist()`.
+#' for a variety of ends, and specifically as input to [CMDist()].
 #'
 #' @name get_centroid
 #' @author Dustin Stoltz
@@ -244,7 +259,6 @@ get_direction <- function(anchors, wv,
 #' space <- c("spacecraft", "rocket", "moon")
 #'
 #' cen <- get_centroid(anchors = space, wv = ft_wv_sample)
-#'
 #' @export
 get_centroid <- function(anchors, wv, missing = "stop") {
 
@@ -276,11 +290,11 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' Word embedding semantic region extractor
 #'
 #' Given a set of word embeddings of \eqn{d} dimensions and \eqn{v} vocabulary,
-#' `get_regions()` finds \eqn{k} semantic regions in \eqn{d} dimensions. This, in
-#' effect, learns latent topics from an embedding space (a.k.a. topic modeling),
-#' which are directly comparable to both terms (with cosine similarity
-#' using `get_cosine()`) and documents (with Concept Mover's distance
-#' using `CMDist()`).
+#' [get_regions()] finds \eqn{k} semantic regions in \eqn{d} dimensions.
+#' This, in effect, learns latent topics from an embedding space (a.k.a.
+#' topic modeling), which are directly comparable to both terms (with
+#' cosine similarity) and documents (with Concept Mover's distance
+#' using [CMDist()]).
 #'
 #' @details
 #' To group words into more encompassing "semantic regions" we use \eqn{k}-means
@@ -302,8 +316,8 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' Options include:
 #' - "naive": O(kN) Lloyd's approach
 #' - "pelleg-moore": Pelleg-Moore tree-based algorithm
-#' - "elkan": Elkan’s triangle-inequality based algorithm
-#' - "hamerly" (default): Hamerly’s modification to Elkan’s algorithm
+#' - "elkan": Elkan's triangle-inequality based algorithm
+#' - "hamerly" (default): Hamerly's modification to Elkan's algorithm
 #' - "dualtree": dual-tree k-means
 #' - "dualtree-covertree": dual-tree k-means sing the cover tree
 #'
@@ -317,7 +331,7 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' Hongshu Chen, and Guangquan Zhang. (2018).
 #' 'Does Deep Learning Help Topic Extraction? A Kernel
 #' K-Means Clustering Method with Word Embedding.'
-#' \emph{Journal of Informetrics}. 12(4):1099–1117.
+#' \emph{Journal of Informetrics}. 12(4):1099-1117.
 #' \doi{10.1016/j.joi.2018.09.004}.\cr
 #' Arseniev-Koehler, Alina and Cochran, Susan D and
 #' Mays, Vickie M and Chang, Kai-Wei and Foster,
@@ -336,8 +350,8 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' @param max_iter Integer indicating the maximum number of iterations
 #'                 before k-means terminates.
 #' @param algorithm Character indicating the algorithm to use for the Lloyd
-#'             iteration (’naive’, ’pelleg-moore’, ’elkan’, ’hamerly’ (default),
-#'             ’dualtree’, or ’dualtree-covertree’).
+#'             iteration ('naive', 'pelleg-moore', 'elkan', 'hamerly' (default),
+#'             'dualtree', or 'dualtree-covertree').
 #' @param seed Integer indicating a random seed. Default is 0, which calls
 #'               'std::time(NULL)'.
 #'
@@ -355,7 +369,6 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #'   algorithm = "hamerly",
 #'   seed = 01984
 #' )
-#'
 #' @export
 #'
 get_regions <- function(wv,
@@ -387,7 +400,7 @@ get_regions <- function(wv,
 #' "Project" each word in a word embedding matrix of \eqn{D} dimension along a
 #' vector of \eqn{D} dimensions, extracted from the same embedding space.
 #' The vector can be a single word, or a concept vector obtained from
-#' `get_centroid()`, `get_direction()`, or `get_regions()`.
+#' [get_centroid()], [get_direction()], or [get_regions()].
 #'
 #' @details
 #'
@@ -425,11 +438,11 @@ find_projection <- function(wv, vec) {
 
 #' Find the 'rejection matrix' from a semantic vector
 #'
-#' "Reject" each word in a word embedding matrix of \eqn{D} dimension from a vector
-#' of \eqn{D} dimensions, extracted from the same embedding space.
-#' The vector can be a single word, or a concept vector obtained
-#' from `get_centroid()`, `get_direction()`, or `get_regions()`.
-#'
+#' "Reject" each word in a word embedding matrix of \eqn{D} dimension
+#' from a vector of \eqn{D} dimensions, extracted from the same
+#' embedding space. The vector can be a single word, or a concept
+#' vector obtained from [get_centroid()], [get_direction()],
+#' or [get_regions()].
 #'
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words.
@@ -452,16 +465,16 @@ find_rejection <- function(wv, vec) {
 
 ## INTERNAL FUNCTIONS ## -------------------------------------------------------
 
-#' Check that all terms are in word embeddings, removes them or stops
+#' Check that all terms are in word embeddings, removes them or stops function
 #'
 #' When vectors, lists, or data.frames with words or word pairs are input
-#' to `get_direction()`, `get_centroid()`, or `CMDist()` this function
+#' to [get_direction()], [get_centroid()], or [CMDist()] this function
 #' makes sure all words are present in the word embeddings provided.
 #'
 #' @details
 #'
-#' If action = "remove", output is the same as terms but missing words
-#' or rows with missing words are removed. If action = "stop",  the function
+#' If `action = "remove"`, output is the same as terms but missing words
+#' or rows with missing words are removed. If `action = "stop"`, the function
 #' will stop with an error. In both cases, the missing words are printed.
 #'
 #' @param terms List or data.frame of terms or term pairs
@@ -475,7 +488,7 @@ find_rejection <- function(wv, vec) {
 #'               Missing words will be printed as a message.
 #'
 #' @return If no words are missing, the original terms are returned
-#'         If action = "remove", output is same as terms,
+#'         If `action = "remove"`, output is same as terms,
 #'         missing words or rows with missing words removed
 #' @noRd
 .check_term_in_embeddings <- function(terms, wv, action = "stop") {

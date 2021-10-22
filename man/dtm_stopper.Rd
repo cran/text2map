@@ -4,10 +4,18 @@
 \alias{dtm_stopper}
 \title{Removes terms from a DTM based on rules}
 \usage{
-dtm_stopper(dtm, stop_list = NULL, stop_freq = NULL, ignore_case = TRUE)
+dtm_stopper(
+  dtm,
+  stop_list = NULL,
+  stop_termfreq = NULL,
+  stop_docfreq = NULL,
+  stop_hapax = FALSE,
+  stop_null = FALSE,
+  ignore_case = TRUE
+)
 }
 \arguments{
-\item{dtm}{Document-term matrix with words as columns. Works with DTMs
+\item{dtm}{Document-term matrix with terms as columns. Works with DTMs
 produced by any popular text analysis package, or you can use the
 \code{dtm_builder()} function.}
 
@@ -15,35 +23,68 @@ produced by any popular text analysis package, or you can use the
 custom list such as \code{c("never", "gonna", "give")}, or a
 combination of the two.}
 
-\item{stop_freq}{Vector of two numbers indicating the lower and upper
-threshold for inclusion. If real numbers less than 1,
-for example \code{c(0.01, 0.99)}, then words will be removed by
-proportion, here words in more than 99\% of all documents or
-words that are in less than 1\% of all documents. If
-integers are provided, for example \code{c(100, 9000)}, then
-words will be removed by count, here words occurring less
-than 100 or more than 9000 times  in the corpus will
-be removed.}
+\item{stop_termfreq}{Vector of two numbers indicating the lower and upper
+term threshold for exclusion (see details).}
+
+\item{stop_docfreq}{Vector of two numbers indicating the lower and upper
+document threshold for exclusion (see details).}
+
+\item{stop_hapax}{Logical (default = FALSE) indicating whether to remove terms
+occurring one time (or zero times), a.k.a. hapax legomena}
+
+\item{stop_null}{Logical (default = FALSE) indicating whether to remove terms
+that occur zero times in the DTM.}
 
 \item{ignore_case}{Logical (default = TRUE) indicating whether to ignore
-capitalization when matching.}
+capitalization when matching terms provided to \code{stop_list}.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"
 }
 \description{
-\code{dtm_stopper()} will "stop" terms from the analysis by removing columns
-that match terms to be stopped. Rules include using precompiled or custom
-list of terms, or terms meeting an upper or lower document frequency
-threshold.
+\code{dtm_stopper()} will "stop" terms from the analysis by removing columns in a
+DTM based on stop rules. Rules include matching terms in a precompiled or
+custom list, terms meeting an upper or lower document frequency threshold,
+or terms meeting an upper or lower term frequency threshold.
 }
 \details{
 Stopping terms by removing their respective columns in the DTM is
 significantly more efficient than searching raw text with string matching
-and deletion rules. The \code{stop_freq} and \code{stop_list} arguments are akin to
-the \code{tm} package's \code{removeSparseTerms} and \code{removeWords} functions,
-respectively. Behind the scenes, the function relies on the \code{fastmatch}
-package to quickly match/not-match terms.
+and deletion rules. Behind the scenes, the function relies on
+the \code{fastmatch} package to quickly match/not-match terms.
+
+The \code{stop_list} arguments takes a list of terms which are matched and
+removed from the DTM. If \code{ignore_case = TRUE} (the default) then word
+case will be ignored.
+
+The \code{stop_termfreq} argument provides rules based on a term's occurrences
+in the DTM as a whole -- regardless of its within document frequency. If
+real numbers between 0 and 1 are provided then terms will be removed by
+corpus proportion. For example \code{c(0.01, 0.99)}, terms that are either below
+1\% of the total tokens or above 99\% of the total tokens will be removed. If
+integers are provided then terms will be removed by total count. For example
+\code{c(100, 9000)}, occurring less than 100 or more than 9000 times in the
+corpus will be removed. This also means that if \code{c(0, 1)} is provided, then
+the will only \emph{keep} terms occurring once.
+
+The \code{stop_docfreq} argument provides rules based on a term's document
+frequency -- i.e. the number of documents within which it occurs, regardless
+of how many times it occurs. If real numbers between 0 and 1 are provided
+then terms will be removed by corpus proportion. For example \code{c(0.01, 0.99)},
+terms in more than 99\% of all documents or terms that are in less than 1\% of
+all documents. For example \code{c(100, 9000)}, then words occurring in less than
+100 documents or more than 9000 documents will be removed. This means that if
+\code{c(0, 1)} is provided, then the function will only \emph{keep} terms occurring in
+exactly one document, and remove terms in more than one.
+
+The \code{stop_hapax} argument is a shortcut for removing terms occurring just one
+time in the corpus -- called hapax legomena. Typically, a size-able portion of
+the corpus tends to be hapax terms, and removing them is a quick solution to
+reducing the dimensions of a DTM. The \code{stop_null} argument removes terms that
+do not occur at all. In other words, there is a column for the term, but the
+entire column is zero. This can occur for a variety of reasons, such as
+starting with a predefined vocabulary (e.g., using \link{dtm_builder}'s \code{vocab}
+argument) or through some cleaning processes.
 }
 \author{
 Dustin Stoltz

@@ -16,7 +16,7 @@
 )
 }
 \arguments{
-\item{x}{CoCA object returned by \code{CoCA()}}
+\item{x}{CoCA object returned by \code{\link[=CoCA]{CoCA()}}}
 
 \item{module}{index for which module to plot (default = NULL)}
 

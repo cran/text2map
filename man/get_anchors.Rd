@@ -2,17 +2,14 @@
 % Please edit documentation in R/utils-embedding.R
 \name{get_anchors}
 \alias{get_anchors}
-\title{Gets anchor terms from precompiled lists}
+\title{Gets anchor terms from precompiled anchor lists}
 \usage{
 get_anchors(relation)
 }
 \arguments{
 \item{relation}{String indicating a semantic relation, 26 relations are
-available in the dataset but should be used as a starting
-point. Available relations include: activity, affluence,
-age, attractiveness, borders, concreteness, cultivation,
-dominance, education, gender, government, purity, safety,
-sexuality, skills, status, valence, whiteness}
+available in the dataset (see details) but should be used
+as a starting point.}
 }
 \value{
 returns a tibble with two columns
@@ -20,17 +17,38 @@ returns a tibble with two columns
 \description{
 Produces a data.frame of juxtaposed word pairs used to extract
 a semantic direction in word embeddings. Can be used as input
-to \code{get_direction()}.
+to \code{\link[=get_direction]{get_direction()}}.
 }
 \details{
 Sets of juxtaposed "anchor" pairs are adapted from published work
 and associated with a particular semantic relation. These should
 be used as a starting point, not as "ground truth."
+
+Available relations include:
+\itemize{
+\item activity
+\item affluence
+\item age
+\item attractiveness
+\item borders
+\item concreteness
+\item cultivation
+\item dominance
+\item education
+\item gender
+\item government
+\item purity
+\item safety
+\item sexuality
+\item skills
+\item status
+\item valence
+\item whiteness
+}
 }
 \examples{
 
 gen <- get_anchors(relation = "gender")
-
 }
 \author{
 Dustin Stoltz

@@ -13,7 +13,7 @@ jfk_speech
 \description{
 This is a data frame for the text of JFK's Rice Speech "We choose to go to
 the moon." Each row is a 10 word string of the speech -- roughly a sentence.
-It is intended to be used for example code.
+This is intended to be used for example code.
 }
 \section{Variables}{
 

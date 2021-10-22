@@ -46,11 +46,11 @@ Returns a named list object of class \code{CoCA}. List elements include:
 }
 \description{
 CoCA outputs schematic classes derived from documents' engagement
-with multiple bi-polar concepts (in a Likert-style fashion)
+with multiple bi-polar concepts (in a Likert-style fashion).
 The function requires a (1) DTM of a corpus which can be obtained using any
-popular text analysis package, or from the \code{dtm_builder()} function, and (2)
-semantic directions as output from the \code{get_direction()}.
-\code{CMDist()} works under the hood. Code modified from the \code{corclass} package.
+popular text analysis package, or from the \code{\link[=dtm_builder]{dtm_builder()}} function, and (2)
+semantic directions as output from the \code{\link[=get_direction]{get_direction()}}.
+\code{\link[=CMDist]{CMDist()}} works under the hood. Code modified from the \code{corclass} package.
 }
 \examples{
 
@@ -65,7 +65,7 @@ jfk_speech$sentence <- tolower(jfk_speech$sentence)
 jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
 
 # create DTM
-dtm <- jfk_speech |> dtm_builder(sentence, sentence_id)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 
 # create semantic directions
 gen <- data.frame(
@@ -74,8 +74,8 @@ gen <- data.frame(
 )
 
 die <- data.frame(
-   add = c("alive"),
-   subtract = c("die")
+  add = c("alive"),
+  subtract = c("die")
 )
 
 gen.dir <- get_direction(anchors = gen, wv = ft_wv_sample)
@@ -83,15 +83,16 @@ die.dir <- get_direction(anchors = die, wv = ft_wv_sample)
 
 sem_dirs <- rbind(gen.dir, die.dir)
 
-classes <- CoCA(dtm = dtm,
-                wv = ft_wv_sample,
-                directions = sem_dirs,
-               filter_sig = TRUE,
-               filter_value = 0.05,
-               zero_action = 'drop')
+classes <- CoCA(
+  dtm = dtm,
+  wv = ft_wv_sample,
+  directions = sem_dirs,
+  filter_sig = TRUE,
+  filter_value = 0.05,
+  zero_action = "drop"
+)
 
 print(classes)
-
 }
 \references{
 Taylor, Marshall A., and Dustin S. Stoltz.
@@ -104,7 +105,7 @@ Sociological Science 4.15 (2017): 353-393.
 \doi{10.15195/v4.a15}\cr
 }
 \seealso{
-\code{\link[=CMDist]{CMDist()}}, \code{\link[=get_direction]{get_direction()}}
+\link{CMDist}, \link{get_direction}
 }
 \author{
 Dustin Stoltz and Marshall Taylor

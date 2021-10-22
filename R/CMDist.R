@@ -1,11 +1,12 @@
 #' Concept Mover's Distance
 #'
 #' Concept Mover's Distance classifies documents of any length along a
-#' continuous measure of engagement with a given concept of interest.
+#' continuous measure of engagement with a given concept of interest
+#' using word embeddings.
 #'
 #' @details
 #'
-#' `CMDist` requires three things: a (1) document-term matrix (DTM), a (2)
+#' `CMDist()` requires three things: a (1) document-term matrix (DTM), a (2)
 #' matrix of word embedding vectors, and (3) concept words or concept vectors.
 #' The function uses *word counts* from the DTM and  *word similarities* as
 #' derived from the cosine similarity of their respective word vectors in a
@@ -13,7 +14,7 @@
 #' in the embedding space. The "cost" of transporting all the words in a
 #' document to a single vector or a few vectors in this space denoting a
 #' concept of interest is the measure of engagement, with higher costs
-#' indicating less engagement. For intuitiveness the output of `CMDist`
+#' indicating less engagement. For intuitiveness the output of `CMDist()`
 #' is inverted such that higher numbers will indicate more engagement
 #' with a concept of interest.
 #'
@@ -29,8 +30,8 @@
 #' also take a vector extracted from the embedding space in the form of a
 #' centroid (which averages the vectors of several words) a direction (which
 #' uses the offset of several juxtaposing words), or a region (which is built
-#' by clustering words into $k$ regions). The `get_centroid()`,
-#' `get_direction()`, and `get_regions()` functions will extract these.
+#' by clustering words into $k$ regions). The [get_centroid()],
+#' [get_direction()], and [get_regions()] functions will extract these.
 #'
 #' @references
 #' Stoltz, Dustin S., and Marshall A. Taylor. (2019)
@@ -38,7 +39,7 @@
 #' Social Science} 2(2):293-313.
 #' \doi{10.1007/s42001-019-00048-6}.\cr
 #' Taylor, Marshall A., and Dustin S. Stoltz. (2020) 'Integrating semantic
-#' directions with concept mover’s distance to measure binary concept
+#' directions with concept mover's distance to measure binary concept
 #' engagement.' \emph{Journal of Computational Social Science} 1-12.
 #' \doi{10.1007/s42001-020-00075-8}.\cr
 #' Taylor, Marshall A., and Dustin S. Stoltz.
@@ -59,8 +60,8 @@
 #'            `dtm_builder()` function.
 #' @param cw Vector with concept word(s) (e.g., `c("love", "money")`,
 #'           `c("critical thinking")`)
-#' @param cv Concept vector(s) as output from `get_direction()`,
-#'          `get_centroid()`, or `get_region()`
+#' @param cv Concept vector(s) as output from [get_direction()],
+#'          [get_centroid()], or [get_regions()]
 #'
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words.
@@ -100,6 +101,8 @@
 #'          concept word or concept vector. The upper and lower bound
 #'          estimates will follow each unique CMD if `sens_interval = TRUE`.
 #'
+#' @seealso [CoCA], [get_direction], [get_centroid]
+#'
 #' @examples
 #'
 #' # load example word embeddings
@@ -113,7 +116,7 @@
 #' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
 #'
 #' # create DTM
-#' dtm <- jfk_speech |> dtm_builder(sentence, sentence_id)
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 #'
 #' # example 1
 #' cm.dists <- CMDist(dtm,
@@ -123,14 +126,12 @@
 #'
 #' # example 2
 #' space <- c("spacecraft", "rocket", "moon")
-#'
 #' cen <- get_centroid(anchors = space, wv = ft_wv_sample)
 #'
 #' cm.dists <- CMDist(dtm,
 #'   cv = cen,
 #'   wv = ft_wv_sample
 #' )
-#'
 #' @export
 #'
 CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
@@ -232,6 +233,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #'               If action = "remove",  output is the same as terms but
 #'               missing words or rows with missing words are removed.
 #'               Missing words will be printed as a message.
+#' @keywords internal
 #' @noRd
 .prep_cmd_INPUT <- function(dtm, cw = NULL, cv = NULL, wv, missing = "stop") {
 
@@ -382,6 +384,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #'             type `7`: \eqn{\(m = 1-p\). \(p_k = \frac{k - 1}{n - 1}\)},
 #'             where, \(p_k = \mbox{mode}[F(x_{k})]\).
 #' @param scale logical (default = `TRUE`) whether to scale the output
+#' @keywords internal
 #' @noRd
 .get_sensitivity_intervals <- function(sampList,
                                        fullDist,
@@ -461,6 +464,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #' @param setup_timeout if parallel = TRUE, maximum number of seconds a worker
 #'                      attempts to connect to master before failing.
 #'
+#' @keywords internal
 #' @noRd
 .parDist2 <- function(prep, threads, setup_timeout,
                       sens_interval, n_iters, alpha) {
@@ -547,6 +551,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #'
 #' @return A matrix with 3 columns `lower`, `upper` and `size`.
 #'
+#' @keywords internal
 #' @noRd
 .split_dtm <- function(n_docs, threads) {
   if (threads > n_docs) {

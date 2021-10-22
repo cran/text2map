@@ -7,7 +7,7 @@
 get_stoplist(source = "tiny2020", language = "en", tidy = FALSE)
 }
 \arguments{
-\item{source}{Character indicating source, default = "tiny2020"}
+\item{source}{Character indicating source, default = \code{"tiny2020"}}
 
 \item{language}{Character (default = "en") indicating language of stopwords
 by ISO 639-1 code, currently only English is supported.}
@@ -26,18 +26,20 @@ aims to be a transparent and well-document collection of stoplists. Only
 includes English language stoplists at the moment.
 }
 \details{
-There is no such thing as a stopword! But, there are \strong{tons} of precompiled
-lists of words that someone thinks we should remove from our texts. (See for
-example: https://github.com/igorbrigadir/stopwords) One of the first
-stoplists is from C.J. van Rijsbergen's "Information retrieval: theory and
-practice" (1979) and includes 250 words. \code{text2map}'s very own stoplist is a
-lean 34 words. Below are stoplists available with \code{get_stoplists()}:
+There is no such thing as a \emph{stopword}! But, there are \strong{tons} of
+precompiled lists of words that someone thinks we should remove from
+our texts. (See for example: https://github.com/igorbrigadir/stopwords)
+One of the first stoplists is from C.J. van Rijsbergen's "Information
+retrieval: theory and practice" (1979) and includes 250 words.
+\code{text2map}'s very own stoplist \code{tiny2020} is a lean 34 words.
+
+Below are stoplists available with \code{\link[=get_stoplist]{get_stoplist()}}:
 \itemize{
 \item "tiny2020": Tiny (2020) list of 33 words (Default)
 \item "snowball2001": Snowball stemming package's (2001) list of 127 words
 \item "snowball2014": Updated Snowball (2014) list of 175 words
 \item "van1979": C. J. van Rijsbergen's (1979) list of 250 words
-\item "fox1990": Christopher Fox’s (1990) list of 421 words
+\item "fox1990": Christopher Fox's (1990) list of 421 words
 \item "smart1993": Original SMART (1993) list of 570 words
 \item "onix2000": ONIX (2000) list of 196 words
 \item "nltk2001": Python's NLTK (2009) list of 179 words
@@ -47,7 +49,7 @@ The Snowball (2014) stoplist is likely the most commonly, it is the default
 in the \code{stopwords} package, which is used by \code{quanteda}, \code{tidytext} and
 \code{tokenizers} packages, followed closely by the Smart (1993) stoplist,
 the default in the \code{tm} package. The word counts for SMART (1993) and
-ONIX (2000) are slightly different than in other places because we found
+ONIX (2000) are slightly different than in other places because of
 duplicate words.
 }
 \author{

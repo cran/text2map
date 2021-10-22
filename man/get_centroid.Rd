@@ -27,7 +27,7 @@ returns a one row matrix
 The function outputs an averaged vector from a set of anchor terms' word
 vectors. This average is roughly equivalent to the intersection of the
 contexts in which each word is used. This semantic centroid can be used
-for a variety of ends, and specifically as input to \code{CMDist()}.
+for a variety of ends, and specifically as input to \code{\link[=CMDist]{CMDist()}}.
 }
 \examples{
 
@@ -37,7 +37,6 @@ data(ft_wv_sample)
 space <- c("spacecraft", "rocket", "moon")
 
 cen <- get_centroid(anchors = space, wv = ft_wv_sample)
-
 }
 \author{
 Dustin Stoltz

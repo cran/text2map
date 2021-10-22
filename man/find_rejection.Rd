@@ -17,8 +17,9 @@ A new word embedding matrix,
 each row of which is rejected from vector.
 }
 \description{
-"Reject" each word in a word embedding matrix of \eqn{D} dimension from a vector
-of \eqn{D} dimensions, extracted from the same embedding space.
-The vector can be a single word, or a concept vector obtained
-from \code{get_centroid()}, \code{get_direction()}, or \code{get_regions()}.
+"Reject" each word in a word embedding matrix of \eqn{D} dimension
+from a vector of \eqn{D} dimensions, extracted from the same
+embedding space. The vector can be a single word, or a concept
+vector obtained from \code{\link[=get_centroid]{get_centroid()}}, \code{\link[=get_direction]{get_direction()}},
+or \code{\link[=get_regions]{get_regions()}}.
 }

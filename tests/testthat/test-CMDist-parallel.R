@@ -164,8 +164,7 @@ test_that("check error if threads greater than available", {
     testthat::skip_on_cran()
 
     n_cores <- parallel::detectCores()
-
-    n_cores <- n_cores + 10
+    n_cores <- n_cores + 1
     # more threads than DTM rows
     expect_error(paralleled <- CMDist(
         dtm=dtm.dgc,
@@ -184,7 +183,7 @@ test_that("check error if threads greater than available", {
         parallel = TRUE,
         threads = n_cores,
         setup_timeout = 120L,
-        sens_interval = FALSE))
+        sens_interval = FALSE) )
 
 
 })

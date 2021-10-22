@@ -79,27 +79,26 @@ test_that("dtm_builder produces identical dtm to cast_dtm", {
                  "Yes I think to myself",
                  "What a wonderful world"),
         line_id = paste0("line", 1:6))
-
     # some text preprocessing
     my.corpus$clean_text <- tolower(gsub("'|’", "", my.corpus$text) )
 
     # example 1
-    dtm.a <- my.corpus |>
+    dtm.a <- my.corpus %>%
         dtm_builder(clean_text, line_id)
 
     # example 2
     dtm.b <-  dtm_builder(my.corpus, text=clean_text, doc_id=line_id)
 
     # example 3
-    dtm.c <- my.corpus |>
+    dtm.c <- my.corpus %>%
         dplyr::mutate(clean_text = gsub("'|’", "", text),
-                      clean_text = tolower(clean_text)) |>
+                      clean_text = tolower(clean_text)) %>%
         dtm_builder(clean_text, line_id)
 
     # compare to tidy
-    dtm.tidy <- my.corpus |>
-        tidytext::unnest_tokens(word, clean_text) |>
-        dplyr::count(line_id, word, sort = TRUE) |>
+    dtm.tidy <- my.corpus %>%
+        tidytext::unnest_tokens(word, clean_text) %>%
+        dplyr::count(line_id, word, sort = TRUE) %>%
         tidytext::cast_dtm(line_id, word, n)
 
     expect_identical(dim(dtm.a), dim(dtm.b) )
@@ -128,7 +127,7 @@ test_that("dtm_builder error/message if last row is blank", {
 
     my.corpus <- data.frame(
         my_text = c("I hear babies crying I watch them grow",
-                    "They’ll learn much more than I'll ever know",
+                    "They'll learn much more than I'll ever know",
                     "And I think to myself",
                     "What a wonderful world",
                     "Yes I think to myself",
@@ -142,38 +141,76 @@ test_that("dtm_builder error/message if last row is blank", {
 
 })
 
+test_that("dtm_builder works with vocab", {
+
+    vocab <- vocab_builder(corpus, text)
+    new.vocab <- vocab[!vocab %in% c("moon")]
+
+    expect_identical(
+    dim(dtm_builder(corpus, text, doc_id,
+                    vocab = new.vocab) ),
+    as.integer(c(10, 43))
+    )
+
+    expect_identical(
+        dim(dtm_builder(corpus, text, doc_id,
+                        vocab = new.vocab, chunk=4L) ),
+        as.integer(c(19, 43))
+    )
+
+    expect_identical(
+        dim(dtm_builder(corpus, text, doc_id,
+                        vocab = new.vocab)),
+        as.integer(c(10, 43))
+    )
+
+    expect_error(
+        expect_message(
+            dtm_builder(corpus, text, doc_ids,
+                        vocab = c("hear", "babies",
+                                  "world", "picklespit"))))
+    expect_error(
+        expect_message(
+            dtm_builder(corpus, text, doc_ids,
+                        vocab = new.vocab, chunk=5L) ))
+    expect_error(
+        expect_message(
+            dtm_builder(corpus, text, doc_ids,
+                        vocab = new.vocab) ))
+})
+
+test_that("dtm_builder error/message if doc_id is wrong...", {
+
+    my.corpus <- data.frame(
+        my_text = c("I hear babies crying I watch them grow",
+                    "They'll learn much more than I'll ever know",
+                    "And I think to myself",
+                    "What a wonderful world",
+                    "Yes I think to myself",
+                    "What a wonderful world"),
+        line_id = paste0("line", 1:6))
+
+    expect_error(
+        expect_message(
+            dtm_builder(my.corpus, my_text, doc_id=line_ids) ))
+
+})
 
 test_that("dtm_builder chunks correctly", {
 
     chunk <- 3L
-    dtm.e <- corpus |>
+    dtm.e <- corpus %>%
              dtm_builder(text, doc_id, chunk = chunk)
     expect_equal(sum(dtm.e[1,]), chunk)
 
-    dtm.f <- corpus |>
+    dtm.f <- corpus %>%
         dtm_builder(text, doc_id)
     expect_equal(sum(dtm.e), sum(dtm.f))
 
     chunk <- 100L
-    dtm.g <- corpus |>
+    dtm.g <- corpus %>%
         dtm_builder(text, doc_id, chunk = chunk)
     expect_equal(sum(dtm.g[1,]), sum(dtm.f))
-
-})
-
-# tests for internal functions
-test_that(".convert_dtm_to_dgCMatrix convert all dtms to dgCMatrix", {
-
-    ## base R matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.bse), "dgCMatrix")
-    ## dgCMatrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.dgc), "dgCMatrix")
-    ## dfm//dgCMatrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.dfm), "dgCMatrix")
-    ## tm//simple_triplet_matrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.tm), "dgCMatrix")
-    ## TermDocumentMatrix //  tm//simple_triplet_matrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.tdm), "dgCMatrix")
 
 })
 
@@ -200,9 +237,80 @@ test_that("dtm resampler creates DTM of the same dimensions", {
     expect_identical(dim(out), dim(dtm.dgc))
     expect_equal(sum(out), sum(dtm.dgc)*1, tolerance=0.1)
 
+    out <- dtm_resampler(dtm.dgc, n=20)
+    expect_s4_class(out, "dgCMatrix")
+    expect_true( all(rowSums(out) == 20) )
+
+    out <- dtm_resampler(dtm.dgc)
+    expect_s4_class(out, "dgCMatrix")
+    expect_true( all(rowSums(out) == rowSums(dtm.dgc)) )
+    expect_equal(sum(out), sum(dtm.dgc))
+
+    expect_warning(dtm_resampler(dtm.dgc, alpha=0.5, n=20))
 
 })
 
+
+test_that("dtm_stopper returns expected output", {
+
+    # example 1
+    dtm.a <- corpus %>%
+        dtm_builder(text, doc_id)
+    dtm.a <- cbind(dtm.a, as.matrix(empty <- rep(0, nrow(dtm.a))) )
+    dtm.a <- cbind(dtm.a, as.matrix(rep(0, nrow(dtm.a))))
+
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_list = c("choose", "moon"))),
+        as.integer(c(10, 44)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_list = c("We", "we", "moon"), ignore_case = FALSE)),
+        as.integer(c(10, 43)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_termfreq = c(2L, 5L)) ),
+        as.integer(c(10, 12)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_termfreq = c(1L, 2L) )),
+        as.integer(c(10, 35)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_termfreq = c(0.04, 0.99) )),
+        as.integer(c(10, 7)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_docfreq = c(0.2, 0.99) )),
+        as.integer(c(10, 13)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_docfreq = c(0.1, 0.4) )),
+        as.integer(c(10, 43)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_docfreq = c(1L, 3L) )),
+        as.integer(c(10, 39)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_hapax = TRUE)),
+        as.integer(c(10, 13)))
+    expect_identical(
+        dim(dtm_stopper(dtm.a, stop_null = TRUE)),
+        as.integer(c(10, 46)))
+    expect_error(expect_message(dtm_stopper(dtm.a, stop_termfreq = c("picklespit")) ))
+    expect_error(expect_message(dtm_stopper(dtm.a, stop_docfreq = c("picklespit")) ))
+    expect_error(expect_message(dtm_stopper(dtm.a)))
+    expect_error(expect_message(dtm_stopper(as.matrix(dtm.a))))
+
+})
+
+# tests for internal functions
+test_that(".convert_dtm_to_dgCMatrix convert all dtms to dgCMatrix", {
+
+    ## base R matrix ##
+    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.bse), "dgCMatrix")
+    ## dgCMatrix matrix ##
+    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.dgc), "dgCMatrix")
+    ## dfm//dgCMatrix matrix ##
+    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.dfm), "dgCMatrix")
+    ## tm//simple_triplet_matrix matrix ##
+    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.tm), "dgCMatrix")
+    ## TermDocumentMatrix //  tm//simple_triplet_matrix matrix ##
+    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.tdm), "dgCMatrix")
+
+})
 
 test_that("dtm resampler works on output of .prep_cmd_INPUT", {
 

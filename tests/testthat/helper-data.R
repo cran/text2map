@@ -1,7 +1,7 @@
 
 # Helper functions for testhat
 #' @importFrom tidytext unnest_tokens cast_dtm cast_dfm
-#' @importFrom dplyr count
+#' @importFrom dplyr count pipe
 #' @importFrom stringr str_squish
 #' @importFrom testthat
 
@@ -26,13 +26,13 @@ corpus <- data.frame(text = sentences,
 ## Create fake word vectors ##
 
 # 10 Dimensions and 30 Words
-# set.seed(59801);rnorm(300) |> round(.,6) -> rnums
+# set.seed(59801);rnorm(300) %>% round(.,6) -> rnums
 # fake_word_vectors <-matrix(rnums, nrow=30)
 # rownames(fake_word_vectors) <- words[1:30]
 # saveRDS(fake_word_vectors, "tests/testthat/fake_word_vectors.Rds")
 #
 # # Create fake word vectors with out of vocab words
-# set.seed(59801);rnorm(350) |> round(.,6) -> rnums
+# set.seed(59801);rnorm(350) %>% round(.,6) -> rnums
 # fake_word_vectors_oov <-matrix(rnums, nrow=35)
 # rownames(fake_word_vectors_oov) <- c(words[1:30],
 #                                      "victory", "back",
@@ -41,7 +41,6 @@ corpus <- data.frame(text = sentences,
 # saveRDS(fake_word_vectors_oov, "tests/testthat/fake_word_vectors_oov.Rds")
 # fake_word_vectors <- readRDS("tests/testthat/fake_word_vectors.Rds")
 # fake_word_vectors_oov <- readRDS("tests/testthat/fake_word_vectors_oov.Rds")
-
 fake_word_vectors <- readRDS("fake_word_vectors.Rds")
 fake_word_vectors_oov <- readRDS("fake_word_vectors_oov.Rds")
 
@@ -132,20 +131,20 @@ dtm_simple_sparse  <- function(text, doc_id){
   }
 
 tidytext_dtm <- function(df.text) {
-            dtm <- df.text |> tidytext::unnest_tokens(word, text) |>
-                                dplyr::count(doc_id, word, sort = TRUE) |>
+            dtm <- df.text %>% tidytext::unnest_tokens(word, text) %>%
+                                dplyr::count(doc_id, word, sort = TRUE) %>%
                                 tidytext::cast_dtm(doc_id, word, n)
 }
 
 tidytext_tdm <- function(df.text) {
-  dtm <- df.text |> tidytext::unnest_tokens(word, text) |>
-    dplyr::count(doc_id, word, sort = TRUE) |>
+  dtm <- df.text %>% tidytext::unnest_tokens(word, text) %>%
+    dplyr::count(doc_id, word, sort = TRUE) %>%
     tidytext::cast_tdm(doc_id, word, n)
 }
 
 tidytext_dfm <- function(df.text) {
-            dfm <- df.text |> tidytext::unnest_tokens(word, text) |>
-                  dplyr::count(doc_id, word, sort = TRUE) |>
+            dfm <- df.text %>% tidytext::unnest_tokens(word, text) %>%
+                  dplyr::count(doc_id, word, sort = TRUE) %>%
                    tidytext::cast_dfm(doc_id, word, n)
 }
 
@@ -200,7 +199,7 @@ new.words <- c("rich", "richer", "affluence",
                 "unskilled", "incompetent") #14
 
 # Create fake word vectors with out of vocab words
-# set.seed(46556);rnorm(400) |> round(6) -> rnums
+# set.seed(46556);rnorm(400) %>% round(6) -> rnums
 # fake_word_vectors_coca <- matrix(rnums, nrow=40)
 # rownames(fake_word_vectors_coca) <- c(words[1:30], new.words)
 # saveRDS(fake_word_vectors_coca, "tests/testthat/fake_word_vectors_coca.Rds")

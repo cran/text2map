@@ -13,14 +13,17 @@ anchor_lists
 \description{
 A dataset containing juxtaposing pairs of English words
 for 26 semantic relations. These anchors are used with
-the \code{get_anchor()} function, which can then be used with
-the \code{get_direction()} function.
+the \code{\link[=get_anchors]{get_anchors()}} function, which can then be used with
+the \code{\link[=get_direction]{get_direction()}} function. These have been collected
+from previously published articles and should be used
+as a starting point for defining a given relation in
+a word embedding model.
 }
 \section{Variables}{
 
 Variables:
 \itemize{
-\item add. words to added (or the positive direction)
+\item add. words to be added (or the positive direction)
 \item subtract. words to be subtract (or the negative direction)
 \item relation. the relation to be extracted, 26 relations available
 \item domain. 6 broader categories within which each relation falls
@@ -28,4 +31,7 @@ Variables:
 }
 }
 
+\seealso{
+\link{CoCA}, \link{get_direction}, \link{get_centroid}, \link{get_anchors}
+}
 \keyword{datasets}

@@ -4,10 +4,10 @@
 \alias{vocab_builder}
 \title{A fast unigram vocabulary builder}
 \usage{
-vocab_builder(df, text)
+vocab_builder(data, text)
 }
 \arguments{
-\item{df}{Data.frame with one column of texts}
+\item{data}{Data.frame with one column of texts}
 
 \item{text}{Name of the column with documents' text}
 }
@@ -17,11 +17,10 @@ returns a list of unique terms in a corpus
 \description{
 A streamlined function to take raw texts from a column of a data.frame and
 produce a list of all the unique tokens. Tokenizes by the fixed,
-single whitespace, and then extract the unique tokens. This can be used as
+single whitespace, and then extracts the unique tokens. This can be used as
 input to \code{dtm_builder()} to standardize the vocabulary (i.e. the columns)
 across multiple DTMs. Prior to building the vocabulary, texts should have
-whitespace trimmed, punctuation removed, and, if desired,
-words should be lowercased.
+whitespace trimmed, if desired, punctuation removed and terms lowercased.
 }
 \author{
 Dustin Stoltz

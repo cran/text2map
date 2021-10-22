@@ -22,8 +22,8 @@ with rows as words.}
 before k-means terminates.}
 
 \item{algorithm}{Character indicating the algorithm to use for the Lloyd
-iteration (’naive’, ’pelleg-moore’, ’elkan’, ’hamerly’ (default),
-’dualtree’, or ’dualtree-covertree’).}
+iteration ('naive', 'pelleg-moore', 'elkan', 'hamerly' (default),
+'dualtree', or 'dualtree-covertree').}
 
 \item{seed}{Integer indicating a random seed. Default is 0, which calls
 'std::time(NULL)'.}
@@ -33,11 +33,11 @@ returns a matrix of class "dgCMatrix" with k rows and d dimensions
 }
 \description{
 Given a set of word embeddings of \eqn{d} dimensions and \eqn{v} vocabulary,
-\code{get_regions()} finds \eqn{k} semantic regions in \eqn{d} dimensions. This, in
-effect, learns latent topics from an embedding space (a.k.a. topic modeling),
-which are directly comparable to both terms (with cosine similarity
-using \code{get_cosine()}) and documents (with Concept Mover's distance
-using \code{CMDist()}).
+\code{\link[=get_regions]{get_regions()}} finds \eqn{k} semantic regions in \eqn{d} dimensions.
+This, in effect, learns latent topics from an embedding space (a.k.a.
+topic modeling), which are directly comparable to both terms (with
+cosine similarity) and documents (with Concept Mover's distance
+using \code{\link[=CMDist]{CMDist()}}).
 }
 \details{
 To group words into more encompassing "semantic regions" we use \eqn{k}-means
@@ -60,8 +60,8 @@ Options include:
 \itemize{
 \item "naive": O(kN) Lloyd's approach
 \item "pelleg-moore": Pelleg-Moore tree-based algorithm
-\item "elkan": Elkan’s triangle-inequality based algorithm
-\item "hamerly" (default): Hamerly’s modification to Elkan’s algorithm
+\item "elkan": Elkan's triangle-inequality based algorithm
+\item "hamerly" (default): Hamerly's modification to Elkan's algorithm
 \item "dualtree": dual-tree k-means
 \item "dualtree-covertree": dual-tree k-means sing the cover tree
 }
@@ -78,7 +78,6 @@ my.regions <- get_regions(
   algorithm = "hamerly",
   seed = 01984
 )
-
 }
 \references{
 Butnaru, Andrei M., and Radu Tudor Ionescu.  (2017)
@@ -90,7 +89,7 @@ Zhang, Yi, Jie Lu, Feng Liu, Qian Liu, Alan Porter,
 Hongshu Chen, and Guangquan Zhang. (2018).
 'Does Deep Learning Help Topic Extraction? A Kernel
 K-Means Clustering Method with Word Embedding.'
-\emph{Journal of Informetrics}. 12(4):1099–1117.
+\emph{Journal of Informetrics}. 12(4):1099-1117.
 \doi{10.1016/j.joi.2018.09.004}.\cr
 Arseniev-Koehler, Alina and Cochran, Susan D and
 Mays, Vickie M and Chang, Kai-Wei and Foster,
