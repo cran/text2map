@@ -1,3 +1,14 @@
+# text2map 0.1.3
+
+## Improvements
+
+* Add functions:
+    - `find_transformation()` to norm, center, and align matrices
+    - `find_projection()` finds the projection matrix onto a vector
+    - `find_rejection()` finds the rejection matrix away from a vector
+    - `dtm_melter()` quickly turns a DTM into a triplet dataframe (doc_id, term, count)
+* Fixed `get_centroid()` naming (limits to single word for names)
+
 # text2map 0.1.1
 
 ## Improvements

@@ -17,13 +17,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-[Dustin S. Stoltz](https://www.dustinstoltz.com) and [Marshall A. Taylor](https://marshalltaylor.net/)
-
 ```{r, eval=TRUE, message=FALSE, out.width='85%', echo=FALSE}
   knitr::include_graphics("figures/02_fig1_cmd.png")
 ```
 
-## Setup
 
 ### Citation
 
@@ -47,7 +44,7 @@ Stoltz, Dustin S., and Marshall A. Taylor. 2019. "Concept Mover's Distance." *Jo
 Install and load the `text2map` package:
 ```r
 
-  library(text2map)
+library(text2map)
 
 ```
 
@@ -55,9 +52,10 @@ Install and load the `text2map` package:
 
 To use the Concept Mover's Distance function (`CMDist`) , you will need to transform your corpus into a document-term matrix (DTM). The preferred DTM is a sparse matrix in `Matrix` format (class "dgCMatrix") as output by `text2vec`, `Quanteda`, `udpipe`, and `tidytext`'s `cast_sparse` function, but we have tried to make the package accommodate DTMs made with the `tm` package (technically a "simple_triplet_matrix") or just a regular old base R dense matrix ([see this for a comparison of DTM creation methods](https://www.dustinstoltz.com/blog/2020/12/1/creating-document-term-matrix-comparison-in-r)). You can also use `text2maps`' very own super fast unigram DTM builder `dtm_builder()`.
 
-###  Word Embeddings Matrix
+###  Word Embedding Matrix
 
 You will also need a matrix of word embedding vectors (with the "words" as rownames), and ultimately, `CMDist` is only as good as the word embeddings used. Word embedding vectors can be from a __pre-trained source__, for example:
+
 * [Stanford NLP GloVe vectors](https://nlp.stanford.edu/projects/glove/)
 * [fastText (Various) English word vectors](https://fasttext.cc/docs/en/english-vectors.html)
 * [fastText Wiki and Common Crawl vectors for 294 languages](https://fasttext.cc/docs/en/pretrained-vectors.html)
@@ -130,7 +128,7 @@ What if instead of a compound concept we are interested in a common concept repr
 
 ### Semantic Directions and Centroids
 
-In the [original _JCSS_ paper](https://drive.google.com/file/d/1iLOVzNsdAetFiaychiJodL3BYTaTnqNl/view?usp=sharing), we discussed the "binary concept problem," where documents that are close to a concept with a binary opposite will likely also be close to both opposing poles. For example if a document is close to "love" it will also be close to "hate." But, very often an analyst will want to know whether a document is close to one pole or the other of this binary concept. To deal with this we incorporate insights from Kozlowski et al's (2019) paper ["Geometry of Culture"](https://journals.sagepub.com/doi/full/10.1177/0003122419877135) to define "semantic directions" within word embeddings -- i.e. pointing toward one pole and away from the other. We outline this procedure in more detail in a subsequent _JCSS_ paper ["Integrating Semantic Directions with Concept Mover's Distance to Measure Binary Concept Engagement"](https://osf.io/preprints/socarxiv/36r2d/). 
+In the [original _JCSS_ paper](https://drive.google.com/file/d/1iLOVzNsdAetFiaychiJodL3BYTaTnqNl/view?usp=sharing), we discussed the "binary concept problem," where documents that are close to a concept with a binary opposite will likely also be close to both opposing poles. For example if a document is close to "love" it will also be close to "hate." But, very often an analyst will want to know whether a document is close to one pole or the other of this binary concept. To deal with this we incorporate insights from Kozlowski et al's (2019) paper ["Geometry of Culture"](https://journals.sagepub.com/doi/full/10.1177/0003122419877135) to define "semantic directions" within word embeddings -- i.e. pointing toward one pole and away from the other. We outline this procedure in more detail in a subsequent _JCSS_ paper ["Integrating Semantic Directions with Concept Mover's Distance to Measure Binary Concept Engagement"](https://drive.google.com/file/d/1UrO7pXem9X4hSzipNDgzGVQupEiPVApH/view?usp=sharing). 
 
 The procedure involves generating a list of antonym pairs for a given binary concept -- that is, terms which may occur in similar contexts but are typically juxtaposed. Then we get the differences between these antonyms' respective vectors, and averaging the result (with `get_direction()`). The resulting vector will be the location of one "pole" of this binary concept, and `CMDist` calculates the distance each document is from this concept vector ("cv"). As this creates a one-dimensional continuum, documents that are far from this "pole" will be close to the opposing "pole."
 
@@ -213,4 +211,4 @@ By default, the outputs are normalized using the `scale()` function in R. If thi
 
 Rather than the Relaxed Word Mover's Distance (RWMD) as discussed in Kusner et al's  (2015) "From Word Embeddings To Document Distances", `text2vec` uses the Linear-Complexity Relaxed Word Mover's Distance (LC-RWMD) as described by Atasu et al. (2017). LC-RWMD not only reduces the computational demands considerably, if we take the maximum of each document pair across the upper and lower triangles (i.e., the maximum of each [*i,j*]-[*j,i*] pair), the resulting symmetric distance matrix is precisely the same as the previous algorithm using Kusner et al's approach. As far as our tests have shown, the triangle corresponding to treating the pseudo-document as a "query" and the documents as a "collection" (see the [text2vec documentation](https://cran.r-project.org/package=text2vec), p. 28) will always return this set of maximums, and therefore there is no reason for the additional comparison step. If you have reason to believe this is not the case, please contact us and we will share the code necessary to reproduce results with the original Kusner et al. approach to check.
 
-For more discussion of the math behind Concept Mover's Distance see Stoltz and Taylor (2019) "[Concept Mover's Distance](https://link.springer.com/article/10.1007/s42001-019-00048-6)" in the _Journal of Computational Social Science_. The replication code and data for that paper can be found here: https://github.com/dustinstoltz/concept_movers_distance_jcss
+For more discussion of the math behind Concept Mover's Distance see Stoltz and Taylor (2019) "Concept Mover's Distance" in the _Journal of Computational Social Science_.

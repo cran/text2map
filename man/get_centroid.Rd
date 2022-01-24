@@ -12,31 +12,38 @@ get_centroid(anchors, wv, missing = "stop")
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
 with rows as words.}
 
-\item{missing}{What action to take if anchor words are not in embeddings.
+\item{missing}{what action to take if terms are not in embeddings.
 If action = "stop" (default), the function is stopped
-and an error messages states which words are missing.
-If action = "remove",  output is the same as terms but
-missing words or rows with missing words are removed.
-Missing words will be printed as a message.}
+and an error messages states which terms are missing.
+If action = "remove",  missing terms or rows with missing
+terms are removed. Missing terms will be printed as a message.}
 }
 \value{
 returns a one row matrix
 }
 \description{
-\code{get_centroid()} requires a list of terms, one column data.frame or matrix.
 The function outputs an averaged vector from a set of anchor terms' word
 vectors. This average is roughly equivalent to the intersection of the
 contexts in which each word is used. This semantic centroid can be used
 for a variety of ends, and specifically as input to \code{\link[=CMDist]{CMDist()}}.
+\code{get_centroid()} requires a list of terms, string of terms, data.frame
+or matrix. In the latter two cases, the first column will be used. The
+vectors are aggregated using the simple average. Terms can be repeated,
+and are therefore "weighted" by their counts.
 }
 \examples{
 
 # load example word embeddings
 data(ft_wv_sample)
 
-space <- c("spacecraft", "rocket", "moon")
+space1 <- c("spacecraft", "rocket", "moon")
 
-cen <- get_centroid(anchors = space, wv = ft_wv_sample)
+cen1 <- get_centroid(anchors = space1, wv = ft_wv_sample)
+
+space2 <- c("spacecraft rocket moon")
+cen2 <- get_centroid(anchors = space2, wv = ft_wv_sample)
+
+identical(cen1, cen2)
 }
 \author{
 Dustin Stoltz

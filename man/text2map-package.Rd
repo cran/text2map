@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
 
-This is a collection of functions optimized for working with for working with various kinds of text matrices. Focusing on the text matrix as the primary object – which is represented either as a base R dense matrix or a 'Matrix' package sparse matrix – allows for a consistent and intuitive interface that stays close to the underlying mathematical foundation of computational text analysis. In particular, the package includes functions for working with word embeddings, text networks, and document-term matrices. Methods developed in Stoltz and Taylor (2019) <doi:10.1007/s42001-019-00048-6>, Taylor and Stoltz (2020) <doi:10.1007/s42001-020-00075-8>, Taylor and Stoltz (2020) <doi:10.15195/v7.a23>, and Stoltz and Taylor (2021) <doi:10.1016/j.poetic.2021.101567>.
+This is a collection of functions optimized for working with with various kinds of text matrices. Focusing on the text matrix as the primary object - represented either as a base R dense matrix or a 'Matrix' package sparse matrix - allows for a consistent and intuitive interface that stays close to the underlying mathematical foundation of computational text analysis. In particular, the package includes functions for working with word embeddings, text networks, and document-term matrices. Methods developed in Stoltz and Taylor (2019) <doi:10.1007/s42001-019-00048-6>, Taylor and Stoltz (2020) <doi:10.1007/s42001-020-00075-8>, Taylor and Stoltz (2020) <doi:10.15195/v7.a23>, and Stoltz and Taylor (2021) <doi:10.1016/j.poetic.2021.101567>.
 }
 \seealso{
 Useful links:

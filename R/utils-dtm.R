@@ -262,7 +262,7 @@ dtm_stats <- function(dtm,
   }
 
   # basic stats
-  sparsity <- sum(dtm[] == 0) / (ncol(dtm) * nrow(dtm))
+  sparsity <- sum(dtm[] == 0) / ncol(dtm) / nrow(dtm)
   doc_count <- Matrix::rowSums(dtm)
   doc_bins <- Matrix::rowSums(dtm[] > 0)
 
@@ -279,15 +279,15 @@ dtm_stats <- function(dtm,
 
   # lexical richness
   if (richness == TRUE) {
-    hapax <- sum(dtm[] == 1) / sum(dtm)
-    dis <- sum(dtm[] == 2) / sum(dtm)
-    tris <- sum(dtm[] == 3) / sum(dtm)
+    hapax <- sum(dtm[, colSums(dtm) == 1]) / sum(dtm)
+    dis <- sum(dtm[, colSums(dtm) == 2]) / sum(dtm)
+    tris <- sum(dtm[, colSums(dtm) == 3]) / sum(dtm)
 
     tab2 <- data.frame(
-      hapax = round(hapax, 3),
-      dis = round(dis, 3),
-      tris = round(tris, 3),
-      ttr = round(ncol(dtm) / sum(dtm), 3),
+      hapax = round(hapax, 2),
+      dis = round(dis, 2),
+      tris = round(tris, 2),
+      ttr = round(ncol(dtm) / sum(dtm), 2),
       row.names = NULL
     )
 
@@ -301,12 +301,12 @@ dtm_stats <- function(dtm,
       min_tokens = as.integer(base::min(doc_count)),
       max_types = as.integer(base::max(doc_bins)),
       max_tokens = as.integer(base::max(doc_count)),
-      sd_types = round(stats::sd(doc_bins), 3),
-      sd_tokens = round(stats::sd(doc_count), 3),
-      kr_types = round(.kurtosis(doc_bins), 3),
-      kr_tokens = round(.kurtosis(doc_count), 3),
-      sk_types = round(.skewness(doc_bins), 3),
-      sk_tokens = round(.skewness(doc_count), 3),
+      sd_types = round(stats::sd(doc_bins), 2),
+      sd_tokens = round(stats::sd(doc_count), 2),
+      kr_types = round(.kurtosis(doc_bins), 2),
+      kr_tokens = round(.kurtosis(doc_count), 2),
+      sk_types = round(.skewness(doc_bins), 2),
+      sk_tokens = round(.skewness(doc_count), 2),
       row.names = NULL
     )
 
@@ -316,8 +316,8 @@ dtm_stats <- function(dtm,
   # term central tendencies
   if (central == TRUE) {
     tab4 <- data.frame(
-      mu_types = base::mean(doc_bins),
-      mu_tokens = base::mean(doc_count),
+      mu_types = round(base::mean(doc_bins), 2),
+      mu_tokens = round(base::mean(doc_count), 2),
       md_types = stats::median(doc_bins),
       md_tokens = stats::median(doc_count),
       row.names = NULL
@@ -333,7 +333,7 @@ dtm_stats <- function(dtm,
     tab5 <- data.frame(
       min_length = as.integer(base::min(char.len)),
       max_length = as.integer(base::max(char.len)),
-      mu_length = round(base::mean(char.len), 3),
+      mu_length = round(base::mean(char.len), 2),
       row.names = NULL
     )
 
@@ -363,15 +363,15 @@ dtm_stats <- function(dtm,
     if (richness == TRUE) {
       tab2$hapax <- paste0(formatC(100 * tab2$hapax,
         format = "f",
-        digits = 3
+        digits = 2
       ), "%")
       tab2$dis <- paste0(formatC(100 * tab2$dis,
         format = "f",
-        digits = 3
+        digits = 2
       ), "%")
       tab2$tris <- paste0(formatC(100 * tab2$tris,
         format = "f",
-        digits = 3
+        digits = 2
       ), "%")
 
       tab2 <- data.frame(
@@ -798,6 +798,41 @@ vocab_builder <- function(data, text) {
 
   return(vocab)
 }
+
+#' Melt a DTM into a triplet data frame
+#'
+#' Takes a DTM converts into a data frame with three columns:
+#' documents, terms, counts. Each row is a unique document by term
+#' count This is akin to `reshape2` packages `melt` function,
+#' but works on a sparse matrix.The resulting data frame is
+#' equivalent to the `tidytext` triplet tibble.
+#'
+#'
+#' @importFrom Matrix summary
+#'
+#' @name dtm_melter
+#' @author Dustin Stoltz
+#'
+#' @param dtm Document-term matrix with terms as columns. Works with DTMs
+#'            produced by any popular text analysis package, or using the
+#'            `dtm_builder()` function.
+#'
+#' @return returns data frame with three columns
+#'
+#' @export
+dtm_melter <- function(dtm) {
+
+  # explicitly declare class for input
+  dtm <- .convert_dtm_to_dgCMatrix(dtm)
+
+  df_trpl <- Matrix::summary(dtm)
+  df_trpl[, 1] <- rownames(dtm)[df_trpl$i]
+  df_trpl[, 2] <- colnames(dtm)[df_trpl$j]
+  colnames(df_trpl) <- c("doc_id", "term", "count")
+
+  return(df_trpl)
+}
+
 
 
 ## ---- INTERNAL DTM SPECIFIC FUNCTIONS -------------------------------------- #

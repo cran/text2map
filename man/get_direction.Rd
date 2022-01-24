@@ -10,17 +10,16 @@ get_direction(anchors, wv, method = "paired", missing = "stop", n_dirs = 1L)
 \item{anchors}{Two column data frame of juxtaposed 'anchor' terms}
 
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
-with rows as words.}
+with rows as terms.}
 
 \item{method}{Indicates the method used to generate vector offset.
 Default is 'paired'. See details.}
 
-\item{missing}{What action to take if words are not in embeddings.
+\item{missing}{what action to take if terms are not in embeddings.
 If action = "stop" (default), the function is stopped
-and an error messages states which words are missing.
-If action = "remove",  output is the same as terms but
-missing words or rows with missing words are removed.
-Missing words will be printed as a message.}
+and an error messages states which terms are missing.
+If action = "remove",  missing terms or rows with missing
+terms are removed. Missing terms will be printed as a message.}
 
 \item{n_dirs}{If \code{method = "PCA"}, an integer indicating how many directions
 to return. Default = \code{1L}, indicating a single,
@@ -39,7 +38,7 @@ Semantic directions can be estimated in using a few methods:
 \itemize{
 \item 'paired' (default): each individual term is subtracted from exactly one
 other paired term. there must be the same number of
-words for each side of the direction (although one
+terms for each side of the direction (although one
 word may be used more than once).
 \item 'pooled': terms corresponding to one side of a direction are first
 averaged, and then these averaged vectors are subtracted.

@@ -1,4 +1,4 @@
-#' Concept Mover's Distance
+#' Calculate Concept Mover's Distance
 #'
 #' Concept Mover's Distance classifies documents of any length along a
 #' continuous measure of engagement with a given concept of interest
@@ -8,14 +8,13 @@
 #'
 #' `CMDist()` requires three things: a (1) document-term matrix (DTM), a (2)
 #' matrix of word embedding vectors, and (3) concept words or concept vectors.
-#' The function uses *word counts* from the DTM and  *word similarities* as
-#' derived from the cosine similarity of their respective word vectors in a
-#' word embedding model. A document is then conceived as a "cloud" of words
-#' in the embedding space. The "cost" of transporting all the words in a
-#' document to a single vector or a few vectors in this space denoting a
-#' concept of interest is the measure of engagement, with higher costs
+#' The function uses *word counts* from the DTM and  *word similarities*
+#' from the cosine similarity of their respective word vectors in a
+#' word embedding model. The "cost" of transporting all the words in a
+#' document to a single vector or a few vectors (denoting a
+#' concept of interest) is the measure of engagement, with higher costs
 #' indicating less engagement. For intuitiveness the output of `CMDist()`
-#' is inverted such that higher numbers will indicate more engagement
+#' is inverted such that higher numbers will indicate *more engagement*
 #' with a concept of interest.
 #'
 #' The vector, or vectors, of the concept are specified in several ways.
@@ -28,7 +27,7 @@
 #'
 #' Instead of selecting a word already in the embedding space, the function can
 #' also take a vector extracted from the embedding space in the form of a
-#' centroid (which averages the vectors of several words) a direction (which
+#' centroid (which averages the vectors of several words) ,a direction (which
 #' uses the offset of several juxtaposing words), or a region (which is built
 #' by clustering words into $k$ regions). The [get_centroid()],
 #' [get_direction()], and [get_regions()] functions will extract these.
@@ -56,7 +55,7 @@
 #' @importFrom methods as
 #'
 #' @param dtm Document-term matrix with words as columns. Works with DTMs
-#'            produced by any popular text analysis package, or you can use the
+#'            produced by any popular text analysis package, or using the
 #'            `dtm_builder()` function.
 #' @param cw Vector with concept word(s) (e.g., `c("love", "money")`,
 #'           `c("critical thinking")`)
@@ -214,8 +213,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #'
 #' Private helper function to prepare the DTM and word embeddings, outputs
 #' number of pseudo-documents and the labels for concept words and concept
-#' vectors (as output from `get_direction()` or `get_centroid()`). Ensures
-#' unique labeling, and adds out of vocabulary words to DTM.
+#' vectors. Ensures unique labeling, and adds out of vocabulary words to DTM.
 #'
 #' @importFrom stringr str_trim
 #' @importFrom kit funique

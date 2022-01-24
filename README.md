@@ -17,7 +17,8 @@ install.packages("text2map")
 Or install the latest development version from GitLab:
 
 ``` r
-devtools::install_gitlab("culturalcartography/text2map")
+library(remote)
+install_gitlab("culturalcartography/text2map")
 ```
 
 Get started with "Concept Mover's Distance by reading:
@@ -40,9 +41,10 @@ There are three related packages in development, and hosted on GitLab:
 The above packages can be installed using the following:
 
 ```r
-devtools::install_gitlab("culturalcartography/text2map.theme")
-devtools::install_gitlab("culturalcartography/text2map.corpora")
-devtools::install_gitlab("culturalcartography/text2map.dictionaries")
+library(remote)
+install_gitlab("culturalcartography/text2map.theme")
+install_gitlab("culturalcartography/text2map.corpora")
+install_gitlab("culturalcartography/text2map.dictionaries")
 ```
 
 <!-- badges: start -->

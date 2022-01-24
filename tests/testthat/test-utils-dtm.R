@@ -68,6 +68,21 @@ test_that("dtm_stats returns basic output alone", {
 
 })
 
+test_that("dtm_melter works on both base and sparse", {
+
+    out_a <- dtm_melter(dtm=dtm.bse)
+    out_b <- dtm_melter(dtm=dtm.dgc)
+
+    expect_type(out_a, "list")
+    expect_type(out_b, "list")
+    expect_equal(ncol(out_a), as.integer(3L))
+    expect_equal(ncol(out_b), as.integer(3L))
+    expect_equal(out_a, out_b)
+    expect_equal(sum(out_a$count), sum(dtm.bse))
+    expect_equal(sum(out_b$count), sum(dtm.dgc))
+
+})
+
 
 test_that("dtm_builder produces identical dtm to cast_dtm", {
 

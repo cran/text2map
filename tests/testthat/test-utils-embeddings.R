@@ -480,3 +480,26 @@ test_that("find_rejection produces matrix with correct dimensions", {
 
 })
 
+test_that("find_tranformation produces matrix with correct dimensions and names", {
+
+    norm <- find_transformation(wv=fake_word_vectors,
+                                 method = "norm")
+
+    center <- find_transformation(wv=fake_word_vectors,
+                                 method = "center" )
+
+    align <- find_transformation(wv=fake_word_vectors,
+                                 ref=fake_word_vectors,
+                                 method = "align" )
+
+    expect_identical(dim(norm), dim(fake_word_vectors))
+    expect_identical(dim(center), dim(fake_word_vectors))
+    expect_identical(dim(align), dim(fake_word_vectors))
+
+    expect_identical(rownames(norm), rownames(fake_word_vectors))
+    expect_identical(rownames(center), rownames(fake_word_vectors))
+    expect_identical(rownames(align), rownames(fake_word_vectors))
+
+
+})
+

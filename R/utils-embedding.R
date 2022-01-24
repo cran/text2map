@@ -61,7 +61,7 @@ get_anchors <- function(relation) {
 #' Semantic directions can be estimated in using a few methods:
 #' - 'paired' (default): each individual term is subtracted from exactly one
 #'                       other paired term. there must be the same number of
-#'                       words for each side of the direction (although one
+#'                       terms for each side of the direction (although one
 #'                       word may be used more than once).
 #' - 'pooled': terms corresponding to one side of a direction are first
 #'             averaged, and then these averaged vectors are subtracted.
@@ -106,15 +106,14 @@ get_anchors <- function(relation) {
 #'
 #' @param anchors Two column data frame of juxtaposed 'anchor' terms
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
-#'           with rows as words.
+#'           with rows as terms.
 #' @param method Indicates the method used to generate vector offset.
 #'               Default is 'paired'. See details.
-#' @param missing What action to take if words are not in embeddings.
+#' @param missing what action to take if terms are not in embeddings.
 #'               If action = "stop" (default), the function is stopped
-#'               and an error messages states which words are missing.
-#'               If action = "remove",  output is the same as terms but
-#'               missing words or rows with missing words are removed.
-#'               Missing words will be printed as a message.
+#'               and an error messages states which terms are missing.
+#'               If action = "remove",  missing terms or rows with missing
+#'               terms are removed. Missing terms will be printed as a message.
 #' @param n_dirs If `method = "PCA"`, an integer indicating how many directions
 #'               to return. Default = `1L`, indicating a single,
 #'               bipolar, direction.
@@ -230,11 +229,14 @@ get_direction <- function(anchors, wv,
 
 #' Word embedding semantic centroid extractor
 #'
-#' `get_centroid()` requires a list of terms, one column data.frame or matrix.
 #' The function outputs an averaged vector from a set of anchor terms' word
 #' vectors. This average is roughly equivalent to the intersection of the
 #' contexts in which each word is used. This semantic centroid can be used
 #' for a variety of ends, and specifically as input to [CMDist()].
+#' `get_centroid()` requires a list of terms, string of terms, data.frame
+#' or matrix. In the latter two cases, the first column will be used. The
+#' vectors are aggregated using the simple average. Terms can be repeated,
+#' and are therefore "weighted" by their counts.
 #'
 #' @name get_centroid
 #' @author Dustin Stoltz
@@ -242,12 +244,11 @@ get_direction <- function(anchors, wv,
 #' @param anchors List of terms to be averaged
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words.
-#' @param missing What action to take if anchor words are not in embeddings.
+#' @param missing what action to take if terms are not in embeddings.
 #'               If action = "stop" (default), the function is stopped
-#'               and an error messages states which words are missing.
-#'               If action = "remove",  output is the same as terms but
-#'               missing words or rows with missing words are removed.
-#'               Missing words will be printed as a message.
+#'               and an error messages states which terms are missing.
+#'               If action = "remove",  missing terms or rows with missing
+#'               terms are removed. Missing terms will be printed as a message.
 #'
 #' @return returns a one row matrix
 #'
@@ -256,23 +257,46 @@ get_direction <- function(anchors, wv,
 #' # load example word embeddings
 #' data(ft_wv_sample)
 #'
-#' space <- c("spacecraft", "rocket", "moon")
+#' space1 <- c("spacecraft", "rocket", "moon")
 #'
-#' cen <- get_centroid(anchors = space, wv = ft_wv_sample)
+#' cen1 <- get_centroid(anchors = space1, wv = ft_wv_sample)
+#'
+#' space2 <- c("spacecraft rocket moon")
+#' cen2 <- get_centroid(anchors = space2, wv = ft_wv_sample)
+#'
+#' identical(cen1, cen2)
 #' @export
 get_centroid <- function(anchors, wv, missing = "stop") {
 
   # if data.frame or matrix convert first column to list of terms
   if (!is.null(ncol(anchors))) {
-    anchors <- unlist(anchors[, 1])
+    anchors <- unlist(anchors[, 1],
+      recursive = FALSE,
+      use.names = FALSE
+    )
   } else {
     if (is.recursive(anchors)) {
       # if nested list, only first list is used
-      anchors <- unlist(anchors[[1]])
+      anchors <- unlist(anchors[[1]],
+        recursive = FALSE,
+        use.names = FALSE
+      )
     } else {
-      anchors <- unlist(anchors)
+      anchors <- unlist(anchors,
+        recursive = FALSE,
+        use.names = FALSE
+      )
     }
   }
+
+  anchors <- stringi::stri_split(
+    anchors,
+    fixed = " ",
+    omit_empty = TRUE
+  ) |> unlist(
+    recursive = FALSE,
+    use.names = FALSE
+  )
 
   # check that word vectors exist for each word
   anchors <- .check_term_in_embeddings(anchors, wv, action = missing)
@@ -283,7 +307,8 @@ get_centroid <- function(anchors, wv, missing = "stop") {
   centroid <- t(as.matrix(colMeans(centroid)))
 
   # create unique name for new vector
-  rownames(centroid) <- paste0(anchors[1], "_centroid")
+  first_word <- strsplit(anchors[1], " ")[[1]][1]
+  rownames(centroid) <- paste0(first_word, "_centroid")
   return(centroid)
 }
 
@@ -388,7 +413,7 @@ get_regions <- function(wv,
     )$centroid
   )
 
-  rownames(regions) <- paste0("region ", seq_len(nrow(regions)))
+  rownames(regions) <- paste0("region_", seq_len(nrow(regions)))
 
   regions <- Matrix::Matrix(regions, sparse = TRUE)
 
@@ -462,40 +487,166 @@ find_rejection <- function(wv, vec) {
 }
 
 
+#' Find a specified matrix transformation
+#'
+#' Given a matrix, \eqn{B}, of word embedding vectors (source) with
+#' terms as rows, this function finds a transformed matrix following a
+#' specified operation. These include: centering (i.e.
+#' translation) and normalization (i.e. scaling). In the first, \eqn{B} is
+#' centered by subtracting column means. In the second, \eqn{B} is
+#' normalized by the L2 norm. Both have been found to improve
+#' word embedding representations. The function also finds a transformed
+#' matrix that approximately aligns \eqn{B}, with another matrix,
+#' \eqn{A}, of word embedding vectors (reference), using Procrustes
+#' transformation (see details).
+#'
+#' @details
+#' Aligning a source matrix of word embedding vectors, \eqn{B}, to a
+#' reference matrix, \eqn{A}, has primarily been used as a post-processing step
+#' for embeddings trained on longitudinal corpora for diachronic analysis
+#' or for cross-lingual embeddings. Aligning preserves internal (cosine)
+#' distances, while orient the source embeddings to minimize the sum of squared
+#' distances (and is therefore a Least Squares problem).
+#' Alignment is accomplished with the following steps:
+#'   - translation: centering by column means
+#'   - scaling: scale (normalizes) by the L2 Norm
+#'   - rotation/reflection: rotates and a reflects to minimize
+#'     sum of squared differences, using singular value decomposition
+#'
+#' Alignment is asymmetrical, and only outputs the transformed source matrix,
+#' \eqn{B}. Therefore, it is typically recommended to align \eqn{B} to \eqn{A},
+#' and then \eqn{A} to \eqn{B}. However, simplying centering and norming
+#' \eqn{A} after may be sufficient.
+#'
+#' @references
+#' Mikel Artetxe, Gorka Labaka, and Eneko Agirre. (2018).
+#' 'A robust self-learning method for fully unsupervised
+#' cross-lingual mappings of word embeddings.' \emph{In Proceedings
+#' of the 56th Annual Meeting of the Association for
+#' Computational Linguistics}. 789-798\cr
+#' Mikel Artetxe, Gorka Labaka, and Eneko Agirre. 2019.
+#' 'An effective approach to unsupervised machine translation.'
+#' \emph{In Proceedings of the 57th Annual Meeting of the Association
+#' for Computational Linguistics}. 194-203\cr
+#' Hamilton, William L., Jure Leskovec, and Dan Jurafsky. (2018).
+#' 'Diachronic Word Embeddings Reveal Statistical Laws of Semantic Change.'
+#' \url{https://arxiv.org/abs/1605.09096v6}.\cr
+#' Lin, Zefeng, Xiaojun Wan, and Zongming Guo. (2019).
+#' 'Learning Diachronic Word Embeddings with Iterative Stable
+#' Information Alignment.' \emph{Natural Language Processing and
+#' Chinese Computing}. 749-60. \doi{10.1007/978-3-030-32233-5_58}.\cr
+#' Schlechtweg et al. (2019). 'A Wind of Change: Detecting and
+#' Evaluating Lexical Semantic Change across Times and Domains.'
+#' \url{https://arxiv.org/abs/1906.02979v1}.
+#' Shoemark et a. (2019). 'Room to Glo: A Systematic Comparison
+#' of Semantic Change Detection Approaches with Word Embeddings.'
+#' \emph{Proceedings of the 2019 Conference on Empirical Methods in
+#' Natural Language Processing}. 66-76. \doi{10.18653/v1/D19-1007}
+#' Borg and Groenen. (1997). \emph{Modern Multidimensional Scaling}.
+#' New York: Springer. 340-342
+#'
+#' @param wv Matrix of word embedding vectors (a.k.a embedding model)
+#'           with rows as terms (the source matrix to be transformed).
+#' @param ref If `method = "align"`, this is the reference matrix
+#'            toward which the source matrix is to be aligned.
+#' @param method Character vector indicating the method to use for
+#'               the transformation. Current methods include: "align",
+#'               "norm", and "center" -- see details.
+#'
+#'
+#' @return A new word embedding matrix,
+#'         transformed using the specified method.
+#'
+#' @export
+find_transformation <- function(wv,
+                                ref = NULL,
+                                method = c("align", "norm", "center")) {
+  stopifnot(inherits(wv, "matrix") || inherits(wv, "sparseMatrix"))
+  method <- match.arg(method)
+
+  RESULT <- switch(method,
+    align = .procustes_align(wv, ref),
+    norm = .l2_normalize(wv),
+    center = .colmeans_translate(wv)
+  )
+
+  return(RESULT)
+}
+
 
 ## INTERNAL FUNCTIONS ## -------------------------------------------------------
 
+.procustes_align <- function(wv, ref) {
+  stopifnot(inherits(ref, "matrix") || inherits(ref, "sparseMatrix"))
+  stopifnot(ncol(wv) == ncol(ref))
+
+  # scaling (scale to unit length)
+  wv <- .l2_normalize(wv)
+  ref <- .l2_normalize(ref)
+  # column center (translation)
+  # following Schlechtweg et al. (2019)
+  wv <- .colmeans_translate(wv)
+  ref <- .colmeans_translate(ref)
+  # svd (rotation/reflection)
+  rot <- svd(crossprod(ref, wv))
+  Q <- tcrossprod(rot$v, rot$u) # Q = VU^T
+
+  return(wv %*% Q)
+}
+
+.colmeans_translate <- function(wv) {
+  return(wv - rep(
+    colMeans(wv),
+    rep.int(
+      nrow(wv),
+      ncol(wv)
+    )
+  ))
+}
+
+.l2_normalize <- function(wv) {
+  norm_vec <- 1 / sqrt(rowSums(wv^2))
+  # when sum row elements == 0
+  norm_vec[is.infinite(norm_vec)] <- 0
+
+  if (inherits(wv, "sparseMatrix")) {
+    return(Matrix::Diagonal(x = norm_vec) %*% wv)
+  } else {
+    return(wv * norm_vec)
+  }
+}
+
+
 #' Check that all terms are in word embeddings, removes them or stops function
 #'
-#' When vectors, lists, or data.frames with words or word pairs are input
+#' When vectors, lists, or data.frames with terms or term pairs are input
 #' to [get_direction()], [get_centroid()], or [CMDist()] this function
-#' makes sure all words are present in the word embeddings provided.
+#' makes sure all terms are present in the word embeddings provided.
 #'
 #' @details
 #'
-#' If `action = "remove"`, output is the same as terms but missing words
-#' or rows with missing words are removed. If `action = "stop"`, the function
-#' will stop with an error. In both cases, the missing words are printed.
+#' If `action = "remove"`, output is the same, but missing terms
+#' or rows with missing terms are removed. If `action = "stop"`, the function
+#' will stop with an error. In both cases, the missing terms are printed.
 #'
 #' @param terms List or data.frame of terms or term pairs
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
-#'           with rows as words.
-#' @param action what action to take if words are not in embeddings.
+#'           with rows as terms.
+#' @param action what action to take if terms are not in embeddings.
 #'               If action = "stop" (default), the function is stopped
-#'               and an error messages states which words are missing.
-#'               If action = "remove",  output is the same as terms but
-#'               missing words or rows with missing words are removed.
-#'               Missing words will be printed as a message.
+#'               and an error messages states which terms are missing.
+#'               If action = "remove",  missing terms or rows with missing
+#'               terms are removed. Missing terms will be printed as a message.
 #'
-#' @return If no words are missing, the original terms are returned
+#' @return If no terms are missing, the original terms are returned
 #'         If `action = "remove"`, output is same as terms,
-#'         missing words or rows with missing words removed
+#'         missing terms or rows with missing terms removed
 #' @noRd
 .check_term_in_embeddings <- function(terms, wv, action = "stop") {
   vocab <- unique(unlist(strsplit(unlist(terms), " ")))
   bad_words <- unlist(vocab)[!(unlist(vocab) %in% rownames(wv))]
 
-  ## If no missing words, return terms ##
+  ## If no missing terms, return terms ##
   if (identical(bad_words, character(0))) {
     return(terms)
   }
@@ -510,7 +661,7 @@ find_rejection <- function(wv, vec) {
     stop(stop_msg)
   }
 
-  ### If we want to remove the missing words ###
+  ### If we want to remove the missing terms ###
   if (action == "remove") {
 
     # for DATA FRAMES or TIBBLES
@@ -596,7 +747,7 @@ because there are no matching word vectors: ",
 #' @details
 #' Setting `n_vocab` will limit the number of rows that will be read in.
 #' As rows of embeddings tend to be sorted by their frequencies in the training
-#' corpus, this argument will return the most frequent words in descending
+#' corpus, this argument will return the most frequent terms in descending
 #' order. Reading may take a while and cannot be easily parallelized since
 #' connection objects cannot be "shared" across processes. Therefore,
 #' setting `n_vocab` can speed up this process.
@@ -611,7 +762,7 @@ because there are no matching word vectors: ",
 #' @param format Character indicating whether it is a `bin` or `vec`,
 #'               If `NULL` (the default), the function will assume by the
 #'               ending of the file name.
-#' @param n_vocab Integer indicating number of rows (i.e. words) to read in
+#' @param n_vocab Integer indicating number of rows (i.e. terms) to read in
 #'                to the environment (default is `Inf` which will read all).
 #'                See details.
 #'
