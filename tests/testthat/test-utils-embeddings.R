@@ -9,7 +9,7 @@ test_that("get_centroid works on different data types", {
 
     ## single c() list of terms ##
     out.c <- get_centroid(anchors=anchor.solo.c,
-                         wv=fake_word_vectors)
+                          wv=fake_word_vectors)
 
     expect_type(out.c, "double")
     expect_identical(dim(out.c),  ce.dims)
@@ -360,6 +360,21 @@ test_that(".check_term_in_embeddings removing all words will stop", {
 })
 
 
+test_that(".check_term_in_embeddings only prints 10 bad words", {
+
+    ## single list of terms ##
+    # character list
+    terms <- c("choose", "picklespit", "mulepants", "pandaboots",
+               "rhinojumps", "penguinland", "tigersoda", "wildrumpus",
+               "weirdal", "boul", "jawn", "handcrank", "quink")
+    expect_message(
+    out <- .check_term_in_embeddings(terms=terms,
+                                  wv=fake_word_vectors,
+                                  action="remove"))
+    expect_identical(out, "choose")
+
+})
+
 
 test_that(".check_term_in_embeddings stops when words
             missing on different data types", {
@@ -480,16 +495,25 @@ test_that("find_rejection produces matrix with correct dimensions", {
 
 })
 
-test_that("find_tranformation produces matrix with correct dimensions and names", {
+test_that("find_tranformation, dimensions and names", {
 
     norm <- find_transformation(wv=fake_word_vectors,
                                  method = "norm")
-
     center <- find_transformation(wv=fake_word_vectors,
                                  method = "center" )
-
     align <- find_transformation(wv=fake_word_vectors,
                                  ref=fake_word_vectors,
+                                 method = "align" )
+
+    fake_vectors_dgc <- methods::as(fake_word_vectors,
+                                    "dgCMatrix")
+
+    norm.dgc <- find_transformation(wv=fake_vectors_dgc,
+                                method = "norm")
+    center.dgc  <- find_transformation(wv=fake_vectors_dgc,
+                                  method = "center" )
+    align.dgc  <- find_transformation(wv=fake_vectors_dgc,
+                                 ref=fake_vectors_dgc,
                                  method = "align" )
 
     expect_identical(dim(norm), dim(fake_word_vectors))
@@ -500,6 +524,13 @@ test_that("find_tranformation produces matrix with correct dimensions and names"
     expect_identical(rownames(center), rownames(fake_word_vectors))
     expect_identical(rownames(align), rownames(fake_word_vectors))
 
+    expect_identical(dim(norm), dim(norm.dgc))
+    expect_identical(dim(center), dim(center.dgc))
+    expect_identical(dim(align), dim(align.dgc))
+
+    expect_identical(rownames(norm), rownames(norm.dgc))
+    expect_identical(rownames(center), rownames(center.dgc))
+    expect_identical(rownames(align), rownames(align.dgc))
 
 })
 

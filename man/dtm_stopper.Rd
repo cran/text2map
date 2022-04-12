@@ -8,7 +8,10 @@ dtm_stopper(
   dtm,
   stop_list = NULL,
   stop_termfreq = NULL,
+  stop_termrank = NULL,
+  stop_termprop = NULL,
   stop_docfreq = NULL,
+  stop_docprop = NULL,
   stop_hapax = FALSE,
   stop_null = FALSE,
   ignore_case = TRUE
@@ -17,32 +20,45 @@ dtm_stopper(
 \arguments{
 \item{dtm}{Document-term matrix with terms as columns. Works with DTMs
 produced by any popular text analysis package, or you can use the
-\code{dtm_builder()} function.}
+\code{dtm_builder} function.}
 
-\item{stop_list}{Vector of terms, from either a precompiled stoplist or
-custom list such as \code{c("never", "gonna", "give")}, or a
-combination of the two.}
+\item{stop_list}{Vector of terms, from a precompiled stoplist or
+custom list such as \code{c("never", "gonna", "give")}.}
 
 \item{stop_termfreq}{Vector of two numbers indicating the lower and upper
-term threshold for exclusion (see details).}
+threshold for exclusion (see details). Use \code{Inf}
+for max or min, respectively.}
+
+\item{stop_termrank}{Single integer indicating upper term rank threshold
+for exclusion (see details).}
+
+\item{stop_termprop}{Vector of two numbers indicating the lower and upper
+threshold for exclusion (see details). Use \code{Inf}
+for max or min, respectively.}
 
 \item{stop_docfreq}{Vector of two numbers indicating the lower and upper
-document threshold for exclusion (see details).}
+threshold for exclusion (see details). Use \code{Inf}
+for max or min, respectively.}
 
-\item{stop_hapax}{Logical (default = FALSE) indicating whether to remove terms
-occurring one time (or zero times), a.k.a. hapax legomena}
+\item{stop_docprop}{Vector of two numbers indicating the lower and upper
+threshold for exclusion (see details). Use \code{Inf}
+for max or min, respectively.}
+
+\item{stop_hapax}{Logical (default = FALSE) indicating whether to remove
+terms occurring one time (or zero times), a.k.a.
+hapax legomena}
 
 \item{stop_null}{Logical (default = FALSE) indicating whether to remove terms
 that occur zero times in the DTM.}
 
 \item{ignore_case}{Logical (default = TRUE) indicating whether to ignore
-capitalization when matching terms provided to \code{stop_list}.}
+capitalization.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"
 }
 \description{
-\code{dtm_stopper()} will "stop" terms from the analysis by removing columns in a
+\code{dtm_stopper} will "stop" terms from the analysis by removing columns in a
 DTM based on stop rules. Rules include matching terms in a precompiled or
 custom list, terms meeting an upper or lower document frequency threshold,
 or terms meeting an upper or lower term frequency threshold.
@@ -67,6 +83,9 @@ integers are provided then terms will be removed by total count. For example
 corpus will be removed. This also means that if \code{c(0, 1)} is provided, then
 the will only \emph{keep} terms occurring once.
 
+The \code{stop_termrank} argument provides the upper threshold for a terms' rank
+in the corpus. For example, \code{5L} will remove the five most frequent terms.
+
 The \code{stop_docfreq} argument provides rules based on a term's document
 frequency -- i.e. the number of documents within which it occurs, regardless
 of how many times it occurs. If real numbers between 0 and 1 are provided
@@ -78,13 +97,70 @@ all documents. For example \code{c(100, 9000)}, then words occurring in less tha
 exactly one document, and remove terms in more than one.
 
 The \code{stop_hapax} argument is a shortcut for removing terms occurring just one
-time in the corpus -- called hapax legomena. Typically, a size-able portion of
-the corpus tends to be hapax terms, and removing them is a quick solution to
-reducing the dimensions of a DTM. The \code{stop_null} argument removes terms that
-do not occur at all. In other words, there is a column for the term, but the
-entire column is zero. This can occur for a variety of reasons, such as
-starting with a predefined vocabulary (e.g., using \link{dtm_builder}'s \code{vocab}
-argument) or through some cleaning processes.
+time in the corpus -- called hapax legomena. Typically, a size-able portion
+of the corpus tends to be hapax terms, and removing them is a quick solution
+to reducing the dimensions of a DTM. The DTM must be frequency counts (not
+relative frequencies).
+
+The \code{stop_null} argument removes terms that do not occur at all.
+In other words, there is a column for the term, but the entire column
+is zero. This can occur for a variety of reasons, such as starting with
+a predefined vocabulary (e.g., using \link{dtm_builder}'s \code{vocab} argument) or
+through some cleaning processes.
+}
+\examples{
+
+# create corpus and DTM
+my.corpus <- data.frame(
+  text = c(
+    "I hear babies crying I watch them grow",
+    "They'll learn much more than I'll ever know",
+    "And I think to myself",
+    "What a wonderful world",
+    "Yes I think to myself",
+    "What a wonderful world"
+  ),
+  line_id = paste0("line", seq_len(6))
+)
+## some text preprocessing
+my.corpus$clean_text <- tolower(gsub("'", "", my.corpus$text))
+
+dtm <- dtm_builder(
+  data = my.corpus,
+  text = clean_text,
+  doc_id = line_id
+)
+
+## example 1 with R 4.1 pipe
+\donttest{
+dtm_st <- dtm |>
+  dtm_stopper(stop_list = c("world", "babies"))
+}
+
+## example 2 without pipe
+dtm_st <- dtm_stopper(
+  dtm,
+  stop_list = c("world", "babies")
+)
+
+## example 3 precompiled stoplist
+dtm_st <- dtm_stopper(
+  dtm,
+  stop_list = get_stoplist("snowball2014")
+)
+
+## example 4, stop top 2
+dtm_st <- dtm_stopper(
+  dtm,
+  stop_termrank = 2L
+)
+
+## example 5, stop docfreq
+dtm_st <- dtm_stopper(
+  dtm,
+  stop_docfreq = c(2, 5)
+)
+
 }
 \author{
 Dustin Stoltz

@@ -86,3 +86,23 @@ test_that("CoCA prints a solution", {
     #expect_output(print(classes), coca.msg)
 
 })
+
+test_that("CoCA plot", {
+
+    classes <- CoCA(dtm=dtm.bse,
+                    wv=fake_word_vectors_coca,
+                    directions = sem.dirs,
+                    filter_sig = TRUE,
+                    filter_value = 0.05,
+                    zero_action = 'drop')
+
+    p <- plot(classes, module = 1)
+
+    expect_identical(p$Arguments$labels,
+                     rownames(sem.dirs))
+    expect_identical(p$Arguments$esize,
+                     8)
+    expect_identical(p$Arguments$alpha,
+                     0.05)
+
+})

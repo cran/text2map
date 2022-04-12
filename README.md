@@ -1,6 +1,6 @@
 # [`text2map`](https://culturalcartography.gitlab.io/text2map/): R Tools for Text Matrices <img src="man/figures/logo.png" align="right" height="120" />
 
-This is an R Package with libraries and utility functions for computational text analysis for the social sciences.
+This is an R Package with libraries and utility functions for computational text analysis.
 
 The functions are optimized for working with various kinds of **text matrices**. Focusing on the text matrix as the primary object -- which is represented either as a base `R` dense matrix or a `Matrix` package sparse matrix -- allows for a consistent and intuitive interface that stays close to the underlying mathematical foundation of computational text analysis. In particular, the package includes functions for working with word embeddings, text networks, and document-term matrices.
 
@@ -17,7 +17,7 @@ install.packages("text2map")
 Or install the latest development version from GitLab:
 
 ``` r
-library(remote)
+library(remotes)
 install_gitlab("culturalcartography/text2map")
 ```
 
@@ -31,21 +31,31 @@ vignette("CMDist-concept-movers-distance", package = "text2map")
 
 There are three related packages in development, and hosted on GitLab: 
 
-- text2map.corpora: collection of text datasets
+- text2map.corpora: collection of 13+ text datasets
 - text2map.dictionaries: collection of dictionaries, currently:
     - Sensorimotor Norms Dictionary for English, N = 40,000 (Lynott, et al. 2020)
     - Concreteness Dictionary for English, N = 40,000 (Brysbaert et al. 2014)
     - NRC Valence, Arousal, and Dominance Dictionary for English (Mohammad et al. 2018)
-- text2map.theme: changes ggplot2 aesthetics and loads viridis color scheme
+- text2map.theme: changes `ggplot2` aesthetics and loads viridis color scheme as default
 
 The above packages can be installed using the following:
 
 ```r
-library(remote)
+library(remotes)
 install_gitlab("culturalcartography/text2map.theme")
 install_gitlab("culturalcartography/text2map.corpora")
 install_gitlab("culturalcartography/text2map.dictionaries")
 ```
+
+### Contributions and Support
+
+We welcome contributions! 
+
+For any contributions, feel free to fork the package repository on GitLab or submit pull requests. We follow the [Tidyverse](https://style.tidyverse.org/) and [rOpensci](https://devguide.ropensci.org/building.html) style guides (see also [Advanced R](http://adv-r.had.co.nz/Style.html). In terms of adding functions, we encourage any method that works with base R matrices or the Matrix package's `dgCMatrix` class.
+
+Please report any issues or bugs here: https://gitlab.com/culturalcartography/text2map/-/issues
+
+Any questions and requests for support can also be directed to the package maintainers (maintainers [at] textmapping [dot] com).
 
 <!-- badges: start -->
 

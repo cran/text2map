@@ -105,30 +105,30 @@ wv.cv.cw.dims <- c(as.integer(nrow(fake_word_vectors)+2),
 ## create fake dtm
 # -----------------------------------------------------------------------------
 
-dtm_base_loop <- function(text, doc_id){
-    tokns <- strsplit(tolower(text), " ", fixed=TRUE)
-    vocab <- sort(unique(unlist(tokns)))
-    dtm <- matrix(data = 0L,
-                  ncol = length(vocab), nrow = length(tokns),
-                  dimnames = list(doc_id, vocab) )
-    freqs <- lapply(tokns, table)
-    for (i in seq_len(length(freqs)) ){
-                doc <- freqs[[i]]
-                dtm[i, names(doc)] <- as.integer(doc)
-    }
-    return(dtm)
-}
+# dtm_base_loop <- function(text, doc_id){
+#     tokns <- strsplit(tolower(text), " ", fixed=TRUE)
+#     vocab <- sort(unique(unlist(tokns)))
+#     dtm <- matrix(data = 0L,
+#                   ncol = length(vocab), nrow = length(tokns),
+#                   dimnames = list(doc_id, vocab) )
+#     freqs <- lapply(tokns, table)
+#     for (i in seq_len(length(freqs)) ){
+#                 doc <- freqs[[i]]
+#                 dtm[i, names(doc)] <- as.integer(doc)
+#     }
+#     return(dtm)
+# }
 
 
-dtm_simple_sparse  <- function(text, doc_id){
-        tokns <- strsplit(tolower(text), " ")
-        vects <- unlist(tokns)
-        vocab <- sort(unique(vects))
-        lens <- vapply(tokns, length, numeric(1L))
-        dtm <- Matrix::sparseMatrix(i=rep(seq_along(lens), lens),
-                                    j=match(vects, vocab), x=1L,
-                                    dimnames = list(doc_id, vocab))
-  }
+# dtm_simple_sparse  <- function(text, doc_id){
+#         tokns <- strsplit(tolower(text), " ")
+#         vects <- unlist(tokns)
+#         vocab <- sort(unique(vects))
+#         lens <- vapply(tokns, length, numeric(1L))
+#         dtm <- Matrix::sparseMatrix(i=rep(seq_along(lens), lens),
+#                                     j=match(vects, vocab), x=1L,
+#                                     dimnames = list(doc_id, vocab))
+#   }
 
 tidytext_dtm <- function(df.text) {
             dtm <- df.text %>% tidytext::unnest_tokens(word, text) %>%
@@ -149,13 +149,7 @@ tidytext_dfm <- function(df.text) {
 }
 
 # base matrix
-dtm.bse <- dtm_base_loop(corpus$text, corpus$doc_id)
-
-# class __dfm__ matrix
-# tidytext::cast_dfm()
-# quanteda::dfm()
-# corpustools::get_dfm()
-dtm.dfm <-tidytext_dfm(corpus)
+dtm.bse <- dtm_builder(corpus, text, doc_id, dense = TRUE)
 
 # sparse __dgCMatrix__ matrix
 # corpustools::get_dtm()
@@ -164,7 +158,14 @@ dtm.dfm <-tidytext_dfm(corpus)
 # textTinyR::sparse_term_matrix
 # wactor::dtm()
 # udpipe::document_term_matrix()
-dtm.dgc <- dtm_simple_sparse(corpus$text, corpus$doc_id)
+#dtm.dgc <- dtm_simple_sparse(corpus$text, corpus$doc_id)
+dtm.dgc <- dtm_builder(corpus, text, doc_id)
+
+# class __dfm__ matrix
+# tidytext::cast_dfm()
+# quanteda::dfm()
+# corpustools::get_dfm()
+dtm.dfm <- tidytext_dfm(corpus)
 
 # sparse __simple_triplet_matrix__ matrix
 # gofastr::q_dtm() # also class __DocumentTermMatrix__
@@ -174,20 +175,8 @@ dtm.tm <-tidytext_dtm(corpus)
 
 # sparse __simple_triplet_matrix__ matrix
 # tm::TermDocumentMatrix() # TermDocumentMatrx
-dtm.tdm <-tidytext_tdm(corpus)
+dtm.tdm <- tidytext_tdm(corpus)
 
-# dim(dtm.bse)
-# dim(dtm.dfm)
-# dim(dtm.dgc)
-# dim(dtm.tm)
-
-# class(dtm.bse)
-# class(dtm.dfm)
-# class(dtm.dgc)
-# class(dtm.tm)
-
-# sort(featnames(dtm.dfm))
-# sort(colnames(dtm.bse))
 
 # -----------------------------------------------------------------------------
 # CoCA
@@ -203,7 +192,7 @@ new.words <- c("rich", "richer", "affluence",
 # fake_word_vectors_coca <- matrix(rnums, nrow=40)
 # rownames(fake_word_vectors_coca) <- c(words[1:30], new.words)
 # saveRDS(fake_word_vectors_coca, "tests/testthat/fake_word_vectors_coca.Rds")
-#fake_word_vectors_coca <- readRDS("tests/testthat/fake_word_vectors_coca.Rds")
+# fake_word_vectors_coca <- readRDS("tests/testthat/fake_word_vectors_coca.Rds")
 fake_word_vectors_coca <- readRDS("fake_word_vectors_coca.Rds")
 
 # build juxtaposed pairs for each semantic directions
@@ -234,7 +223,6 @@ cor.dims <- c(as.integer(nrow(dtm.bse)),
 #                 zero_action = 'drop')
 
 coca.msg <- "CoCA found 2 schematic classes in the corpus. Sizes: 5 5"
-
 
 # Make a degenerate class
 classes.d <- CoCA(dtm=dtm.bse,

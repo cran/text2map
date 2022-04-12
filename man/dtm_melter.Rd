@@ -12,14 +12,15 @@ produced by any popular text analysis package, or using the
 \code{dtm_builder()} function.}
 }
 \value{
-returns data frame with three columns
+returns data frame with three columns: doc_id, term, freq
 }
 \description{
-Takes a DTM converts into a data frame with three columns:
-documents, terms, counts. Each row is a unique document by term
-count This is akin to \code{reshape2} packages \code{melt} function,
-but works on a sparse matrix.The resulting data frame is
-equivalent to the \code{tidytext} triplet tibble.
+Converts a DTM into a data frame with three columns:
+documents, terms, frequency. Each row is a unique
+document by term frequency. This is akin to \code{reshape2}
+packages \code{melt} function, but works on a sparse matrix.
+The resulting data frame is also equivalent to the
+\code{tidytext} triplet tibble.
 }
 \author{
 Dustin Stoltz

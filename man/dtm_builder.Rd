@@ -4,7 +4,14 @@
 \alias{dtm_builder}
 \title{A fast unigram DTM builder}
 \usage{
-dtm_builder(data, text, doc_id, vocab = NULL, chunk = NULL)
+dtm_builder(
+  data,
+  text,
+  doc_id = NULL,
+  vocab = NULL,
+  chunk = NULL,
+  dense = FALSE
+)
 }
 \arguments{
 \item{data}{Data.frame with column of texts and column of document ids}
@@ -22,9 +29,12 @@ Columns will also be in the same order as the list of terms.}
 For example, \code{100L} will divide the corpus into new documents
 with 100 terms (with the final document likely including
 slightly less than 100).}
+
+\item{dense}{The default (\verb{FALSE``) is to return a matrix of class "dgCMatrix" because document-term matrix typically have mostly zero cells. This is much more memory efficient. Setting dense to }TRUE\verb{will return a normal base}R` matrix.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"
+or class "matrix"
 }
 \description{
 A streamlined function to take raw texts from a column of a data.frame and
@@ -35,10 +45,10 @@ The function is fast because it has few bells and whistles:
 \itemize{
 \item No weighting schemes other than raw counts
 \item Tokenizes by the fixed, single whitespace
-\item Only tokenizes unigrams, no bigrams, trigrams, etc..
+\item Only tokenizes unigrams. No bigrams, trigrams, etc...
 \item Columns are in the order unique terms are discovered
 \item No preprocessing during building
-\item Outputs a basic sparse matrix
+\item Outputs a basic sparse Matrix or dense matrix
 }
 
 Weighting or stopping terms can be done efficiently after the fact with
@@ -47,17 +57,17 @@ function itself. For example, using the \code{dtm_stopper()} function.
 Prior to creating the DTM, texts should have whitespace trimmed, if
 desired, punctuation removed and terms lowercased.
 
-Like \code{tidytext}'s DTM functions, \code{dtm_builder()} is optimized for use in a
-pipeline, but unlike \code{tidytext}, it does not build an intermediary
+Like \code{tidytext}'s DTM functions, \code{dtm_builder()} is optimized for use
+in a pipeline, but unlike \code{tidytext}, it does not build an intermediary
 tripletlist, so \code{dtm_builder()} is faster and far more memory
 efficient.
 
 The function can also \code{chunk} the corpus into documents of a given length
-(default is \code{NULL}). If the integer provided is \code{200L}, this will divide the
-corpus into new documents with 200 terms (with the final document likely
-including slightly less than 200). If the total terms in the corpus
-were less than or equal to \code{chunk} integer, this would produce a
-DTM with one document (most will probably not want this).
+(default is \code{NULL}). If the integer provided is \code{200L}, this will divide
+the corpus into new documents with 200 terms (with the final document
+likely including slightly less than 200). If the total terms in the
+corpus were less than or equal to \code{chunk} integer, this would produce
+a DTM with one document (most will probably not want this).
 
 If the vocabulary is already known, or standardizing vocabulary across
 several DTMs is desired, a list of terms can be provided to the \code{vocab}
@@ -76,7 +86,7 @@ my.corpus <- data.frame(
     "Yes I think to myself",
     "What a wonderful world"
   ),
-  line_id = paste0("line", 1:6)
+  line_id = paste0("line", seq_len(6))
 )
 ## some text preprocessing
 my.corpus$clean_text <- tolower(gsub("'", "", my.corpus$text))

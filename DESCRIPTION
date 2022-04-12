@@ -1,11 +1,11 @@
 Type: Package
 Package: text2map
 Title: R Tools for Text Matrices, Embeddings, and Networks
-Version: 0.1.3
+Version: 0.1.4
 Authors@R: 
    c(person(given = "Dustin", 
             family = "Stoltz", 
-            email = "dss219@lehigh.edu", 
+            email = "maintainers@textmapping.com", 
             role = c("aut", "cre"),
             comment = c(ORCID = "0000-0002-4774-0765")),
      person(given = "Marshall", 
@@ -40,9 +40,9 @@ Suggests: testthat (>= 3.0.0), tidytext, tm, quanteda, knitr, rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr, rmarkdown
 NeedsCompilation: no
-Packaged: 2022-01-23 22:59:33 UTC; tin
+Packaged: 2022-04-11 21:33:36 UTC; tin
 Author: Dustin Stoltz [aut, cre] (<https://orcid.org/0000-0002-4774-0765>),
   Marshall Taylor [aut] (<https://orcid.org/0000-0002-7440-0723>)
-Maintainer: Dustin Stoltz <dss219@lehigh.edu>
+Maintainer: Dustin Stoltz <maintainers@textmapping.com>
 Repository: CRAN
-Date/Publication: 2022-01-24 07:40:02 UTC
+Date/Publication: 2022-04-12 07:10:02 UTC

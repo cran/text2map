@@ -1,3 +1,15 @@
+#' Import Matrix Methods
+#'
+#' Get methods and classes from Matrix
+#'
+#' @import methods
+#' @import Matrix
+#' @importClassesFrom Matrix dgCMatrix dgTMatrix
+#' @keywords internal
+#' @export
+#' @name Matrix
+NULL
+
 #' Pipe operator
 #'
 #' See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.

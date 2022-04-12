@@ -2,6 +2,8 @@ testthat::skip_on_ci()
 
 test_that("check parallel and serial CMDist gives the same output", {
 
+    testthat::skip_on_cran()
+
     # check that single **cw** outputs the same in serial and parallel
     paralleled <- CMDist(
         dtm=dtm.dgc,
@@ -73,7 +75,10 @@ test_that("check parallel and serial CMDist gives the same output", {
     expect_identical(paralleled, serialed)
 })
 
+
 test_that("compare parallel and serial sens_interval output", {
+
+    testthat::skip_on_cran()
 
     # check main function works
     paralleled <- CMDist(
@@ -100,8 +105,9 @@ test_that("compare parallel and serial sens_interval output", {
 
 })
 
-
 test_that("check internal 'resampler' function works with parallel", {
+
+    testthat::skip_on_cran()
 
     prep <- .prep_cmd_INPUT(dtm=dtm.dgc,
                             cw = cw.2,

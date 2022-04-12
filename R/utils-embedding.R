@@ -69,10 +69,11 @@ get_anchors <- function(relation) {
 #'             the direction.
 #' - 'L2': the vector is calculated the same as with 'pooled'
 #'         but is then divided by the L2 'Euclidean' norm
-#' - 'PCA': vector offsets are calculated for each paired terms, as with
-#'          'pooled', if `n_dirs = 1L` (the default) then the direction is the
-#'          first principal component. Users can return more than one direction
-#'          by increasing the `n_dirs` parameter.
+#' - 'PCA': vector offsets are calculated for each pair of terms,
+#'          as with 'paired', and if `n_dirs = 1L` (the default)
+#'          then the direction is the first principal component.
+#'          Users can return more than one direction by increasing
+#'          the `n_dirs` parameter.
 #'
 #' @references
 #' Bolukbasi, T., Chang, K. W., Zou, J., Saligrama, V., and Kalai, A. (2016).
@@ -205,10 +206,13 @@ get_direction <- function(anchors, wv,
     # yes, these are inverted for a reason
     direction <- wv[anchors_sub, , drop = FALSE] -
       wv[anchors_add, , drop = FALSE]
-    direction <- t(stats::prcomp(direction,
-      center = FALSE,
-      rank. = n_dirs
-    )$rotation)
+    direction <- Matrix::t(
+      stats::prcomp(direction,
+        center = TRUE,
+        scale. = nrow(direction) > 1L,
+        rank. = n_dirs
+      )$rotation
+    )
   }
 
   if (!method %in% c("pooled", "paired", "L2", "PCA")) {
@@ -289,11 +293,12 @@ get_centroid <- function(anchors, wv, missing = "stop") {
     }
   }
 
-  anchors <- stringi::stri_split(
-    anchors,
-    fixed = " ",
-    omit_empty = TRUE
-  ) |> unlist(
+  anchors <- unlist(
+    stringi::stri_split(
+      anchors,
+      fixed = " ",
+      omit_empty = TRUE
+    ),
     recursive = FALSE,
     use.names = FALSE
   )
@@ -651,7 +656,17 @@ find_transformation <- function(wv,
     return(terms)
   }
 
+
+
   ## Create the stop message ##
+  if (length(bad_words) > 10L) {
+    n_words <- length(bad_words) - 10L
+    bad_words_msg <- paste(bad_words[seq_len(10)], collapse = "; ")
+    bad_words_msg <- paste(bad_words_msg, " and ", n_words, " more term(s)")
+  } else {
+    bad_words_msg <- bad_words
+  }
+
   stop_msg <- paste0(
     "The following have no matching word vectors: ",
     paste(bad_words, collapse = "; ")
@@ -688,8 +703,7 @@ find_transformation <- function(wv,
     }
 
     # if LIST
-    # lists are used for pooling,
-    # rather than paired semantic directions
+    # lists are used for pooling rather than paired
     if (!is.data.frame(terms) && is.list(terms)) {
       if (length(terms) == 2) {
         terms <- lapply(

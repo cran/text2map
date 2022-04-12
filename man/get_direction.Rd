@@ -46,10 +46,11 @@ A different number of terms can be used for each side of
 the direction.
 \item 'L2': the vector is calculated the same as with 'pooled'
 but is then divided by the L2 'Euclidean' norm
-\item 'PCA': vector offsets are calculated for each paired terms, as with
-'pooled', if \code{n_dirs = 1L} (the default) then the direction is the
-first principal component. Users can return more than one direction
-by increasing the \code{n_dirs} parameter.
+\item 'PCA': vector offsets are calculated for each pair of terms,
+as with 'paired', and if \code{n_dirs = 1L} (the default)
+then the direction is the first principal component.
+Users can return more than one direction by increasing
+the \code{n_dirs} parameter.
 }
 }
 \examples{

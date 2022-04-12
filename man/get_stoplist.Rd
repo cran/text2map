@@ -33,7 +33,7 @@ One of the first stoplists is from C.J. van Rijsbergen's "Information
 retrieval: theory and practice" (1979) and includes 250 words.
 \code{text2map}'s very own stoplist \code{tiny2020} is a lean 34 words.
 
-Below are stoplists available with \code{\link[=get_stoplist]{get_stoplist()}}:
+Below are stoplists available with \link{get_stoplist}:
 \itemize{
 \item "tiny2020": Tiny (2020) list of 33 words (Default)
 \item "snowball2001": Snowball stemming package's (2001) list of 127 words
