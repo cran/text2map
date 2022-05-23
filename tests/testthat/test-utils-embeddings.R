@@ -437,7 +437,6 @@ test_that("get_regions seed works", {
         wv = fake_word_vectors,
         k_regions = 20L,
         max_iter = 10L,
-        algorithm = "hamerly",
         seed = 442
     )
 
@@ -445,7 +444,6 @@ test_that("get_regions seed works", {
         wv = fake_word_vectors,
         k_regions = 20L,
         max_iter = 10L,
-        algorithm = "hamerly",
         seed = 442
     )
 

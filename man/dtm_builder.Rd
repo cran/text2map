@@ -30,7 +30,10 @@ For example, \code{100L} will divide the corpus into new documents
 with 100 terms (with the final document likely including
 slightly less than 100).}
 
-\item{dense}{The default (\verb{FALSE``) is to return a matrix of class "dgCMatrix" because document-term matrix typically have mostly zero cells. This is much more memory efficient. Setting dense to }TRUE\verb{will return a normal base}R` matrix.}
+\item{dense}{The default (\code{FALSE}) is to return a matrix of class
+"dgCMatrix" as DTMs typically have
+mostly zero cells. This is much more memory efficient.
+Setting dense to \code{TRUE} will return a normal base \code{R} matrix.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"

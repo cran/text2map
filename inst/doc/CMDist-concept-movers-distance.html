@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
-<meta name="date" content="2022-04-11" />
+<meta name="date" content="2022-05-23" />
 
 <title>CMDist: Quick Start Guide</title>
 
@@ -332,7 +332,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">CMDist: Quick Start Guide</h1>
-<h4 class="date">2022-04-11</h4>
+<h4 class="date">2022-05-23</h4>
 
 
 
@@ -365,12 +365,12 @@ Distance.” <em>Journal of Computational Social Science</em>
 you will need to transform your corpus into a document-term matrix
 (DTM). The preferred DTM is a sparse matrix in <code>Matrix</code>
 format (class “dgCMatrix”) as output by <code>text2vec</code>,
-<code>Quanteda</code>, <code>udpipe</code>, and <code>tidytext</code>‘s
+<code>Quanteda</code>, <code>udpipe</code>, and <code>tidytext</code>’s
 <code>cast_sparse</code> function, but we have tried to make the package
 accommodate DTMs made with the <code>tm</code> package (technically a
 “simple_triplet_matrix”) or just a regular old base R dense matrix (<a href="https://www.dustinstoltz.com/blog/2020/12/1/creating-document-term-matrix-comparison-in-r">see
 this for a comparison of DTM creation methods</a>). You can also use
-<code>text2maps</code>’ very own super fast unigram DTM builder
+<code>text2map</code>’s super fast unigram DTM builder
 <code>dtm_builder()</code>.</p>
 </div>
 <div id="word-embedding-matrix" class="section level3">
@@ -405,12 +405,12 @@ Drive:</p>
 </ul>
 <p>You can also download the file directly into your R session using the
 following:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">library</span>(googledrive) <span class="co"># (see https://googledrive.tidyverse.org/)</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">drive_download</span>(<span class="fu">as_id</span>(<span class="st">&quot;17H4GOGedeGo0urQdDC-4e5qWQMeWLpGG&quot;</span>), <span class="at">path =</span> temp, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    my.wv <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(temp)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># save them to your project file so you don&#39;t have to re-download</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">saveRDS</span>(my.wv, <span class="st">&quot;data/ft.cc.en.300D.2M.Rds&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googledrive) <span class="co"># (see https://googledrive.tidyverse.org/)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">drive_download</span>(<span class="fu">as_id</span>(<span class="st">&quot;17H4GOGedeGo0urQdDC-4e5qWQMeWLpGG&quot;</span>), <span class="at">path =</span> temp, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>my.wv <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(temp)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># save them to your project file so you don&#39;t have to re-download</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(my.wv, <span class="st">&quot;data/ft.cc.en.300D.2M.Rds&quot;</span>)</span></code></pre></div>
 <p>Instead of pretrained embeddings, you can create your own embeddings
 trained locally on the corpus on which you are using
 <code>CMDist</code>. For example, the <code>text2vec</code> R package
@@ -441,10 +441,13 @@ space. One way of double-checking that selected terms are approriate is
 to look at the term’s nearest neighbors. Here we use the
 <code>sim2</code> function from <code>text2vec</code> to get the cosine
 distance between “thinking” and its top 10 nearest neighbors.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    cos.sim <span class="ot">&lt;-</span> text2vec<span class="sc">::</span><span class="fu">sim2</span>(<span class="at">x =</span> my.wv, <span class="at">y =</span> my.wv[<span class="st">&quot;thinking&quot;</span>, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">method =</span> <span class="st">&quot;cosine&quot;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">sort</span>(cos.sim[,<span class="dv">1</span>], <span class="at">decreasing =</span> <span class="cn">TRUE</span>), <span class="dv">10</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(text2vec)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>cos_sim <span class="ot">&lt;-</span> <span class="fu">sim2</span>(<span class="at">x =</span> my.wv, </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">y =</span> my.wv[<span class="st">&quot;thinking&quot;</span>, , <span class="at">drop =</span> <span class="cn">FALSE</span>], </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">method =</span> <span class="st">&quot;cosine&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">sort</span>(cos_sim[,<span class="dv">1</span>], <span class="at">decreasing =</span> <span class="cn">TRUE</span>), <span class="dv">10</span>)</span></code></pre></div>
 <div id="single-word" class="section level4">
 <h4>Single Word</h4>
 <p>Once you have a DTM and word embedding matrix, the simplest use of
@@ -452,7 +455,7 @@ distance between “thinking” and its top 10 nearest neighbors.</p>
 denoted by a <em>single word</em>. Here, we use the word “thinking” as
 our concept word (“cw”):</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="at">wv =</span> my.wv)</span></code></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="at">wv =</span> my.wv)</span></code></pre></div>
 </div>
 <div id="compound-concepts" class="section level4">
 <h4>Compound Concepts</h4>
@@ -462,7 +465,7 @@ thinking.” To handle this, it is as simple as including both words
 separated by a space in the quotes. This creates a pseudo-document that
 contains only “critical” and “thinking.”</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;critical thinking&quot;</span>, <span class="at">wv =</span> my.wv)</span></code></pre></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;critical thinking&quot;</span>, <span class="at">wv =</span> my.wv)</span></code></pre></div>
 </div>
 <div id="ngrams" class="section level4">
 <h4>Ngrams</h4>
@@ -474,7 +477,7 @@ ngram is in the embeddings, the only difference for <code>CMDist</code>
 is that an underscore rather than a space needs to be placed between
 words:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;critical_thinking&quot;</span>, <span class="at">wv =</span> my.wv)</span></code></pre></div>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;critical_thinking&quot;</span>, <span class="at">wv =</span> my.wv)</span></code></pre></div>
 </div>
 </div>
 <div id="semantic-directions-and-centroids" class="section level3">
@@ -501,28 +504,28 @@ of one “pole” of this binary concept, and <code>CMDist</code> calculates
 the distance each document is from this concept vector (“cv”). As this
 creates a one-dimensional continuum, documents that are far from this
 “pole” will be close to the opposing “pole.”</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># first build the semantic direction:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  additions  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  substracts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;life&quot;</span>, <span class="st">&quot;survivor&quot;</span>, <span class="st">&quot;birth&quot;</span>, <span class="st">&quot;living&quot;</span>, <span class="st">&quot;endure&quot;</span>)</span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first build the semantic direction:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>additions  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>substracts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;life&quot;</span>, <span class="st">&quot;survivor&quot;</span>, <span class="st">&quot;birth&quot;</span>, <span class="st">&quot;living&quot;</span>, <span class="st">&quot;endure&quot;</span>)</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  pairs <span class="ot">&lt;-</span> <span class="fu">cbind</span>(additions, substracts)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  death.sd <span class="ot">&lt;-</span> <span class="fu">get_direction</span>(pairs, my.wv)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># input it into the function just like a concept word:</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cv =</span> death.sd, <span class="at">wv =</span> my.wv)</span></code></pre></div>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>pairs <span class="ot">&lt;-</span> <span class="fu">cbind</span>(additions, substracts)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>death.sd <span class="ot">&lt;-</span> <span class="fu">get_direction</span>(pairs, my.wv)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># input it into the function just like a concept word:</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cv =</span> death.sd, <span class="at">wv =</span> my.wv)</span></code></pre></div>
 <p>Instead of building a pseudo-document with several terms, as in the
 compound concept section above, one could also average several terms
 together to arrive at a “centroid” in the word embedding space – this
 can be understood as referring to the center of a “semantic region.”
 Again, <code>CMDist</code> will calculate the distance each document is
 from this concept vector (“cv”).</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># first build the semantic centroid:</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  terms  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  death.sc <span class="ot">&lt;-</span> <span class="fu">get_centroid</span>(terms, my.wv)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># input it into the function just like a concept word:</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cv =</span> death.sc, <span class="at">wv =</span> my.wv)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first build the semantic centroid:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>terms  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>death.sc <span class="ot">&lt;-</span> <span class="fu">get_centroid</span>(terms, my.wv)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># input it into the function just like a concept word:</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cv =</span> death.sc, <span class="at">wv =</span> my.wv)</span></code></pre></div>
 </div>
 </div>
 <div id="other-options-and-considerations" class="section level2">
@@ -536,17 +539,17 @@ example, in our <em>JCSS</em> paper, we compare how Shakespeare’s plays
 engage with “death” against 200 other concepts. <code>CMDist</code> also
 incorporate both concept words and vectors into the same run.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># example 1</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  concept.words <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;thinking&quot;</span>, <span class="st">&quot;critical&quot;</span>, <span class="st">&quot;thought&quot;</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="sc">&lt;</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> concept.words, <span class="at">wv =</span> my.wv)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># example 2</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  concept.words <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical_thinking&quot;</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="sc">&lt;</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> concept.words, <span class="at">wv =</span> my.wv)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># example 3</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  concept.words <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical_thinking&quot;</span>)</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="sc">&lt;</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> concept.words, <span class="at">cv =</span> concept.vectors, <span class="at">wv =</span> my.wv)</span></code></pre></div>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># example 1</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>concept.words <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;thinking&quot;</span>, <span class="st">&quot;critical&quot;</span>, <span class="st">&quot;thought&quot;</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="sc">&lt;</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> concept.words, <span class="at">wv =</span> my.wv)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># example 2</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>concept.words <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical_thinking&quot;</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="sc">&lt;</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> concept.words, <span class="at">wv =</span> my.wv)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># example 3</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>concept.words <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical_thinking&quot;</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="sc">&lt;</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> concept.words, <span class="at">cv =</span> concept.vectors, <span class="at">wv =</span> my.wv)</span></code></pre></div>
 </div>
 <div id="performance-and-parallel-cmdist" class="section level3">
 <h3>Performance and Parallel CMDist</h3>
@@ -560,11 +563,11 @@ in accuracy) is by removing very sparse terms in your DTM. Parallelizing
 is another option, so we built it in. To use parallel calculations just
 set <code>parallel = TRUE</code>. The default number of threads is 2,
 but you can set it as high as you have threads/cores.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cw =</span> <span class="st">&quot;critical_thinking&quot;</span>, </span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                          <span class="at">wv =</span> my.wv, </span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                          <span class="at">parallel =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                          <span class="at">threads =</span> <span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">cw =</span> <span class="st">&quot;critical_thinking&quot;</span>, </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">wv =</span> my.wv, </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">parallel =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">threads =</span> <span class="dv">2</span>)</span></code></pre></div>
 </div>
 <div id="scaling-output-and-vector-comparison-metric" class="section level3">
 <h3>Scaling Output and Vector Comparison Metric</h3>
@@ -572,7 +575,7 @@ but you can set it as high as you have threads/cores.</p>
 function in R. If this is not desired, set
 <code>scale = FALSE</code>.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  doc.closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="at">wv =</span> my.wv, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a> doc_closeness <span class="ot">&lt;-</span> <span class="fu">CMDist</span>(<span class="at">dtm =</span> my.dtm, <span class="at">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="at">wv =</span> my.wv, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                          </span></code></pre></div>
 <p><code>CMDist</code> relies <code>text2vec</code> which currently uses
 <strong>cosine</strong> as the distance metric to solve the underlying

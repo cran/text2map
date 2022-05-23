@@ -101,3 +101,31 @@ NULL
 #' @keywords datasets
 #' @format A matrix of 770 rows and 300 columns
 NULL
+
+
+#' Metadata for Shakespeare's First Folio
+#'
+#' Metadata related to Shakespeare's First Folio
+#' including the IDs to download the plays from
+#' Project Gutenberg, and a count of the number of
+#' deaths in each play (body count).
+#' 
+#' @section Variables:
+#' Variables:
+#' \itemize{
+#' \item short_title.
+#' \item gutenberg_title.
+#' \item gutenberg_id.
+#' \item genre.
+#' \item year.
+#' \item body_count.
+#' \item boas_problem_plays.
+#' \item death.
+#' }
+#'
+#' @docType data
+#' @name meta_shakespeare
+#' @usage meta_shakespeare
+#' @keywords datasets
+#' @format A matrix of 37 rows and 8 columns
+NULL

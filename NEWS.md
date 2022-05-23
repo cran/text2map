@@ -1,3 +1,21 @@
+# text2map 0.1.5
+## Improvements
+
+- Replaced dependency
+  - using ClusterR for `get_regions`, instead of mlpack
+  - Uses the Armadillo library k-means algorithm only (no longer provides an option)
+- Added functionality:
+  - `seq_builder` creates a token-integer sequence representation
+- Added Shakespeare metadata for examples
+- Import Matrix package methods
+# text2map 0.1.4
+
+## Improvements
+
+* Added functionality
+    - `dtm_builder` includes an option to return a dense base R matrix
+    - `dtm_stopper` includes an option to remove based on a terms rank (e.g., top 10), stopping based on count and proportion are now two separate options
+
 # text2map 0.1.3
 
 ## Improvements

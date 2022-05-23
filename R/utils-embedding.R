@@ -341,15 +341,8 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' is a mixed membership topic model similar to topic modeling by Latent
 #' Dirichlet Allocation.
 #'
-#' We use the `kmeans` function from the `mlpack` package, which offers several
-#' algorithms for each "Lloyd iteration," we use the "naive" as the default.
-#' Options include:
-#' - "naive": O(kN) Lloyd's approach
-#' - "pelleg-moore": Pelleg-Moore tree-based algorithm
-#' - "elkan": Elkan's triangle-inequality based algorithm
-#' - "hamerly" (default): Hamerly's modification to Elkan's algorithm
-#' - "dualtree": dual-tree k-means
-#' - "dualtree-covertree": dual-tree k-means sing the cover tree
+#' We use the `KMeans_arma` function from the `ClusterR` package which
+#' uses the Armadillo library.
 #'
 #' @references
 #' Butnaru, Andrei M., and Radu Tudor Ionescu.  (2017)
@@ -372,16 +365,13 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' @name get_regions
 #' @author Dustin Stoltz
 #'
-#' @importFrom mlpack kmeans
+#' @importFrom ClusterR KMeans_arma
 #'
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words.
 #' @param k_regions Integer indicating the k number of regions to return
 #' @param max_iter Integer indicating the maximum number of iterations
 #'                 before k-means terminates.
-#' @param algorithm Character indicating the algorithm to use for the Lloyd
-#'             iteration ('naive', 'pelleg-moore', 'elkan', 'hamerly' (default),
-#'             'dualtree', or 'dualtree-covertree').
 #' @param seed Integer indicating a random seed. Default is 0, which calls
 #'               'std::time(NULL)'.
 #'
@@ -396,7 +386,6 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #'   wv = ft_wv_sample,
 #'   k_regions = 10L,
 #'   max_iter = 10L,
-#'   algorithm = "hamerly",
 #'   seed = 01984
 #' )
 #' @export
@@ -404,19 +393,17 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 get_regions <- function(wv,
                         k_regions = 5L,
                         max_iter = 20L,
-                        algorithm = "hamerly",
                         seed = 0) {
-  suppressWarnings(
-    # suppress warning about setting seed
-    # appears to be a problem with mlpack
-    regions <- mlpack::kmeans(
-      clusters = k_regions,
-      input = wv,
-      max_iterations = max_iter,
-      algorithm = algorithm,
-      seed = seed
-    )$centroid
+
+  regions <- ClusterR::KMeans_arma(
+    data = wv,
+    clusters = k_regions,
+    n_iter = max_iter,
+    seed = seed,
+    verbose = FALSE
   )
+
+  regions <- as(regions, "matrix")
 
   rownames(regions) <- paste0("region_", seq_len(nrow(regions)))
 

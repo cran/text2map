@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils-methods.R
 \name{Matrix}
 \alias{Matrix}
-\title{Import Matrix Methods}
+\title{Import Matrix}
 \description{
 Get methods and classes from Matrix
 }

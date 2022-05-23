@@ -59,8 +59,8 @@
 #'              For example, `100L` will divide the corpus into new documents
 #'              with 100 terms (with the final document likely including
 #'              slightly less than 100).
-#' @param dense The default (`FALSE``) is to return a matrix of class
-#'              "dgCMatrix" because document-term matrix typically have
+#' @param dense The default (`FALSE`) is to return a matrix of class
+#'              "dgCMatrix" as DTMs typically have
 #'              mostly zero cells. This is much more memory efficient.
 #'              Setting dense to `TRUE` will return a normal base `R` matrix.
 #'
@@ -173,7 +173,7 @@ dtm_builder <- function(data,
         j = fastmatch::fmatch(vects, vocab, nomatch = 0L),
         x = 1L
       )
-
+      # create chunk IDs
       ch_ids <- paste0(
         "chunk_",
         stringr::str_pad(
@@ -261,8 +261,11 @@ dtm_builder <- function(data,
 
 #' Gets DTM summary statistics
 #'
-#' `dtm_stats()` provides a summary, corpus-level statistics using
-#' any document-term matrix
+#' `dtm_stats()` provides a summary of corpus-level statistics
+#' using any document-term matrix. These include (1) basic information
+#' on size (total documents, total unique terms, total tokens),
+#' (2) lexical richness, (3) distribution information,
+#' (4) central tendency, and (5) character-level information.
 #'
 #' @name dtm_stats
 #' @author Dustin Stoltz
@@ -291,7 +294,7 @@ dtm_builder <- function(data,
 #'
 #' @return A list of one to five data frames with summary statistics (if
 #'         `simplify=FALSE`), otherwise a single data frame where each
-#'         statistics is a column.
+#'         statistic is a column.
 #'
 #' @export
 dtm_stats <- function(dtm,
@@ -549,6 +552,8 @@ dtm_stats <- function(dtm,
 #' a predefined vocabulary (e.g., using [dtm_builder]'s `vocab` argument) or
 #' through some cleaning processes.
 #'
+#' The `omit_empty` argument will remove documents that are empty
+#'
 #' @name dtm_stopper
 #' @author Dustin Stoltz
 #'
@@ -578,6 +583,8 @@ dtm_stats <- function(dtm,
 #'                   hapax legomena
 #' @param stop_null Logical (default = FALSE) indicating whether to remove terms
 #'                  that occur zero times in the DTM.
+#' @param omit_empty Logical (default = FALSE) indicating whether to omit rows that
+#'                   are empty after stopping any terms.
 #' @param ignore_case Logical (default = TRUE) indicating whether to ignore
 #'                   capitalization.
 #'
@@ -647,6 +654,7 @@ dtm_stopper <- function(dtm,
                         stop_docprop = NULL,
                         stop_hapax = FALSE,
                         stop_null = FALSE,
+                        omit_empty = FALSE,
                         ignore_case = TRUE) {
 
   ## stop if all stop rules are NULL
@@ -747,7 +755,15 @@ dtm_stopper <- function(dtm,
     indx <- colnames(dtm) %fnin% stop_list
   }
 
-  return(dtm[, indx, drop = FALSE])
+  ## stop words
+  dtm <- dtm[, indx, drop = FALSE]
+
+  ## omit empty rows
+  if (omit_empty) {
+    dtm <- .remove_empty_rows(dtm)
+  }
+
+  return(dtm)
 }
 
 #' Resamples an input DTM to generate new DTMs
@@ -933,6 +949,123 @@ dtm_melter <- function(dtm) {
   colnames(df_trpl) <- c("doc_id", "term", "freq")
 
   return(df_trpl)
+}
+
+
+#' Represent Documents as Token-Integer Sequences
+#' 
+#' First, each token in the vocabulary is mapped to an integer 
+#' in a lookup dictionary. Next, documents are converted to sequences 
+#' of integers where each integer is an index of the token 
+#' from the dictionary.
+#' 
+#' @details
+#' Function will return a matrix of integer sequences by default.
+#' The columns will be the length of the longest document or
+#' `maxlen`, with shorter documents padded with zeros. The 
+#' dictionary  will be an attribute of the matrix accessed with 
+#' `attr(seq)$dic`. If `matrix = FALSE`, the function will 
+#' return a list of integer sequences. The vocabulary will either 
+#' be each unique token in the corpus, or a the list of words 
+#' provided to the `vocab` argument. This kind of text 
+#' representation is used in [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer) and [keras](https://keras.rstudio.com/reference/texts_to_sequences.html).
+#'
+#'
+#' @importFrom stringr str_pad
+#' @importFrom kit funique
+#' @importFrom fastmatch fmatch
+#'
+#' @name seq_builder
+#' @author Dustin Stoltz
+#'
+#' @param data Data.frame with column of texts and column of document ids
+#' @param text Name of the column with documents' text
+#' @param doc_id Name of the column with documents' unique ids.
+#' @param vocab Default is `NULL`, if a list of terms is provided, 
+#'              the function will return a DTM with terms restricted 
+#'              to this vocabulary. Columns will also be in the same 
+#'              order as the list of terms.
+#' @param maxlen Integer indicating the maximum document length.
+#'               If NULL (default), the length of the longest document is used.
+#' @param matrix Logical, `TRUE` (default) returns a matrix, `FALSE` a list
+#'
+#' @return returns a matrix or list
+#'
+#' @export
+seq_builder <- function(data,
+                        text,
+                        doc_id = NULL,
+                        vocab = NULL,
+                        maxlen = NULL,
+                        matrix = TRUE) {
+
+  # checks/creates doc_ids
+  doc_id <- enquo(doc_id)
+
+  if (!rlang::quo_is_null(doc_id)) {
+    docs <- dplyr::pull(data, {{ doc_id }})
+  } else {
+    # add padding to numbers so it sorts in the order of data
+    docs <- paste0(
+      "doc_",
+      stringr::str_pad(
+        seq_len(nrow(data)),
+        nchar(nrow(data)),
+        pad = "0"
+      )
+    )
+  }
+  # tokenizes by the fixed space pattern
+  # outputs a nested list of tokens
+  tokns <- stringi::stri_split(
+    dplyr::pull(data, {{ text }}),
+    fixed = " ", omit_empty = TRUE
+  )
+
+  if (is.null(maxlen)) {
+    maxlen <- max(lengths(tokns))
+  }
+
+  tokns <- lapply(tokns, function(x) {
+    length(x) <- maxlen
+    x[is.na(x)] <- 0L
+    return(x)
+  })
+
+  if (is.null(vocab)) {
+    vects <- unlist(tokns,
+      recursive = FALSE,
+      use.names = FALSE
+    )
+    vocab <- kit::funique(vects)
+  }
+  # convert to token-integer list
+  tokns <- lapply(tokns,
+    fastmatch::fmatch,
+    vocab,
+    nomatch = 0L
+  )
+  # get all unique intgers,
+  # use as index for dictionary
+  dic <- vocab[
+    kit::funique(
+      unlist(tokns,
+        recursive = FALSE,
+        use.names = FALSE
+      )
+    )
+  ]
+
+  if (matrix) {
+    tokns <- do.call(rbind, tokns)
+    rownames(tokns) <- docs
+  } else {
+    names(tokns) <- docs
+  }
+
+  attr(tokns, "dic") <- dic
+
+  return(tokns)
 }
 
 

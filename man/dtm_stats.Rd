@@ -41,11 +41,14 @@ a list of small data frames.}
 \value{
 A list of one to five data frames with summary statistics (if
 \code{simplify=FALSE}), otherwise a single data frame where each
-statistics is a column.
+statistic is a column.
 }
 \description{
-\code{dtm_stats()} provides a summary, corpus-level statistics using
-any document-term matrix
+\code{dtm_stats()} provides a summary of corpus-level statistics
+using any document-term matrix. These include (1) basic information
+on size (total documents, total unique terms, total tokens),
+(2) lexical richness, (3) distribution information,
+(4) central tendency, and (5) character-level information.
 }
 \author{
 Dustin Stoltz

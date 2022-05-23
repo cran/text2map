@@ -4,13 +4,7 @@
 \alias{get_regions}
 \title{Word embedding semantic region extractor}
 \usage{
-get_regions(
-  wv,
-  k_regions = 5L,
-  max_iter = 20L,
-  algorithm = "hamerly",
-  seed = 0
-)
+get_regions(wv, k_regions = 5L, max_iter = 20L, seed = 0)
 }
 \arguments{
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
@@ -20,10 +14,6 @@ with rows as words.}
 
 \item{max_iter}{Integer indicating the maximum number of iterations
 before k-means terminates.}
-
-\item{algorithm}{Character indicating the algorithm to use for the Lloyd
-iteration ('naive', 'pelleg-moore', 'elkan', 'hamerly' (default),
-'dualtree', or 'dualtree-covertree').}
 
 \item{seed}{Integer indicating a random seed. Default is 0, which calls
 'std::time(NULL)'.}
@@ -54,17 +44,8 @@ we can measure each terms similarity to each region. This, in effect,
 is a mixed membership topic model similar to topic modeling by Latent
 Dirichlet Allocation.
 
-We use the \code{kmeans} function from the \code{mlpack} package, which offers several
-algorithms for each "Lloyd iteration," we use the "naive" as the default.
-Options include:
-\itemize{
-\item "naive": O(kN) Lloyd's approach
-\item "pelleg-moore": Pelleg-Moore tree-based algorithm
-\item "elkan": Elkan's triangle-inequality based algorithm
-\item "hamerly" (default): Hamerly's modification to Elkan's algorithm
-\item "dualtree": dual-tree k-means
-\item "dualtree-covertree": dual-tree k-means sing the cover tree
-}
+We use the \code{KMeans_arma} function from the \code{ClusterR} package which
+uses the Armadillo library.
 }
 \examples{
 
@@ -75,7 +56,6 @@ my.regions <- get_regions(
   wv = ft_wv_sample,
   k_regions = 10L,
   max_iter = 10L,
-  algorithm = "hamerly",
   seed = 01984
 )
 }

@@ -14,6 +14,7 @@ dtm_stopper(
   stop_docprop = NULL,
   stop_hapax = FALSE,
   stop_null = FALSE,
+  omit_empty = FALSE,
   ignore_case = TRUE
 )
 }
@@ -50,6 +51,9 @@ hapax legomena}
 
 \item{stop_null}{Logical (default = FALSE) indicating whether to remove terms
 that occur zero times in the DTM.}
+
+\item{omit_empty}{Logical (default = FALSE) indicating whether to omit rows that
+are empty after stopping any terms.}
 
 \item{ignore_case}{Logical (default = TRUE) indicating whether to ignore
 capitalization.}
@@ -107,6 +111,8 @@ In other words, there is a column for the term, but the entire column
 is zero. This can occur for a variety of reasons, such as starting with
 a predefined vocabulary (e.g., using \link{dtm_builder}'s \code{vocab} argument) or
 through some cleaning processes.
+
+The \code{omit_empty} argument will remove documents that are empty
 }
 \examples{
 

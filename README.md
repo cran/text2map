@@ -51,7 +51,7 @@ install_gitlab("culturalcartography/text2map.dictionaries")
 
 We welcome contributions! 
 
-For any contributions, feel free to fork the package repository on GitLab or submit pull requests. We follow the [Tidyverse](https://style.tidyverse.org/) and [rOpensci](https://devguide.ropensci.org/building.html) style guides (see also [Advanced R](http://adv-r.had.co.nz/Style.html). In terms of adding functions, we encourage any method that works with base R matrices or the Matrix package's `dgCMatrix` class.
+For any contributions, feel free to fork the package repository on GitLab or submit pull requests. We follow the [Tidyverse](https://style.tidyverse.org/) and [rOpensci](https://devguide.ropensci.org/building.html) style guides (see also [Advanced R](http://adv-r.had.co.nz/Style.html)). In terms of adding functions, we encourage any method that works with base R matrices or the Matrix package's `dgCMatrix` class.
 
 Please report any issues or bugs here: https://gitlab.com/culturalcartography/text2map/-/issues
 
@@ -62,6 +62,8 @@ Any questions and requests for support can also be directed to the package maint
 [![CRAN](https://user-content.gitlab-static.net/2c1d3fa0363b0d2990145498a602380b6f39c810/68747470733a2f2f7777772e722d706b672e6f72672f6261646765732f76657273696f6e2f74657874326d6170)](https://cran.r-project.org/package=text2map)
 
 [![pipeline](https://gitlab.com/culturalcartography/text2map/badges/master/pipeline.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/master)
+
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.03741/status.svg)](https://doi.org/10.21105/joss.03741)
 
 [![coverage](https://gitlab.com/culturalcartography/text2map/badges/master/coverage.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/master)
 
