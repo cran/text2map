@@ -10,7 +10,8 @@ dtm_builder(
   doc_id = NULL,
   vocab = NULL,
   chunk = NULL,
-  dense = FALSE
+  dense = FALSE,
+  omit_empty = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ slightly less than 100).}
 "dgCMatrix" as DTMs typically have
 mostly zero cells. This is much more memory efficient.
 Setting dense to \code{TRUE} will return a normal base \code{R} matrix.}
+
+\item{omit_empty}{Logical (default = \code{FALSE}) indicating whether to omit rows
+that are empty after stopping any terms.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"
@@ -80,56 +84,56 @@ argument. Columns of the DTM will be in the order of the list of terms.
 
 library(dplyr)
 
-my.corpus <- data.frame(
-  text = c(
-    "I hear babies crying I watch them grow",
-    "They'll learn much more than I'll ever know",
-    "And I think to myself",
-    "What a wonderful world",
-    "Yes I think to myself",
-    "What a wonderful world"
-  ),
-  line_id = paste0("line", seq_len(6))
+my_corpus <- data.frame(
+    text = c(
+        "I hear babies crying I watch them grow",
+        "They'll learn much more than I'll ever know",
+        "And I think to myself",
+        "What a wonderful world",
+        "Yes I think to myself",
+        "What a wonderful world"
+    ),
+    line_id = paste0("line", seq_len(6))
 )
 ## some text preprocessing
-my.corpus$clean_text <- tolower(gsub("'", "", my.corpus$text))
+my_corpus$clean_text <- tolower(gsub("'", "", my_corpus$text))
 
 # example 1 with R 4.1 pipe
 \donttest{
-dtm <- my.corpus |>
-  dtm_builder(clean_text, line_id)
+dtm <- my_corpus |>
+    dtm_builder(clean_text, line_id)
 }
 
 # example 2 without pipe
 dtm <- dtm_builder(
-  data = my.corpus,
-  text = clean_text,
-  doc_id = line_id
+    data = my_corpus,
+    text = clean_text,
+    doc_id = line_id
 )
 
 # example 3 with dplyr pipe and mutate
-dtm <- my.corpus \%>\%
-  mutate(
-    clean_text = gsub("'", "", text),
-    clean_text = tolower(clean_text)
-  ) \%>\%
-  dtm_builder(clean_text, line_id)
+dtm <- my_corpus \%>\%
+    mutate(
+        clean_text = gsub("'", "", text),
+        clean_text = tolower(clean_text)
+    ) \%>\%
+    dtm_builder(clean_text, line_id)
 
 # example 4 with dplyr and chunk of 3 terms
-dtm <- my.corpus \%>\%
-  dtm_builder(clean_text,
-    line_id,
-    chunk = 3L
-  )
+dtm <- my_corpus \%>\%
+    dtm_builder(clean_text,
+        line_id,
+        chunk = 3L
+    )
 
 # example 5 with user defined vocabulary
 my.vocab <- c("wonderful", "world", "haiku", "think")
 
 dtm <- dtm_builder(
-  data = my.corpus,
-  text = clean_text,
-  doc_id = line_id,
-  vocab = my.vocab
+    data = my_corpus,
+    text = clean_text,
+    doc_id = line_id,
+    vocab = my.vocab
 )
 }
 \author{

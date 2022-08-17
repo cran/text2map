@@ -532,3 +532,36 @@ test_that("find_tranformation, dimensions and names", {
 
 })
 
+test_that("find_tranformation, dimensions and names", {
+
+    tcm.approx <- text2vec::sim2(fake_word_vectors, method = "cosine")
+    vocab <- intersect(rownames(tcm.dgc), rownames(tcm.approx))
+    tcm.dgc.b <- tcm.dgc[vocab, vocab]
+    tcm.approx <- tcm.approx[vocab, vocab]
+    base <- mean((tcm.approx - tcm.dgc.b)^2)
+
+    retro <- find_transformation(wv=fake_word_vectors,
+                                 ref=tcm.dgc,
+                                 method = "retrofit")
+
+    tcm.approx <- text2vec::sim2(retro, method = "cosine")
+    tcm.dgc.b <- tcm.dgc[vocab, vocab]
+    tcm.approx <- tcm.approx[vocab, vocab]
+    post <- mean((tcm.approx - tcm.dgc.b)^2)
+
+    retro <- find_transformation(wv=retro,
+                                ref=tcm.dgc,
+                                method = "retrofit")
+    
+    tcm.approx <- text2vec::sim2(retro, method = "cosine")
+    tcm.dgc.b <- tcm.dgc[vocab, vocab]
+    tcm.approx <- tcm.approx[vocab, vocab]
+    postb <- mean((tcm.approx - tcm.dgc.b)^2)
+
+    expect_true(base > post)
+    expect_true(post > postb)
+
+    expect_identical(dim(retro), dim(fake_word_vectors))
+
+})
+

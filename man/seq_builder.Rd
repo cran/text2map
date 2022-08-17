@@ -43,12 +43,12 @@ from the dictionary.
 Function will return a matrix of integer sequences by default.
 The columns will be the length of the longest document or
 \code{maxlen}, with shorter documents padded with zeros. The
-dictionary  will be an attribute of the matrix accessed with
-\code{attr(seq)$dic}. If \code{matrix = FALSE}, the function will
+dictionary will be an attribute of the matrix accessed with
+\code{attr(seq, "dic")}. If \code{matrix = FALSE}, the function will
 return a list of integer sequences. The vocabulary will either
 be each unique token in the corpus, or a the list of words
 provided to the \code{vocab} argument. This kind of text
-representation is used in \href{https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer}{tensorflow} and \href{https://keras.rstudio.com/reference/texts_to_sequences.html}{keras}.
+representation is used in \href{https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer}{tensorflow} and \href{https://tensorflow.rstudio.com/reference/keras/texts_to_sequences}{keras}.
 }
 \author{
 Dustin Stoltz

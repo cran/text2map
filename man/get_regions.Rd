@@ -53,10 +53,10 @@ uses the Armadillo library.
 data(ft_wv_sample)
 
 my.regions <- get_regions(
-  wv = ft_wv_sample,
-  k_regions = 10L,
-  max_iter = 10L,
-  seed = 01984
+    wv = ft_wv_sample,
+    k_regions = 10L,
+    max_iter = 10L,
+    seed = 01984
 )
 }
 \references{

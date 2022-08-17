@@ -23,8 +23,24 @@ sentences <- stringr::str_squish(gsub("[\n]", "", sentences))
 corpus <- data.frame(text = sentences,
                      doc_id = LETTERS[seq_len(length(sentences))])
 
-## Create fake word vectors ##
+# create another mini corpus
+my_corpus <- data.frame(
+    text = c(
+        "I hear babies crying I watch them grow",
+        "They'll learn much more than I'll ever know",
+        "And I think to myself",
+        "What a wonderful world",
+        "Yes I think to myself",
+        "What a wonderful world"
+    ),
+    line_id = paste0("line", seq_len(6))
+)
+# some text preprocessing
+my_corpus$clean_text <- tolower(gsub("'", "", my_corpus$text))
 
+# -----------------------------------------------------------------------------
+### Create fake word vectors ##
+# -----------------------------------------------------------------------------
 # 10 Dimensions and 30 Words
 # set.seed(59801);rnorm(300) %>% round(.,6) -> rnums
 # fake_word_vectors <-matrix(rnums, nrow=30)
@@ -177,6 +193,18 @@ dtm.tm <-tidytext_dtm(corpus)
 # tm::TermDocumentMatrix() # TermDocumentMatrx
 dtm.tdm <- tidytext_tdm(corpus)
 
+# -----------------------------------------------------------------------------
+# Create TCM
+# -----------------------------------------------------------------------------
+
+tkns <- quanteda::tokens(corpus$text)
+tcm <- quanteda::fcm(tkns,
+    context = "window",
+    window = 5L,
+    tri = FALSE
+)
+
+tcm.dgc <- as(tcm, "dgCMatrix")
 
 # -----------------------------------------------------------------------------
 # CoCA

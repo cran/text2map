@@ -1,3 +1,11 @@
+# text2map 0.1.6
+## Improvements
+
+- Add functionality
+  - `doc_centrality` calculates four graph-based centrality metrics using DTMs
+  - `doc_similarty` calculates four document similarity measures using DTMs
+
+
 # text2map 0.1.5
 ## Improvements
 
@@ -8,6 +16,7 @@
   - `seq_builder` creates a token-integer sequence representation
 - Added Shakespeare metadata for examples
 - Import Matrix package methods
+
 # text2map 0.1.4
 
 ## Improvements

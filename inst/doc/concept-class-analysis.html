@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
-<meta name="date" content="2022-05-23" />
+<meta name="date" content="2022-08-17" />
 
 <title>CoCA: Concept Class Analysis</title>
 
@@ -25,6 +25,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
     if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
     a = h.attributes;
     while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
   }
 });
 </script>
@@ -52,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -121,13 +136,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -332,48 +354,37 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">CoCA: Concept Class Analysis</h1>
-<h4 class="date">2022-05-23</h4>
+<h4 class="date">2022-08-17</h4>
 
 
 
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(text2map)</span></code></pre></div>
-<p>Concept Class Analysis (CoCA) is a method for grouping documents
-based on the schematic similarities in their engagement with multiple
-semantic directions (as measured in the previous section). This is a
-generalization of <a href="https://sociologicalscience.com/articles-v4-15-353/">Correlational
-Class Analysis</a> for survey data. We outline this method in more
-detail in our <em>Sociological Science</em> paper, “<a href="http://dx.doi.org/10.15195/v7.a23">Concept Class Analysis: A
-Method for Identifying Cultural Schemas in Texts</a>.”</p>
-<p>The first step to use CoCA is build two or more semantic directions.
-For example, here are three semantic directions related to
-socio-economic status:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>    <span class="co"># build juxtaposed pairs for each semantic directions</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    pairs<span class="fl">.01</span> <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">additions  =</span> <span class="fu">c</span>(<span class="st">&quot;rich&quot;</span>, <span class="st">&quot;richer&quot;</span>, <span class="st">&quot;affluence&quot;</span>, <span class="st">&quot;wealthy&quot;</span>),</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">substracts =</span> <span class="fu">c</span>(<span class="st">&quot;poor&quot;</span>, <span class="st">&quot;poorer&quot;</span>, <span class="st">&quot;poverty&quot;</span>, <span class="st">&quot;impoverished&quot;</span>) )</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    pairs<span class="fl">.02</span> <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">additions  =</span> <span class="fu">c</span>(<span class="st">&quot;skilled&quot;</span>, <span class="st">&quot;competent&quot;</span>, <span class="st">&quot;proficient&quot;</span>, <span class="st">&quot;adept&quot;</span>),</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">substracts =</span> <span class="fu">c</span>(<span class="st">&quot;unskilled&quot;</span>, <span class="st">&quot;incompetent&quot;</span>, <span class="st">&quot;inproficient&quot;</span>, <span class="st">&quot;inept&quot;</span>) )</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    pairs<span class="fl">.03</span> <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">additions  =</span> <span class="fu">c</span>(<span class="st">&quot;educated&quot;</span>, <span class="st">&quot;learned&quot;</span>, <span class="st">&quot;trained&quot;</span>, <span class="st">&quot;literate&quot;</span>),</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                           <span class="at">substracts =</span> <span class="fu">c</span>(<span class="st">&quot;uneducated&quot;</span>, <span class="st">&quot;unlearned&quot;</span>, <span class="st">&quot;untrained&quot;</span>, <span class="st">&quot;illiterate&quot;</span>) )</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># get the vectors for each direction</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    sd<span class="fl">.01</span> <span class="ot">&lt;-</span> <span class="fu">get_direction</span>(pairs<span class="fl">.01</span>, my.wv)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    sd<span class="fl">.02</span> <span class="ot">&lt;-</span> <span class="fu">get_direction</span>(pairs<span class="fl">.02</span>, my.wv)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    sd<span class="fl">.03</span> <span class="ot">&lt;-</span> <span class="fu">get_direction</span>(pairs<span class="fl">.03</span>, my.wv)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># row bind each direction</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    sem.dirs <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sd<span class="fl">.01</span>, sd<span class="fl">.02</span>, sd<span class="fl">.03</span>)</span></code></pre></div>
-<p>Next, we feed our document-term matrix, word embeddings matrix, and
-our semantic direction data.frame from above to the <code>CoCA</code>
-function:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  classes <span class="ot">&lt;-</span> <span class="fu">CoCA</span>(my.dtm, <span class="at">wv =</span> my.wv, <span class="at">directions =</span> sem.dirs)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(classes)</span></code></pre></div>
-<p>Finally, using the <code>plot()</code> function, we can generate
-simple visualizations of the schematic classes found:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># this is a quick plot. </span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># designate which module to plot with `module = `</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(classes, <span class="at">module=</span><span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">library</span>(text2map)</span></code></pre></div>
+<p>Concept Class Analysis (CoCA) is a method for grouping documents based on the schematic similarities in their engagement with multiple semantic directions (as measured in the previous section). This is a generalization of <a href="https://sociologicalscience.com/articles-v4-15-353/">Correlational Class Analysis</a> for survey data. We outline this method in more detail in our <em>Sociological Science</em> paper, “<a href="http://dx.doi.org/10.15195/v7.a23">Concept Class Analysis: A Method for Identifying Cultural Schemas in Texts</a>.”</p>
+<p>The first step to use CoCA is build two or more semantic directions. For example, here are three semantic directions related to socio-economic status. Note that you must load or create word embeddings.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    <span class="co"># build juxtaposed pairs for each semantic directions</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    pairs_<span class="dv">01</span> &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">additions  =</span> <span class="kw">c</span>(<span class="st">&quot;rich&quot;</span>, <span class="st">&quot;richer&quot;</span>, <span class="st">&quot;affluence&quot;</span>, <span class="st">&quot;wealthy&quot;</span>),</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>                           <span class="dt">substracts =</span> <span class="kw">c</span>(<span class="st">&quot;poor&quot;</span>, <span class="st">&quot;poorer&quot;</span>, <span class="st">&quot;poverty&quot;</span>, <span class="st">&quot;impoverished&quot;</span>) )</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    pairs_<span class="dv">02</span> &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">additions  =</span> <span class="kw">c</span>(<span class="st">&quot;skilled&quot;</span>, <span class="st">&quot;competent&quot;</span>, <span class="st">&quot;proficient&quot;</span>, <span class="st">&quot;adept&quot;</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>                          <span class="dt">substracts =</span> <span class="kw">c</span>(<span class="st">&quot;unskilled&quot;</span>, <span class="st">&quot;incompetent&quot;</span>, <span class="st">&quot;inproficient&quot;</span>, <span class="st">&quot;inept&quot;</span>) )</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    pairs_<span class="dv">03</span> &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">additions  =</span> <span class="kw">c</span>(<span class="st">&quot;educated&quot;</span>, <span class="st">&quot;learned&quot;</span>, <span class="st">&quot;trained&quot;</span>, <span class="st">&quot;literate&quot;</span>),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>                           <span class="dt">substracts =</span> <span class="kw">c</span>(<span class="st">&quot;uneducated&quot;</span>, <span class="st">&quot;unlearned&quot;</span>, <span class="st">&quot;untrained&quot;</span>, <span class="st">&quot;illiterate&quot;</span>) )</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    <span class="co"># get the vectors for each direction</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    sd_<span class="dv">01</span> &lt;-<span class="st"> </span><span class="kw">get_direction</span>(pairs_<span class="dv">01</span>, my_wv)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    sd_<span class="dv">02</span> &lt;-<span class="st"> </span><span class="kw">get_direction</span>(pairs_<span class="dv">02</span>, my_wv)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    sd_<span class="dv">03</span> &lt;-<span class="st"> </span><span class="kw">get_direction</span>(pairs_<span class="dv">03</span>, my_wv)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    <span class="co"># row bind each direction</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>    sem_dirs &lt;-<span class="st"> </span><span class="kw">rbind</span>(sd_<span class="dv">01</span>, sd_<span class="dv">02</span>, sd_<span class="dv">03</span>)</span></code></pre></div>
+<p>Next, we feed our document-term matrix, word embeddings matrix, and our semantic direction data.frame from above to the <code>CoCA</code> function:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>  classes &lt;-<span class="st"> </span><span class="kw">CoCA</span>(my_dtm, <span class="dt">wv =</span> my_wv, <span class="dt">directions =</span> sem_dirs)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  <span class="kw">print</span>(classes)</span></code></pre></div>
+<p>Finally, using the <code>plot()</code> function, we can generate simple visualizations of the schematic classes found:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>  <span class="co"># this is a quick plot. </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="co"># designate which module to plot with `module = `</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">plot</span>(classes, <span class="dt">module=</span><span class="dv">1</span>)</span></code></pre></div>
 
 
 

@@ -15,6 +15,7 @@ dtm_stopper(
   stop_hapax = FALSE,
   stop_null = FALSE,
   omit_empty = FALSE,
+  dense = FALSE,
   ignore_case = TRUE
 )
 }
@@ -52,8 +53,12 @@ hapax legomena}
 \item{stop_null}{Logical (default = FALSE) indicating whether to remove terms
 that occur zero times in the DTM.}
 
-\item{omit_empty}{Logical (default = FALSE) indicating whether to omit rows that
-are empty after stopping any terms.}
+\item{omit_empty}{Logical (default = FALSE) indicating whether to omit rows
+that are empty after stopping any terms.}
+
+\item{dense}{The default (\code{FALSE}) is to return a matrix of class
+"dgCMatrix". Setting dense to \code{TRUE} will return a
+normal base \code{R} dense matrix.}
 
 \item{ignore_case}{Logical (default = TRUE) indicating whether to ignore
 capitalization.}
@@ -117,54 +122,54 @@ The \code{omit_empty} argument will remove documents that are empty
 \examples{
 
 # create corpus and DTM
-my.corpus <- data.frame(
-  text = c(
-    "I hear babies crying I watch them grow",
-    "They'll learn much more than I'll ever know",
-    "And I think to myself",
-    "What a wonderful world",
-    "Yes I think to myself",
-    "What a wonderful world"
-  ),
-  line_id = paste0("line", seq_len(6))
+my_corpus <- data.frame(
+    text = c(
+        "I hear babies crying I watch them grow",
+        "They'll learn much more than I'll ever know",
+        "And I think to myself",
+        "What a wonderful world",
+        "Yes I think to myself",
+        "What a wonderful world"
+    ),
+    line_id = paste0("line", seq_len(6))
 )
 ## some text preprocessing
-my.corpus$clean_text <- tolower(gsub("'", "", my.corpus$text))
+my_corpus$clean_text <- tolower(gsub("'", "", my_corpus$text))
 
 dtm <- dtm_builder(
-  data = my.corpus,
-  text = clean_text,
-  doc_id = line_id
+    data = my_corpus,
+    text = clean_text,
+    doc_id = line_id
 )
 
 ## example 1 with R 4.1 pipe
 \donttest{
 dtm_st <- dtm |>
-  dtm_stopper(stop_list = c("world", "babies"))
+    dtm_stopper(stop_list = c("world", "babies"))
 }
 
 ## example 2 without pipe
 dtm_st <- dtm_stopper(
-  dtm,
-  stop_list = c("world", "babies")
+    dtm,
+    stop_list = c("world", "babies")
 )
 
 ## example 3 precompiled stoplist
 dtm_st <- dtm_stopper(
-  dtm,
-  stop_list = get_stoplist("snowball2014")
+    dtm,
+    stop_list = get_stoplist("snowball2014")
 )
 
 ## example 4, stop top 2
 dtm_st <- dtm_stopper(
-  dtm,
-  stop_termrank = 2L
+    dtm,
+    stop_termrank = 2L
 )
 
 ## example 5, stop docfreq
 dtm_st <- dtm_stopper(
-  dtm,
-  stop_docfreq = c(2, 5)
+    dtm,
+    stop_docfreq = c(2, 5)
 )
 
 }

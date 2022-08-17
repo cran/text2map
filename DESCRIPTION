@@ -1,7 +1,7 @@
 Type: Package
 Package: text2map
 Title: R Tools for Text Matrices, Embeddings, and Networks
-Version: 0.1.5
+Version: 0.1.6
 Authors@R: 
    c(person(given = "Dustin", 
             family = "Stoltz", 
@@ -31,18 +31,18 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 BugReports: https://gitlab.com/culturalcartography/text2map/-/issues
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Depends: R (>= 3.5.0), Matrix
 Imports: text2vec, parallel, doParallel, foreach, stringr, stringi,
         dplyr, kit, fastmatch, methods, qgraph (>= 1.6.9), igraph (>=
-        1.2.6), magrittr, rlang, ClusterR, tibble
+        1.2.6), magrittr, rlang, ClusterR, tibble, rsvd
 Suggests: testthat (>= 3.0.0), tidytext, tm, quanteda, knitr, rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr, rmarkdown
 NeedsCompilation: no
-Packaged: 2022-05-23 14:26:43 UTC; tin
+Packaged: 2022-08-17 16:30:57 UTC; dss219
 Author: Dustin Stoltz [aut, cre] (<https://orcid.org/0000-0002-4774-0765>),
   Marshall Taylor [aut] (<https://orcid.org/0000-0002-7440-0723>)
 Maintainer: Dustin Stoltz <maintainers@textmapping.com>
 Repository: CRAN
-Date/Publication: 2022-05-23 18:20:02 UTC
+Date/Publication: 2022-08-17 22:20:02 UTC

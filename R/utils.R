@@ -179,8 +179,8 @@ tiny_gender_tagger <- function() {
 #' @noRd
 .kurtosis <- function(x) {
   n <- length(x)
-  x <- x - mean(x)
-  r <- n * sum(x^4) / (sum(x^2)^2)
+  x <- x - base::mean(x)
+  r <- n * base::sum(x^4) / (base::sum(x^2)^2)
   out <- r * (1 - 1 / n)^2 - 3
   return(out)
 }
@@ -195,8 +195,8 @@ tiny_gender_tagger <- function() {
 #' @noRd
 .skewness <- function(x) {
   n <- length(x)
-  x <- x - mean(x)
-  y <- sqrt(n) * sum(x^3) / (sum(x^2)^(3 / 2))
+  x <- x - base::mean(x)
+  y <- sqrt(n) * base::sum(x^3) / (base::sum(x^2)^(3 / 2))
   out <- y * ((1 - 1 / n))^(3 / 2)
   return(out)
 }

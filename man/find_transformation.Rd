@@ -4,7 +4,11 @@
 \alias{find_transformation}
 \title{Find a specified matrix transformation}
 \usage{
-find_transformation(wv, ref = NULL, method = c("align", "norm", "center"))
+find_transformation(
+  wv,
+  ref = NULL,
+  method = c("align", "norm", "center", "retrofit")
+)
 }
 \arguments{
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
@@ -15,7 +19,7 @@ toward which the source matrix is to be aligned.}
 
 \item{method}{Character vector indicating the method to use for
 the transformation. Current methods include: "align",
-"norm", and "center" -- see details.}
+"norm", "center", and "refrofit" -- see details.}
 }
 \value{
 A new word embedding matrix,
@@ -31,7 +35,9 @@ normalized by the L2 norm. Both have been found to improve
 word embedding representations. The function also finds a transformed
 matrix that approximately aligns \eqn{B}, with another matrix,
 \eqn{A}, of word embedding vectors (reference), using Procrustes
-transformation (see details).
+transformation (see details). Finally, given a term-co-occurrence matrix
+built on a local corpus, the function can "retrofit" pretrained
+embeddings to better match the local corpus.
 }
 \details{
 Aligning a source matrix of word embedding vectors, \eqn{B}, to a

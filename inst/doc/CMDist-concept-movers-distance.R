@@ -11,15 +11,15 @@ knitr::include_graphics("figures/02_fig1_cmd.png")
 #  library(googledrive) # (see https://googledrive.tidyverse.org/)
 #  temp <- tempfile()
 #  drive_download(as_id("17H4GOGedeGo0urQdDC-4e5qWQMeWLpGG"), path = temp, overwrite = TRUE)
-#  my.wv <- readRDS(temp)
+#  my_wv <- readRDS(temp)
 #  # save them to your project file so you don't have to re-download
-#  saveRDS(my.wv, "data/ft.cc.en.300D.2M.Rds")
+#  saveRDS(my_wv, "data/ft.cc.en.300D.2M.Rds")
 
 ## ---- eval = FALSE------------------------------------------------------------
 #  library(text2vec)
 #  
-#  cos_sim <- sim2(x = my.wv,
-#                  y = my.wv["thinking", , drop = FALSE],
+#  cos_sim <- sim2(x = my_wv,
+#                  y = my_wv["thinking", , drop = FALSE],
 #                  method = "cosine")
 #  
 #  head(sort(cos_sim[,1], decreasing = TRUE), 10)

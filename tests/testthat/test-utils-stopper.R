@@ -18,6 +18,21 @@ test_that("dtm_stopper works with stop_list", {
 
 })
 
+test_that("dtm_stopper works with dense", {
+
+    out1 <- dtm_stopper(dtm.dgc,
+            stop_list = c("we", "moon"),
+            ignore_case = FALSE,
+            dense = TRUE)
+
+    expect_identical(
+        dim(out1),
+        as.integer(c(10, 42)))
+
+    expect_identical(class(out1), c("matrix", "array"))
+
+})
+
 test_that("dtm_stopper works with stop_termfreq", {
 
     expect_identical(
@@ -29,19 +44,31 @@ test_that("dtm_stopper works with stop_termfreq", {
     expect_identical(
         dim(dtm_stopper(dtm.dgc, stop_termfreq = c(1, 2))),
         as.integer(c(10, 35)))
+    expect_identical(
+        dim(dtm_stopper(dtm.dgc, stop_termfreq = c(1, Inf))),
+        as.integer(c(10, 44)))
 })
 
 test_that("dtm_stopper works with stop_termprop", {
+
     expect_identical(
         dim(dtm_stopper(dtm.dgc, stop_termprop = c(0.04, 0.99))),
         as.integer(c(10, 7)))
     expect_identical(
         dim(dtm_stopper(dtm.dgc, stop_termprop = c(0.01, 0.1))),
         as.integer(c(10, 43)))
-
+    expect_identical(
+        dim(dtm_stopper(dtm.dgc, stop_termprop = c(0.01, 0.06))),
+        as.integer(c(10, 41)))
+    expect_identical(
+        dim(dtm_stopper(dtm.dgc, stop_termprop = c(Inf, 0.1))),
+        as.integer(c(10, 44)))
+    expect_identical(
+        dim(dtm_stopper(dtm.dgc, stop_termprop = c(Inf, Inf))),
+        as.integer(c(10, 44)))
 })
 
-test_that("dtm_stopper works with stop_docprop", {
+test_that("dtm_stopper works with stop_docfreq", {
 
     expect_identical(
         dim(dtm_stopper(dtm.dgc, stop_docfreq = c(1L, 3L))),
@@ -49,6 +76,12 @@ test_that("dtm_stopper works with stop_docprop", {
     expect_identical(
         dim(dtm_stopper(dtm.dgc, stop_docfreq = c(2L, 4L))),
         as.integer(c(10, 12)))
+    expect_identical(
+        dim(dtm_stopper(dtm.dgc, stop_docfreq = c(2L, Inf))),
+        as.integer(c(10, 13)))
+    expect_identical(
+        dim(dtm_stopper(dtm.dgc, stop_docfreq = c(Inf, Inf))),
+        as.integer(c(10, 44)))
 })
 
 test_that("dtm_stopper works with stop_docprop", {
@@ -131,7 +164,8 @@ test_that("dtm_stopper errors work", {
         expect_message(dtm_stopper(as.matrix(dtm.dgc))))
     expect_error(
         expect_message(dtm_stopper(dtm.dgc, stop_termrank = "picklespit")))
-
+    expect_error(
+        expect_message(dtm_stopper(dtm.dgc, stop_termfreq = "picklespit")))
 })
 
 

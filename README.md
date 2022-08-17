@@ -37,6 +37,7 @@ There are three related packages in development, and hosted on GitLab:
     - Concreteness Dictionary for English, N = 40,000 (Brysbaert et al. 2014)
     - NRC Valence, Arousal, and Dominance Dictionary for English (Mohammad et al. 2018)
 - text2map.theme: changes `ggplot2` aesthetics and loads viridis color scheme as default
+- text2map.pretrained: collection of pretrained embeddings and stm models
 
 The above packages can be installed using the following:
 
@@ -44,6 +45,7 @@ The above packages can be installed using the following:
 library(remotes)
 install_gitlab("culturalcartography/text2map.theme")
 install_gitlab("culturalcartography/text2map.corpora")
+install_gitlab("culturalcartography/text2map.pretrained")
 install_gitlab("culturalcartography/text2map.dictionaries")
 ```
 

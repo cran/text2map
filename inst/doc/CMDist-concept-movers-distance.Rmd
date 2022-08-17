@@ -73,26 +73,26 @@ You can also download the file directly into your R session using the following:
 library(googledrive) # (see https://googledrive.tidyverse.org/)
 temp <- tempfile()
 drive_download(as_id("17H4GOGedeGo0urQdDC-4e5qWQMeWLpGG"), path = temp, overwrite = TRUE)
-my.wv <- readRDS(temp)
+my_wv <- readRDS(temp)
 # save them to your project file so you don't have to re-download
-saveRDS(my.wv, "data/ft.cc.en.300D.2M.Rds")
+saveRDS(my_wv, "data/ft.cc.en.300D.2M.Rds")
 ```
 
-Instead of pretrained embeddings, you can create your own embeddings trained locally on the corpus on which you are using `CMDist`. For example, the `text2vec` R package provides a nice [workflow for using the GloVe method to train embeddings](https://cran.r-project.org/package=text2vec/vignettes/glove.html). As we discuss in our original paper, the decision to use pre-trained vs local corpus-trained is understudied as applied in the social-scientific context. Pretrained embeddings are a simple way to get an analysis started, but researchers should always be critical about the corpus used to train these models.
+Instead of pretrained embeddings, you can create your own embeddings trained locally on the corpus on which you are using `CMDist`. For example, the `text2vec` R package provides a nice [workflow for using the GloVe method to train embeddings](https://cran.r-project.org/package=text2vec/vignettes/glove.html). Pretrained embeddings are a simple way to get an analysis started, but researchers should always be critical about the corpus used to train these models.
 
-One important caveat: the terms used to denote a concept or build a semantic direction need not be in the corpus, _but it must be in the word embeddings matrix_. If it is not, the function will stop and let you know. This means, obviously, that corpus-trained embeddings cannot be used with words not in the corpus (pre-trained must be used). As the fastText method can be trained on "subword" character strings, it is possible to average the character strings that make up an out-of-vocabulary term.
+One important caveat: the terms used to denote a concept or build a semantic direction need not be in the corpus, _but it must be in the word embeddings matrix_. If it is not, the function will stop and let you know. This means, obviously, that local corpus-trained embeddings cannot be used with words not in the corpus (pre-trained must be used). As the fastText method can be trained on "subword" character strings, it is possible to average the character strings that make up an out-of-vocabulary term.
 
 ## Measuring Conceptual Engagement
 
 ### Terms Denoting Focal Concepts
 
-The most difficult and important part of using Concept Mover's Distance is selecting anchor terms. This should be driven by (a) theory, (b) prior literature, (c) domain knowledge, and (d) the word embedding space. One way of double-checking that selected terms are approriate is to look at the term's nearest neighbors. Here we use the `sim2` function from `text2vec` to get the cosine distance between "thinking" and its top 10 nearest neighbors.
+The most difficult and important part of using Concept Mover's Distance is selecting anchor terms. This should be driven by (a) theory, (b) prior literature, (c) domain knowledge, and (d) the word embedding space. One way of double-checking that selected terms are appropriate is to look at the term's nearest neighbors. Here we use the `sim2` function from `text2vec` to get the cosine distance between "thinking" and its top 10 nearest neighbors.
 
 ```{r, eval = FALSE}
 library(text2vec)
 
-cos_sim <- sim2(x = my.wv, 
-                y = my.wv["thinking", , drop = FALSE], 
+cos_sim <- sim2(x = my_wv, 
+                y = my_wv["thinking", , drop = FALSE], 
                 method = "cosine")
 
 head(sort(cos_sim[,1], decreasing = TRUE), 10)
@@ -105,7 +105,7 @@ Once you have a DTM and word embedding matrix, the simplest use of `CMDist` invo
 
 ```r
   
-doc_closeness <- CMDist(dtm = my.dtm, cw = "thinking", wv = my.wv)
+doc_closeness <- CMDist(dtm = my_dtm, cw = "thinking", wv = my_wv)
 
 ```
 
@@ -115,7 +115,7 @@ However, we may be interested in _specifying_ the concept with additional words:
 
 ```r
   
-doc_closeness <- CMDist(dtm = my.dtm, cw = "critical thinking", wv = my.wv)
+doc_closeness <- CMDist(dtm = my_dtm, cw = "critical thinking", wv = my_wv)
 
 ```
 
@@ -125,7 +125,7 @@ What if instead of a compound concept we are interested in a common concept repr
 
 ```r
   
-doc_closeness <- CMDist(dtm = my.dtm, cw = "critical_thinking", wv = my.wv)
+doc_closeness <- CMDist(dtm = my_dtm, cw = "critical_thinking", wv = my_wv)
 
 ```
 
@@ -141,10 +141,10 @@ additions  <- c("death", "casualty", "demise", "dying", "fatality")
 substracts <- c("life", "survivor", "birth", "living", "endure")
 
 pairs <- cbind(additions, substracts)
-death.sd <- get_direction(pairs, my.wv)
+death.sd <- get_direction(pairs, my_wv)
 
 # input it into the function just like a concept word:
-doc_closeness <- CMDist(dtm = my.dtm, cv = death.sd, wv = my.wv)
+doc_closeness <- CMDist(dtm = my_dtm, cv = death.sd, wv = my_wv)
 
 ```
 
@@ -154,10 +154,10 @@ Instead of building a pseudo-document with several terms, as in the compound con
 # first build the semantic centroid:
 terms  <- c("death", "casualty", "demise", "dying", "fatality")
 
-death.sc <- get_centroid(terms, my.wv)
+death.sc <- get_centroid(terms, my_wv)
 
 # input it into the function just like a concept word:
-doc_closeness <- CMDist(dtm = my.dtm, cv = death.sc, wv = my.wv)
+doc_closeness <- CMDist(dtm = my_dtm, cv = death.sc, wv = my_wv)
 
 ```
 
@@ -171,15 +171,15 @@ An analysis might suggest multiple concepts are of interest, and so it is useful
 
 # example 1
 concept.words <- c("thinking", "critical", "thought")
-doc_closeness < CMDist(dtm = my.dtm, cw = concept.words, wv = my.wv)
+doc_closeness < CMDist(dtm = my_dtm, cw = concept.words, wv = my_wv)
 
 # example 2
 concept.words <- c("critical thought", "critical_thinking")
-doc_closeness < CMDist(dtm = my.dtm, cw = concept.words, wv = my.wv)
+doc_closeness < CMDist(dtm = my_dtm, cw = concept.words, wv = my_wv)
 
 # example 3
 concept.words <- c("critical thought", "critical_thinking")
-doc_closeness < CMDist(dtm = my.dtm, cw = concept.words, cv = concept.vectors, wv = my.wv)
+doc_closeness < CMDist(dtm = my_dtm, cw = concept.words, cv = concept.vectors, wv = my_wv)
 
 ```
 
@@ -190,9 +190,9 @@ Calculating `CMD` (as of version 0.5.0) relies on [Linear Complexity RWMD](https
 One way to reduce complexity and thus time (without a noticeable drop in accuracy) is by removing very sparse terms in your DTM. Parallelizing is another option, so we built it in. To use parallel calculations just set `parallel = TRUE`. The default number of threads is 2, but you can set it as high as you have threads/cores.
 
 ```r
-doc_closeness <- CMDist(dtm = my.dtm, 
+doc_closeness <- CMDist(dtm = my_dtm, 
                       cw = "critical_thinking", 
-                      wv = my.wv, 
+                      wv = my_wv, 
                       parallel = TRUE, 
                       threads = 2)
 
@@ -204,7 +204,7 @@ By default, the outputs are normalized using the `scale()` function in R. If thi
 
 ```r
   
- doc_closeness <- CMDist(dtm = my.dtm, cw = "thinking", wv = my.wv, scale = FALSE)
+ doc_closeness <- CMDist(dtm = my_dtm, cw = "thinking", wv = my_wv, scale = FALSE)
                           
 ```
 
