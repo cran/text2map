@@ -121,6 +121,12 @@ test_that("doc_similarity, cosine", {
 })
 
 
+test_that("doc_similarity, cosine, x and y", {
+    out1 <- doc_similarity(dtm.dgc, dtm.dgc, method = "cosine")
+    expect_true(ncol(out1) == nrow(out1))
+})
+
+
 test_that("doc_similarity, wmd", {
     out1 <- doc_similarity(dtm.dgc,
         wv = fake_word_vectors,

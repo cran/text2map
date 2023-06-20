@@ -204,7 +204,13 @@ tcm <- quanteda::fcm(tkns,
     tri = FALSE
 )
 
-tcm.dgc <- as(tcm, "dgCMatrix")
+# tcm.dgc <- as(tcm, "dgCMatrix")
+tcm.dgc <- methods::as(
+      methods::as(
+          methods::as(tcm, "dMatrix"),
+          "generalMatrix"
+      ), "CsparseMatrix"
+  )
 
 # -----------------------------------------------------------------------------
 # CoCA

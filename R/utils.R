@@ -92,7 +92,6 @@ get_stoplist <- function(source = "tiny2020", language = "en", tidy = FALSE) {
 #'
 #' @return returns a tibble with two columns
 #' @export
-
 tiny_gender_tagger <- function() {
   tb1 <- tibble::tibble(
     word = c(
@@ -104,7 +103,6 @@ tiny_gender_tagger <- function() {
     )
   )
   tb1$gender <- "feminine"
-
 
   tb2 <- tibble::tibble(
     word = c(
@@ -121,7 +119,6 @@ tiny_gender_tagger <- function() {
 
   return(gender_tagger)
 }
-
 
 ## ------ INTERNAL GENERIC FUNCTIONS ----------------------------------------- #
 
@@ -143,6 +140,7 @@ tiny_gender_tagger <- function() {
 #'
 #' @author Dustin Stoltz
 #'
+#' @keywords internal
 #' @noRd
 `%in%` <- fastmatch::`%fin%`
 
@@ -168,14 +166,33 @@ tiny_gender_tagger <- function() {
 #' @noRd
 `%fnin%` <- Negate(fastmatch::`%fin%`)
 
+# #' Fast-not-match `%fnin%` operator
+# #'
+# #' Complement of the operator \code{\%in\%}. Returns the elements of `x` that
+# #'
+# #'
+# #'
+# #' @usage x \%fin\% y
+# #'
+# #' @param x vector of all items
+# #' @param y vector of set of items to be not-matched
+# #'
+# #' @return logical vector of items in x not in y
+# #'
+# #' @author Dustin Stoltz
+# #'
+# #' @noRd
+# `%fnin%` <- Negate(base::`%in%`)
 
-#' .kurtosis
+
+#' Measure .kurtosis
 #'
 #' adapted from e1071 package type=3 in the kurtosis function:
 #' b_2 = m_4/s^4 - 3 = (g_2 + 3)(1 - 1/n)^2 - 3
 #'
 #' @param x a vector of numbers
 #'
+#' @keywords internal
 #' @noRd
 .kurtosis <- function(x) {
   n <- length(x)
@@ -185,13 +202,14 @@ tiny_gender_tagger <- function() {
   return(out)
 }
 
-#' .skewness
+#' Measure .skewness
 #'
 #' adapted from e1071 package type=3 in the skewness function:
 #' b_1 = m_3/s^3 = g_((n - 1)/n)^3/2
 #'
 #' @param x a vector of numbers
 #'
+#' @keywords internal
 #' @noRd
 .skewness <- function(x) {
   n <- length(x)
@@ -201,21 +219,23 @@ tiny_gender_tagger <- function() {
   return(out)
 }
 
-#' .n_decimal_places
+#' Measure .n_decimal_places
 #'
 #' Counts the number of decimal places. Code from
 #' https://stackoverflow.com/a/5173906/15855390
 #'
 #' @param x a vector of numbers
 #'
+#' @keywords internal
 #' @noRd
 .n_decimal_places <- function(x) {
   if (abs(x - round(x)) > .Machine$double.eps^0.5) {
-    nchar(strsplit(sub(
-      "0+$", "",
-      as.character(format(x, scientific = FALSE))
-    ), ".",
-    fixed = TRUE
+    nchar(strsplit(
+      sub(
+        "0+$", "",
+        as.character(format(x, scientific = FALSE))
+      ), ".",
+      fixed = TRUE
     )[[1]][[2]])
   } else {
     return(as.integer(0))
@@ -229,6 +249,7 @@ tiny_gender_tagger <- function() {
 #' @param x a vector of numbers
 #' @param any logical (default FALSE), return any TRUE
 #'
+#' @keywords internal
 #' @noRd
 .check_whole_num <- function(x) {
   out <- is.integer(x)
@@ -236,7 +257,35 @@ tiny_gender_tagger <- function() {
   return(isTRUE(out))
 }
 
+
+#' .rnorm_trunc
+#'
+#' Generating random numbers from a truncated distribution
+#' https://www.r-bloggers.com/2020/08/generating-data-from-a-truncated-distribution/
+#' 
+#' @importFrom stats runif
+#' @importFrom stats pnorm
+#' @importFrom stats qnorm
+#'
+#' @param n number of random values to return
+#' @param mean average of the returned values
+#' @param sd standard deviation of the returned values
+#' @param min minimum value of the returned values
+#' @param max maximum value of the returned values
+#'
+#' @keywords internal
+#' @noRd
+.rnorm_trunc <- function(n, mean, sd, min, max) {
+  u <- stats::runif(n,
+    min = stats::pnorm(min, mean = mean, sd = sd),
+    max = stats::pnorm(max, mean = mean, sd = sd)
+  )
+
+  return(stats::qnorm(u, mean = mean, sd = sd))
+}
+
 #' quiets concerns of R CMD check re: i in loops and lapply
 #'
+#' @keywords internal
 #' @noRd
 utils::globalVariables(c("i"))

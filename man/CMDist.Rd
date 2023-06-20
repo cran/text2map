@@ -108,6 +108,7 @@ by clustering words into $k$ regions). The \code{\link[=get_centroid]{get_centro
 }
 \examples{
 
+
 # load example word embeddings
 data(ft_wv_sample)
 
@@ -123,8 +124,8 @@ dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 
 # example 1
 cm.dists <- CMDist(dtm,
-    cw = "space",
-    wv = ft_wv_sample
+  cw = "space",
+  wv = ft_wv_sample
 )
 
 # example 2
@@ -132,8 +133,8 @@ space <- c("spacecraft", "rocket", "moon")
 cen <- get_centroid(anchors = space, wv = ft_wv_sample)
 
 cm.dists <- CMDist(dtm,
-    cv = cen,
-    wv = ft_wv_sample
+  cv = cen,
+  wv = ft_wv_sample
 )
 }
 \references{

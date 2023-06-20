@@ -1,3 +1,17 @@
+# text2map 0.1.6.9003
+
+Fix encoding issue for non-ASCII characters to work with `fastmatch`
+Add functionality 
+- `perm_tester` for Monte Carlo Permutation Tests for Model P-Values
+- `rancor_builder` creates random corpus based on provided term probabilities 
+- `rancors_builder` creates multiple random corpora]
+
+Include additional tests, updated documentation and vignettes
+
+# text2map 0.1.6.9001
+
+Working on an encoding error in `fastmatch` which shows inconsistent behavior with non-ASCII characters. This dev version provides a temporary fix.
+
 # text2map 0.1.6
 ## Improvements
 

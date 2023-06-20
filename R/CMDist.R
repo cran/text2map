@@ -104,6 +104,7 @@
 #'
 #' @examples
 #'
+#' 
 #' # load example word embeddings
 #' data(ft_wv_sample)
 #'
@@ -119,8 +120,8 @@
 #'
 #' # example 1
 #' cm.dists <- CMDist(dtm,
-#'     cw = "space",
-#'     wv = ft_wv_sample
+#'   cw = "space",
+#'   wv = ft_wv_sample
 #' )
 #'
 #' # example 2
@@ -128,8 +129,8 @@
 #' cen <- get_centroid(anchors = space, wv = ft_wv_sample)
 #'
 #' cm.dists <- CMDist(dtm,
-#'     cv = cen,
-#'     wv = ft_wv_sample
+#'   cv = cen,
+#'   wv = ft_wv_sample
 #' )
 #' @export
 #'
@@ -137,72 +138,71 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
                    missing = "stop", scale = TRUE,
                    sens_interval = FALSE, alpha = 1, n_iters = 20L,
                    parallel = FALSE, threads = 2L, setup_timeout = 120L) {
-    prep <- .prep_cmd_INPUT(dtm, cw, cv, wv, missing)
+  prep <- .prep_cmd_INPUT(dtm, cw, cv, wv, missing)
 
-    # Workhorse CMD function: Linear Complexity RWMD ----------------------------
+  # Workhorse CMD function: Linear Complexity RWMD ----------------------------
+  if (parallel == FALSE) {
+    fullDist <- text2vec::RWMD$new(prep$DTM, prep$wem)$sim2(prep$pDTM)
+    fullDist <- t(fullDist[seq_len(prep$n_pd), , drop = FALSE])
+  }
+
+  if (parallel == TRUE) {
+    fullDist <- .parDist2(prep, threads,
+      setup_timeout,
+      sens_interval = FALSE,
+      n_iters = NULL, alpha = NULL
+    )
+  }
+
+  # Calculate Sensitivity Intervals -------------------------------------------
+  if (sens_interval == TRUE) {
+    # Get CMDs from resampled DTMs
     if (parallel == FALSE) {
-        fullDist <- text2vec::RWMD$new(prep$DTM, prep$wem)$sim2(prep$pDTM)
-        fullDist <- t(fullDist[seq_len(prep$n_pd), , drop = FALSE])
+      sampList <- lapply(seq_len(n_iters), function(x) {
+        sampDTM <- dtm_resampler(prep$DTM, alpha = alpha)
+        sampDist <- text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
+        sampDist <- t(sampDist[seq_len(prep$n_pd), , drop = FALSE])
+
+        return(sampDist)
+      })
     }
 
     if (parallel == TRUE) {
-        fullDist <- .parDist2(prep, threads,
-            setup_timeout,
-            sens_interval = FALSE,
-            n_iters = NULL, alpha = NULL
-        )
+      sampList <- .parDist2(
+        prep = prep,
+        threads = threads,
+        setup_timeout = setup_timeout,
+        sens_interval = TRUE,
+        n_iters = n_iters,
+        alpha = alpha
+      )
     }
 
-    # Calculate Sensitivity Intervals -------------------------------------------
-    if (sens_interval == TRUE) {
+    # Get 0.05 and 0.95 percentile estimates
+    dfInt <- .get_sensitivity_intervals(
+      sampList,
+      fullDist,
+      prep,
+      scale = scale
+    )
 
-        # Get CMDs from resampled DTMs
-        if (parallel == FALSE) {
-            sampList <- lapply(seq_len(n_iters), function(x) {
-                sampDTM <- dtm_resampler(prep$DTM, alpha = alpha)
-                sampDist <- text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
-                sampDist <- t(sampDist[seq_len(prep$n_pd), , drop = FALSE])
+    return(dfInt)
+  }
 
-                return(sampDist)
-            })
-        }
+  ## No Sensitivity Intervals -------------------------------------------------
+  if (sens_interval == FALSE) {
+    df <- as.data.frame(fullDist[, seq_len(prep$n_pd)])
 
-        if (parallel == TRUE) {
-            sampList <- .parDist2(
-                prep = prep,
-                threads = threads,
-                setup_timeout = setup_timeout,
-                sens_interval = TRUE,
-                n_iters = n_iters,
-                alpha = alpha
-            )
-        }
-
-        # Get 0.05 and 0.95 percentile estimates
-        dfInt <- .get_sensitivity_intervals(
-            sampList,
-            fullDist,
-            prep,
-            scale = scale
-        )
-
-        return(dfInt)
+    if (scale == TRUE) {
+      df <- as.data.frame(scale(df))
     }
 
-    ## No Sensitivity Intervals -------------------------------------------------
-    if (sens_interval == FALSE) {
-        df <- as.data.frame(fullDist[, seq_len(prep$n_pd)])
-
-        if (scale == TRUE) {
-            df <- as.data.frame(scale(df))
-        }
-
-        #
-        df <- cbind.data.frame(rownames(prep$DTM), df)
-        rownames(df) <- NULL
-        colnames(df) <- c("doc_id", prep$labels)
-        return(df)
-    }
+    #
+    df <- cbind.data.frame(rownames(prep$DTM), df)
+    rownames(df) <- NULL
+    colnames(df) <- c("doc_id", prep$labels)
+    return(df)
+  }
 }
 
 
@@ -234,134 +234,147 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #' @keywords internal
 #' @noRd
 .prep_cmd_INPUT <- function(dtm, cw = NULL, cv = NULL, wv, missing = "stop") {
+  # convert all DTMs to dgCMatrix class
+  if (class(dtm)[[1]] != "dgCMatrix") {
+    dtm <- .convert_mat_to_dgCMatrix(dtm)
+  }
 
-    # convert all DTMs to dgCMatrix class
-    if (class(dtm)[[1]] != "dgCMatrix") {
-        dtm <- .convert_dtm_to_dgCMatrix(dtm)
+
+  # ensure UTF-8 encoding
+  rownames(wv) <- stringi::stri_encode(rownames(wv), to = "UTF-8")
+  colnames(dtm) <- stringi::stri_encode(colnames(dtm), to = "UTF-8")
+
+  # initialize number of pseudo-docs
+  n_pd <- 0
+
+  ## if Concept Words (cw) are provided
+  if (!is.null(cw)) {
+    ## ensure UTF-8 encoding
+    cw <- stringi::stri_encode(cw, to = "UTF-8")
+    ## Make sure there are no extra spaces for concept words
+    cw <- stringr::str_trim(cw)
+
+    # check that concept words are in embeddings
+    cw <- .check_term_in_embeddings(cw, wv, action = missing)
+
+    # number of pseudo-docs
+    n_pd <- length(cw)
+    vocab <- kit::funique(unlist(strsplit(cw, " ", fixed = TRUE),
+      recursive = FALSE,
+      use.names = FALSE
+    ))
+    # create list of unique concept words
+    st_cw <- strsplit(cw, " ", fixed = TRUE)
+
+    ## add unique concept words if not in DTM already
+    for (i in vocab) {
+      if (!i %in% colnames(dtm)) {
+        new <- matrix(0, nrow = nrow(dtm))
+        colnames(new) <- i
+        dtm <- cbind(dtm, new)
+      }
     }
+  }
 
-    # initialize number of pseudo-docs
-    n_pd <- 0
+  ## if Concept Vectors (cv) are provided
+  # add Concept Vectors to DTM and word vector matrix
+  if (!is.null(cv)) {
+    n_pd <- n_pd + nrow(cv)
+    # each cv must have a unique name
+    rownames(cv) <- make.unique(rownames(cv), sep = "_")
+    # add unique concept vectors to word embedding matrix
+    wv <- rbind(wv, cv)
 
-    ## if Concept Words (cw) are provided
-    if (!is.null(cw)) {
-        ## Make sure there are no extra spaces for concept words
-        cw <- stringr::str_trim(cw)
-
-        # check that concept words are in embeddings
-        cw <- .check_term_in_embeddings(cw, wv, action = missing)
-
-        # number of pseudo-docs
-        n_pd <- length(cw)
-        vocab <- kit::funique(unlist(strsplit(cw, " ", fixed = TRUE),
-            recursive = FALSE,
-            use.names = FALSE
-        ))
-        # create list of unique concept words
-        st_cw <- strsplit(cw, " ", fixed = TRUE)
-
-        ## add unique concept words if not in DTM already
-        for (i in vocab) {
-            if (!i %in% colnames(dtm)) {
-                new <- matrix(0, nrow = nrow(dtm))
-                colnames(new) <- i
-                dtm <- cbind(dtm, new)
-            }
-        }
-    }
-
-    ## if Concept Vectors (cv) are provided
-    # add Concept Vectors to DTM and word vector matrix
-    if (!is.null(cv)) {
-        n_pd <- n_pd + nrow(cv)
-        # each cv must have a unique name
-        rownames(cv) <- make.unique(rownames(cv), sep = "_")
-        # add unique concept vectors to word embedding matrix
-        wv <- rbind(wv, cv)
-
-        cvec <- matrix(0, ncol = nrow(cv), nrow = nrow(dtm))
-        colnames(cvec) <- rownames(cv)
-        # add unique concept vectors to DTM
-        dtm <- cbind(dtm, cvec)
-        st_cv <- unlist(strsplit(colnames(cvec), " ", fixed = TRUE),
-            recursive = FALSE,
-            use.names = FALSE
-        )
-    }
-
-
-    ## Prepare vocab of Word Embeddings and DTM
-    wem <- wv[intersect(rownames(wv), colnames(dtm)), ]
-    # This is rare, but remove any NAs or RWMD won't like it
-    wem <- wem[rowSums(is.na(wem)) != ncol(wem), ]
-    # Remove words in the DTM without word vectors
-    dtm <- dtm[, intersect(colnames(dtm), rownames(wem))]
-
-    ## New Concept Vocab
-    # Create full list of unique vocab for each pseudo-doc
-    if (!is.null(cv) & !is.null(cw)) {
-        st <- c(st_cw, st_cv)
-    }
-    if (!is.null(cv) & is.null(cw)) {
-        st <- st_cv
-    }
-    if (is.null(cv) & !is.null(cw)) {
-        st <- st_cw
-    }
-
-
-    ## Pseudo-DTM ##
-    # Initialize
-    # pseudo-DTM must be at least two rows, even if only one concept word
-    pDTM <- Matrix::sparseMatrix(
-        dims = c(nrow = n_pd + 1, ncol(dtm)),
-        i = {}, j = {}
+    cvec <- matrix(0, ncol = nrow(cv), nrow = nrow(dtm))
+    colnames(cvec) <- rownames(cv)
+    # add unique concept vectors to DTM
+    dtm <- cbind(dtm, cvec)
+    st_cv <- unlist(strsplit(colnames(cvec), " ", fixed = TRUE),
+      recursive = FALSE,
+      use.names = FALSE
     )
-    # explicitly declare class
-    pDTM <- methods::as(pDTM, "dgCMatrix")
+  }
 
-    ## fill-in Pseudo-DTM ##
-    colnames(pDTM) <- colnames(dtm)
-    for (i in seq_len(n_pd)) {
-        pDTM[i, st[[i]]] <- 1
-    }
 
-    ## Make Labels for Each Pseudo-Doc ##
-    # grabs the first word in the query for the label
-    if (!is.null(cv) & !is.null(cw)) {
-        cw_labs <- gsub("(^\\w+)\\s.+", "\\1", cw)
-        labs <- c(cw_labs, unlist(st_cv,
-            recursive = FALSE,
-            use.names = FALSE
-        ))
-    }
+  ## Prepare vocab of Word Embeddings and DTM
+  wem <- wv[intersect(rownames(wv), colnames(dtm)), ]
+  # This is rare, but remove any NAs or RWMD won't like it
+  wem <- wem[rowSums(is.na(wem)) != ncol(wem), ]
+  # Remove words in the DTM without word vectors
+  dtm <- dtm[, intersect(colnames(dtm), rownames(wem))]
 
-    if (is.null(cv) & !is.null(cw)) {
-        cw_labs <- gsub("(^\\w+)\\s.+", "\\1", cw)
-        labs <- cw_labs
-    }
+  ## New Concept Vocab
+  # Create full list of unique vocab for each pseudo-doc
+  if (!is.null(cv) & !is.null(cw)) {
+    st <- c(st_cw, st_cv)
+  }
+  if (!is.null(cv) & is.null(cw)) {
+    st <- st_cv
+  }
+  if (is.null(cv) & !is.null(cw)) {
+    st <- st_cw
+  }
 
-    if (!is.null(cv) & is.null(cw)) {
-        labs <- st_cv
-    }
 
-    labs <- make.unique(labs, sep = "_")
+  ## Pseudo-DTM ##
+  # Initialize
+  # pseudo-DTM must be at least two rows, even if only one concept word
+  # creates a matrix of class ngCMatrix
+  pDTM <- Matrix::sparseMatrix(
+    dims = c(nrow = n_pd + 1, ncol(dtm)),
+    i = {}, j = {}, repr = "C"
+  )
+  ## fill-in Pseudo-DTM ##
+  colnames(pDTM) <- colnames(dtm)
+  for (i in seq_len(n_pd)) {
+    pDTM[i, st[[i]]] <- TRUE
+  }
+  # explicitly declare class
+  pDTM <- methods::as(pDTM, "dMatrix")
+  # pDTM <- methods::as(pDTM, "CsparseMatrix")
+  # pDTM <- methods::as(
+  #     methods::as(
+  #         methods::as(pDTM, "dMatrix"),
+  #         "generalMatrix"
+  #     ), "CsparseMatrix"
+  # )
 
-    rownames(pDTM) <- c(labs, "zee_extra_row")
+  ## Make Labels for Each Pseudo-Doc ##
+  # grabs the first word in the query for the label
+  if (!is.null(cv) & !is.null(cw)) {
+    cw_labs <- gsub("(^\\w+)\\s.+", "\\1", cw)
+    labs <- c(cw_labs, unlist(st_cv,
+      recursive = FALSE,
+      use.names = FALSE
+    ))
+  }
 
-    ## Output ##
-    # make a list of:
-    # (1) three matrices: dtm, pDTM, and subset word embeddings
-    # (2) number of pseudo-docs
-    # (3) labels for cmd output
-    output <- list(
-        DTM = dtm, pDTM = pDTM, wem = wem,
-        n_pd = n_pd, labels = labs
-    )
-    # clean up
-    rm(dtm, pDTM, wem, cw, cv, wv, n_pd, labs)
+  if (is.null(cv) & !is.null(cw)) {
+    cw_labs <- gsub("(^\\w+)\\s.+", "\\1", cw)
+    labs <- cw_labs
+  }
 
-    return(output)
+  if (!is.null(cv) & is.null(cw)) {
+    labs <- st_cv
+  }
+
+  labs <- make.unique(labs, sep = "_")
+
+  rownames(pDTM) <- c(labs, "zee_extra_row")
+
+  ## Output ##
+  # make a list of:
+  # (1) three matrices: dtm, pDTM, and subset word embeddings
+  # (2) number of pseudo-docs
+  # (3) labels for cmd output
+  output <- list(
+    DTM = dtm, pDTM = pDTM, wem = wem,
+    n_pd = n_pd, labels = labs
+  )
+  # clean up
+  rm(dtm, pDTM, wem, cw, cv, wv, n_pd, labs)
+
+  return(output)
 }
 
 
@@ -381,7 +394,6 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #'             for the `quantile()` function in the stats package). Default is
 #'             type `7`: \eqn{\(m = 1-p\). \(p_k = \frac{k - 1}{n - 1}\)},
 #'             where, \(p_k = \mbox{mode}[F(x_{k})]\).
-#' @param scale logical (default = `TRUE`) whether to scale the output
 #' @keywords internal
 #' @noRd
 .get_sensitivity_intervals <- function(sampList,
@@ -390,62 +402,62 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
                                        probs = c(0.025, 0.975),
                                        type = 7,
                                        scale) {
-    newList <- lapply(
-        seq_along(prep$labels),
-        function(i) {
-            do.call(cbind, lapply(sampList, `[`, , i))
+  newList <- lapply(
+    seq_along(prep$labels),
+    function(i) {
+      do.call(cbind, lapply(sampList, `[`, , i))
+    }
+  )
+
+  newList <- lapply(
+    seq_along(prep$labels),
+    function(i) {
+      bounds <- lapply(
+        seq_len(nrow(newList[[i]])),
+        function(j) {
+          stats::quantile(newList[[i]][j, ],
+            probs = probs,
+            type = type,
+            na.rm = FALSE
+          )
         }
-    )
+      )
 
-    newList <- lapply(
-        seq_along(prep$labels),
-        function(i) {
-            bounds <- lapply(
-                seq_len(nrow(newList[[i]])),
-                function(j) {
-                    stats::quantile(newList[[i]][j, ],
-                        probs = probs,
-                        type = type,
-                        na.rm = FALSE
-                    )
-                }
-            )
+      bounds <- t(do.call(cbind, bounds))
 
-            bounds <- t(do.call(cbind, bounds))
+      bounds <- data.frame(
+        actual = fullDist[, i],
+        upper = bounds[, 2],
+        lower = bounds[, 1]
+      )
 
-            bounds <- data.frame(
-                actual = fullDist[, i],
-                upper = bounds[, 2],
-                lower = bounds[, 1]
-            )
+      if (scale == TRUE) {
+        bounds <- (bounds - base::mean(bounds$actual)) /
+          stats::sd(unlist(bounds,
+            recursive = FALSE,
+            use.names = FALSE
+          ))
+      }
 
-            if (scale == TRUE) {
-                bounds <- (bounds - base::mean(bounds$actual)) /
-                    stats::sd(unlist(bounds,
-                        recursive = FALSE,
-                        use.names = FALSE
-                    ))
-            }
+      colnames(bounds) <- c(
+        prep$labels[i],
+        paste(prep$labels[i],
+          c("upper", "lower"),
+          sep = "_"
+        )
+      )
 
-            colnames(bounds) <- c(
-                prep$labels[i],
-                paste(prep$labels[i],
-                    c("upper", "lower"),
-                    sep = "_"
-                )
-            )
+      return(bounds)
+    }
+  )
 
-            return(bounds)
-        }
-    )
+  # prepare estimates with sensitivity intervals
+  dfInt <- do.call(cbind, newList)
+  df <- cbind.data.frame(rownames(prep$DTM), dfInt)
+  rownames(df) <- NULL
+  colnames(df) <- c("doc_id", colnames(dfInt))
 
-    # prepare estimates with sensitivity intervals
-    dfInt <- do.call(cbind, newList)
-    df <- cbind.data.frame(rownames(prep$DTM), dfInt)
-    rownames(df) <- NULL
-    colnames(df) <- c("doc_id", colnames(dfInt))
-
-    return(df)
+  return(df)
 }
 
 #' .parDist2
@@ -466,76 +478,74 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #' @noRd
 .parDist2 <- function(prep, threads, setup_timeout,
                       sens_interval, n_iters, alpha) {
+  # error checks
+  if (nrow(prep$DTM) < threads) {
+    stop(paste(
+      "More threads were input than your DTM has rows.\n",
+      "Change to `parallel=FALSE` and retry."
+    ))
+  }
 
-    # error checks
-    if (nrow(prep$DTM) < threads) {
-        stop(paste(
-            "More threads were input than your DTM has rows.\n",
-            "Change to `parallel=FALSE` and retry."
-        ))
+  if ((parallel::detectCores() - 1) < threads) {
+    threads <- as.integer(parallel::detectCores() - 2)
+    message(paste(
+      "More threads were input than your CPU has! Reduced to",
+      threads, "threads."
+    ))
+  }
+
+  # Determine chunk-size to be processed by different threads
+  ind <- .split_dtm(nrow(prep$DTM), threads)
+  cl <- parallel::makeCluster(threads, setup_timeout = setup_timeout)
+  doParallel::registerDoParallel(cl)
+
+  if (sens_interval == FALSE) {
+    # Compute distance in parallel threads
+    outDist <- foreach::foreach(
+      i = seq_len(nrow(ind)),
+      .packages = c("text2vec", "text2map"),
+      .combine = "rbind",
+      .export = ".parDist2",
+      .inorder = TRUE, .verbose = FALSE
+    ) %dopar% {
+      a <- as.integer(ind[i, 1])
+      b <- as.integer(ind[i, 2])
+      # Linear Complexity RWMD
+      dist <- text2vec::RWMD$new(
+        prep$DTM[a:b, , drop = FALSE],
+        prep$wem
+      )$sim2(prep$pDTM)
+      dist <- t(dist[seq_len(prep$n_pd), , drop = FALSE])
+    }
+  }
+
+  if (sens_interval == TRUE) {
+    outDist <- foreach::foreach(
+      # Compute distance in parallel threads
+      i = seq_len(nrow(ind)),
+      .packages = c("text2vec", "text2map"),
+      .combine = "cbind",
+      .export = c(".parDist2", "dtm_resampler"),
+      .inorder = TRUE, .verbose = FALSE
+    ) %dopar% {
+      a <- as.integer(ind[i, 1])
+      b <- as.integer(ind[i, 2])
+      # Linear Complexity RWMD
+      sampDist <- lapply(seq_len(n_iters), function(x) {
+        sampDTM <- dtm_resampler(prep$DTM[a:b, ], alpha = alpha)
+        sampDist <- text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
+        sampDist <- t(sampDist[seq_len(prep$n_pd), , drop = FALSE])
+        return(sampDist)
+      })
     }
 
-    if ((parallel::detectCores() - 1) < threads) {
-        threads <- as.integer(parallel::detectCores() - 2)
-        message(paste(
-            "More threads were input than your CPU has! Reduced to",
-            threads, "threads."
-        ))
-    }
+    outDist <- lapply(seq_len(nrow(prep$DTM)), function(idx) {
+      do.call(rbind, outDist[idx, seq_len(nrow(ind))])
+    })
+  }
 
-    # Determine chunk-size to be processed by different threads
-    ind <- .split_dtm(nrow(prep$DTM), threads)
-    cl <- parallel::makeCluster(threads, setup_timeout = setup_timeout)
-    doParallel::registerDoParallel(cl)
-
-    if (sens_interval == FALSE) {
-
-        # Compute distance in parallel threads
-        outDist <- foreach::foreach(
-            i = seq_len(nrow(ind)),
-            .packages = c("text2vec", "text2map"),
-            .combine = "rbind",
-            .export = ".parDist2",
-            .inorder = TRUE, .verbose = FALSE
-        ) %dopar% {
-            a <- as.integer(ind[i, 1])
-            b <- as.integer(ind[i, 2])
-            # Linear Complexity RWMD
-            dist <- text2vec::RWMD$new(
-                prep$DTM[a:b, , drop = FALSE],
-                prep$wem
-            )$sim2(prep$pDTM)
-            dist <- t(dist[seq_len(prep$n_pd), , drop = FALSE])
-        }
-    }
-
-    if (sens_interval == TRUE) {
-        outDist <- foreach::foreach(
-            # Compute distance in parallel threads
-            i = seq_len(nrow(ind)),
-            .packages = c("text2vec", "text2map"),
-            .combine = "cbind",
-            .export = c(".parDist2", "dtm_resampler"),
-            .inorder = TRUE, .verbose = FALSE
-        ) %dopar% {
-            a <- as.integer(ind[i, 1])
-            b <- as.integer(ind[i, 2])
-            # Linear Complexity RWMD
-            sampDist <- lapply(seq_len(n_iters), function(x) {
-                sampDTM <- dtm_resampler(prep$DTM[a:b, ], alpha = alpha)
-                sampDist <- text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
-                sampDist <- t(sampDist[seq_len(prep$n_pd), , drop = FALSE])
-                return(sampDist)
-            })
-        }
-
-        outDist <- lapply(seq_len(nrow(prep$DTM)), function(idx) {
-            do.call(rbind, outDist[idx, seq_len(nrow(ind))])
-        })
-    }
-
-    on.exit(parallel::stopCluster(cl))
-    return(outDist)
+  on.exit(parallel::stopCluster(cl))
+  return(outDist)
 }
 
 #' .split_dtm
@@ -552,16 +562,16 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #' @keywords internal
 #' @noRd
 .split_dtm <- function(n_docs, threads) {
-    if (threads > n_docs) {
-        threads <- n_docs
-    } else if (threads == 0) {
-        threads <- 1
-    }
+  if (threads > n_docs) {
+    threads <- n_docs
+  } else if (threads == 0) {
+    threads <- 1
+  }
 
-    int <- n_docs / threads
-    upper <- round(seq_len(threads) * int)
-    lower <- c(1, upper[-threads] + 1)
-    size <- c(upper[1], diff(upper))
+  int <- n_docs / threads
+  upper <- round(seq_len(threads) * int)
+  lower <- c(1, upper[-threads] + 1)
+  size <- c(upper[1], diff(upper))
 
-    return(cbind(lower, upper, size))
+  return(cbind(lower, upper, size))
 }

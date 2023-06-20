@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
-<meta name="date" content="2022-08-17" />
+<meta name="date" content="2023-06-19" />
 
 <title>CMDist: Quick Start Guide</title>
 
@@ -25,22 +25,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
     a = h.attributes;
     while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
   }
 });
 </script>
@@ -354,7 +338,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">CMDist: Quick Start Guide</h1>
-<h4 class="date">2022-08-17</h4>
+<h4 class="date">2023-06-19</h4>
 
 
 
@@ -375,13 +359,47 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="load-text2map" class="section level3">
 <h3>Load <code>text2map</code></h3>
-<p>Install and load the <code>text2map</code> package:</p>
+<p>Install and load the <code>text2map</code> package, and a few other supporting packages.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="kw">library</span>(text2map)</span></code></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="kw">library</span>(text2map)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="kw">library</span>(text2vec)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="kw">library</span>(gutenbergr)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="kw">library</span>(textclean)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="kw">library</span>(stringi)</span></code></pre></div>
 </div>
 <div id="document-term-matrix" class="section level3">
 <h3>Document-Term Matrix</h3>
-<p>To use the Concept Mover’s Distance function (<code>CMDist</code>) , you will need to transform your corpus into a document-term matrix (DTM). The preferred DTM is a sparse matrix in <code>Matrix</code> format (class “dgCMatrix”) as output by <code>text2vec</code>, <code>Quanteda</code>, <code>udpipe</code>, and <code>tidytext</code>’s <code>cast_sparse</code> function, but we have tried to make the package accommodate DTMs made with the <code>tm</code> package (technically a “simple_triplet_matrix”) or just a regular old base R dense matrix (<a href="https://www.dustinstoltz.com/blog/2020/12/1/creating-document-term-matrix-comparison-in-r">see this for a comparison of DTM creation methods</a>). You can also use <code>text2map</code>’s super fast unigram DTM builder <code>dtm_builder()</code>.</p>
+<p>To use the Concept Mover’s Distance function (<code>CMDist</code>), you will need to transform your corpus into a document-term matrix (DTM). The preferred DTM is a sparse matrix in <code>Matrix</code> format (class “dgCMatrix”) as output by <code>text2map</code>, <code>text2vec</code>, <code>Quanteda</code>, <code>udpipe</code>, and <code>tidytext</code>’s <code>cast_sparse</code> function, but we have tried to make the package accommodate DTMs made with the <code>tm</code> package (technically a “simple_triplet_matrix”) or just a regular old base R dense matrix (<a href="https://dustinstoltz.com/blog/2020/12/1/creating-document-term-matrix-comparison-in-r">see this for a comparison of DTM creation methods</a>).</p>
+<p>Here is a workflow with <code>text2map</code>’s super fast unigram DTM builder <code>dtm_builder()</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="kw">data</span>(<span class="st">&quot;meta_shakespeare&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="co"># Grab the text from Project GUTENBERG</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>df_plays &lt;-<span class="st"> </span>meta_shakespeare <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(gutenberg_id) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="st">  </span><span class="kw">gutenberg_download</span>() <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a><span class="st">  </span><span class="kw">group_by</span>(gutenberg_id) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">text =</span> <span class="kw">paste</span>(text, <span class="dt">collapse =</span> <span class="st">&quot;, &quot;</span>))</span></code></pre></div>
+<p>Next, we will take care of some preprocessing. Make sure there are no special characters, remove punctuation, take care of curly quotes (which can be a pain), and then smooshing contractions. Finally, we’ll remove any digits that might be floating around, and then make sure there is only a single space between words.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>df_plays &lt;-<span class="st"> </span>df_plays <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">mutate</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="co">## transliterate and lowercase</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">replace_curly_quote</span>(text),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">stri_trans_general</span>(text, <span class="dt">id =</span> <span class="st">&quot;Any-Latin; Latin-ASCII&quot;</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">tolower</span>(text),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>  <span class="co">## punctuation</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">gsub</span>(<span class="st">&quot;(</span><span class="ch">\\</span><span class="st">w+[_&#39;-]+</span><span class="ch">\\</span><span class="st">w+)|[[:punct:]]+&quot;</span>, <span class="st">&quot;</span><span class="ch">\\</span><span class="st">1&quot;</span>, text),</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">replace_contraction</span>(text),</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>  <span class="co">## numbers and spaces</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">gsub</span>(<span class="st">&quot;[[:digit:]]+&quot;</span>, <span class="st">&quot; &quot;</span>, text),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">gsub</span>(<span class="st">&quot;[[:space:]]+&quot;</span>, <span class="st">&quot; &quot;</span>, text),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>  <span class="dt">text =</span> <span class="kw">trimws</span>(text)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>)</span></code></pre></div>
+<p>Finally, we can convert the text of the plays into a DTM.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>dtm_plays &lt;-<span class="st"> </span>df_plays <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="st">  </span><span class="kw">dtm_builder</span>(text, gutenberg_id)</span></code></pre></div>
 </div>
 <div id="word-embedding-matrix" class="section level3">
 <h3>Word Embedding Matrix</h3>
@@ -394,17 +412,27 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <li><a href="https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing">word2vec GoogleNews vectors</a></li>
 <li><a href="http://vectors.nlpl.eu/repository/">NLPL word embeddings repository</a></li>
 </ul>
-<p>It will take a little data wrangling to get these loaded as a matrix in <code>R</code> with rownames as the words (feel free to contact us if you run into any issues loading embeddings into <code>R</code>), or you can just download these <code>R</code>-ready fastText English Word Vectors trained on the Common Crawl (crawl-300d-2M.vec) hosted on Google Drive:</p>
+<p>It will take a little data wrangling to get these loaded as a matrix in <code>R</code> with rownames as the words (feel free to contact us if you run into any issues loading embeddings into <code>R</code>).</p>
+<p>You can also download these <code>R</code>-ready fastText English Word Vectors trained on the Common Crawl (crawl-300d-2M.vec) hosted on Dropbox:</p>
 <ul>
-<li><a href="https://drive.google.com/file/d/17H4GOGedeGo0urQdDC-4e5qWQMeWLpGG/view?usp=sharing">ft.cc.en.300D.2M.Rds (1.4 Gbs)</a></li>
+<li><a href="https://www.dropbox.com/s/ac4m9b16qnarabt/ft.cc.en.300D.2M.Rds?raw=1">ft.cc.en.300D.2M.Rds (1.4 Gbs)</a></li>
 </ul>
-<p>You can also download the file directly into your R session using the following:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">library</span>(googledrive) <span class="co"># (see https://googledrive.tidyverse.org/)</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>temp &lt;-<span class="st"> </span><span class="kw">tempfile</span>()</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="kw">drive_download</span>(<span class="kw">as_id</span>(<span class="st">&quot;17H4GOGedeGo0urQdDC-4e5qWQMeWLpGG&quot;</span>), <span class="dt">path =</span> temp, <span class="dt">overwrite =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>my_wv &lt;-<span class="st"> </span><span class="kw">readRDS</span>(temp)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="co"># save them to your project file so you don&#39;t have to re-download</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="kw">saveRDS</span>(my_wv, <span class="st">&quot;data/ft.cc.en.300D.2M.Rds&quot;</span>)</span></code></pre></div>
+<p>You can also use the <a href="https://culturalcartography.gitlab.io/text2map.pretrained/"><code>text2map.pretrained</code></a> package which hosts a few embeddings.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="co"># install if necessary</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>remotes<span class="op">::</span><span class="kw">install_gitlab</span>(<span class="st">&quot;culturalcartography/text2map.pretrained&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="kw">library</span>(text2map.pretrained)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="co"># download once per machine</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a><span class="kw">download_pretrained</span>(<span class="st">&quot;vecs_fasttext300_wiki_news&quot;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a><span class="co"># load with data() once per session</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a><span class="kw">data</span>(<span class="st">&quot;vecs_fasttext300_wiki_news&quot;</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a><span class="co"># it is a wordy, descriptive name, so you can rename it</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>my_wv &lt;-<span class="st"> </span>vecs_fasttext300_wiki_news</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a><span class="kw">rm</span>(vecs_fasttext300_wiki_news)</span></code></pre></div>
 <p>Instead of pretrained embeddings, you can create your own embeddings trained locally on the corpus on which you are using <code>CMDist</code>. For example, the <code>text2vec</code> R package provides a nice <a href="https://cran.r-project.org/package=text2vec/vignettes/glove.html">workflow for using the GloVe method to train embeddings</a>. Pretrained embeddings are a simple way to get an analysis started, but researchers should always be critical about the corpus used to train these models.</p>
 <p>One important caveat: the terms used to denote a concept or build a semantic direction need not be in the corpus, <em>but it must be in the word embeddings matrix</em>. If it is not, the function will stop and let you know. This means, obviously, that local corpus-trained embeddings cannot be used with words not in the corpus (pre-trained must be used). As the fastText method can be trained on “subword” character strings, it is possible to average the character strings that make up an out-of-vocabulary term.</p>
 </div>
@@ -413,53 +441,54 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="terms-denoting-focal-concepts" class="section level3">
 <h3>Terms Denoting Focal Concepts</h3>
 <p>The most difficult and important part of using Concept Mover’s Distance is selecting anchor terms. This should be driven by (a) theory, (b) prior literature, (c) domain knowledge, and (d) the word embedding space. One way of double-checking that selected terms are appropriate is to look at the term’s nearest neighbors. Here we use the <code>sim2</code> function from <code>text2vec</code> to get the cosine distance between “thinking” and its top 10 nearest neighbors.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">library</span>(text2vec)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>cos_sim &lt;-<span class="st"> </span><span class="kw">sim2</span>(<span class="dt">x =</span> my_wv, </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>                <span class="dt">y =</span> my_wv[<span class="st">&quot;thinking&quot;</span>, , <span class="dt">drop =</span> <span class="ot">FALSE</span>], </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>                <span class="dt">method =</span> <span class="st">&quot;cosine&quot;</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a><span class="kw">head</span>(<span class="kw">sort</span>(cos_sim[,<span class="dv">1</span>], <span class="dt">decreasing =</span> <span class="ot">TRUE</span>), <span class="dv">10</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>cos_sim &lt;-<span class="st"> </span><span class="kw">sim2</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="dt">x =</span> my_wv,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>  <span class="dt">y =</span> my_wv[<span class="st">&quot;thinking&quot;</span>, , <span class="dt">drop =</span> <span class="ot">FALSE</span>],</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>  <span class="dt">method =</span> <span class="st">&quot;cosine&quot;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="kw">head</span>(<span class="kw">sort</span>(cos_sim[, <span class="dv">1</span>], <span class="dt">decreasing =</span> <span class="ot">TRUE</span>), <span class="dv">10</span>)</span></code></pre></div>
 <div id="single-word" class="section level4">
 <h4>Single Word</h4>
 <p>Once you have a DTM and word embedding matrix, the simplest use of <code>CMDist</code> involves finding the closeness to a focal concept denoted by a <em>single word</em>. Here, we use the word “thinking” as our concept word (“cw”):</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>  </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
 </div>
 <div id="compound-concepts" class="section level4">
 <h4>Compound Concepts</h4>
 <p>However, we may be interested in <em>specifying</em> the concept with additional words: for example, we might want to capture “critical thinking.” To handle this, it is as simple as including both words separated by a space in the quotes. This creates a pseudo-document that contains only “critical” and “thinking.”</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>  </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> <span class="st">&quot;critical thinking&quot;</span>, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> <span class="st">&quot;critical thinking&quot;</span>, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
 </div>
 <div id="ngrams" class="section level4">
 <h4>Ngrams</h4>
-<p>What if instead of a compound concept we are interested in a common concept represented with two words (i.e., a bigram)? First, just like with any other word, the ngram must be in the embedding matrix (the fastText pre-trained embeddings have a lot of n≥1 grams). As long as the ngram is in the embeddings, the only difference for <code>CMDist</code> is that an underscore rather than a space needs to be placed between words:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>  </span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> <span class="st">&quot;critical_thinking&quot;</span>, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
+<p>What if instead of a compound concept we are interested in a common concept represented with two words (i.e., a bigram)? First, just like with any other word, the ngram must be in the embedding matrix (the fastText pre-trained embeddings have a lot of n≥1 grams). Typically, ngrams are represented with an underscore or dash between the words. As long as the desired ngram is in the embeddings, the only difference for <code>CMDist</code> is that we’d include the underscore or dash (whichever is used), rather than a space, between words. In the fastText embeddings, the bigram is “critical-thinking”:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> <span class="st">&quot;critical-thinking&quot;</span>, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
 </div>
 </div>
 <div id="semantic-directions-and-centroids" class="section level3">
 <h3>Semantic Directions and Centroids</h3>
 <p>In the <a href="https://drive.google.com/file/d/1iLOVzNsdAetFiaychiJodL3BYTaTnqNl/view?usp=sharing">original <em>JCSS</em> paper</a>, we discussed the “binary concept problem,” where documents that are close to a concept with a binary opposite will likely also be close to both opposing poles. For example if a document is close to “love” it will also be close to “hate.” But, very often an analyst will want to know whether a document is close to one pole or the other of this binary concept. To deal with this we incorporate insights from Kozlowski et al’s (2019) paper <a href="https://doi.org/10.1177/0003122419877135">“Geometry of Culture”</a> to define “semantic directions” within word embeddings – i.e. pointing toward one pole and away from the other. We outline this procedure in more detail in a subsequent <em>JCSS</em> paper <a href="https://drive.google.com/file/d/1UrO7pXem9X4hSzipNDgzGVQupEiPVApH/view?usp=sharing">“Integrating Semantic Directions with Concept Mover’s Distance to Measure Binary Concept Engagement”</a>.</p>
 <p>The procedure involves generating a list of antonym pairs for a given binary concept – that is, terms which may occur in similar contexts but are typically juxtaposed. Then we get the differences between these antonyms’ respective vectors, and averaging the result (with <code>get_direction()</code>). The resulting vector will be the location of one “pole” of this binary concept, and <code>CMDist</code> calculates the distance each document is from this concept vector (“cv”). As this creates a one-dimensional continuum, documents that are far from this “pole” will be close to the opposing “pole.”</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="co"># first build the semantic direction:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>additions  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>substracts &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;life&quot;</span>, <span class="st">&quot;survivor&quot;</span>, <span class="st">&quot;birth&quot;</span>, <span class="st">&quot;living&quot;</span>, <span class="st">&quot;endure&quot;</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>pairs &lt;-<span class="st"> </span><span class="kw">cbind</span>(additions, substracts)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>death.sd &lt;-<span class="st"> </span><span class="kw">get_direction</span>(pairs, my_wv)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a><span class="co"># input it into the function just like a concept word:</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cv =</span> death.sd, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="co"># first build the semantic direction:</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>additions  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>substracts &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;life&quot;</span>, <span class="st">&quot;survivor&quot;</span>, <span class="st">&quot;birth&quot;</span>, <span class="st">&quot;living&quot;</span>, <span class="st">&quot;endure&quot;</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>pairs &lt;-<span class="st"> </span><span class="kw">cbind</span>(additions, substracts)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>sd_death &lt;-<span class="st"> </span><span class="kw">get_direction</span>(pairs, my_wv)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a><span class="co"># input it into the function just like a concept word:</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cv =</span> sd_death, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
 <p>Instead of building a pseudo-document with several terms, as in the compound concept section above, one could also average several terms together to arrive at a “centroid” in the word embedding space – this can be understood as referring to the center of a “semantic region.” Again, <code>CMDist</code> will calculate the distance each document is from this concept vector (“cv”).</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co"># first build the semantic centroid:</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>terms  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>death.sc &lt;-<span class="st"> </span><span class="kw">get_centroid</span>(terms, my_wv)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="co"># input it into the function just like a concept word:</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cv =</span> death.sc, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="co"># first build the semantic centroid:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>terms  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>sc_death &lt;-<span class="st"> </span><span class="kw">get_centroid</span>(terms, my_wv)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a><span class="co"># input it into the function just like a concept word:</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cv =</span> sc_death, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
 </div>
 </div>
 <div id="other-options-and-considerations" class="section level2">
@@ -467,41 +496,43 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="multiple-distances-at-once" class="section level3">
 <h3>Multiple Distances at Once</h3>
 <p>An analysis might suggest multiple concepts are of interest, and so it is useful to get multiple distances at the same time. This, in effect, is adding more rows to our pseudo-document-term matrix. For example, in our <em>JCSS</em> paper, we compare how Shakespeare’s plays engage with “death” against 200 other concepts. <code>CMDist</code> also incorporate both concept words and vectors into the same run.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="co"># example 1</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>concept.words &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;thinking&quot;</span>, <span class="st">&quot;critical&quot;</span>, <span class="st">&quot;thought&quot;</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>doc_closeness <span class="op">&lt;</span><span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> concept.words, <span class="dt">wv =</span> my_wv)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a><span class="co"># example 2</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>concept.words &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical_thinking&quot;</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>doc_closeness <span class="op">&lt;</span><span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> concept.words, <span class="dt">wv =</span> my_wv)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="co"># example 3</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a>concept.words &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical_thinking&quot;</span>)</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>doc_closeness <span class="op">&lt;</span><span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> concept.words, <span class="dt">cv =</span> concept.vectors, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="co"># example 1</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>concept_words &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;thinking&quot;</span>, <span class="st">&quot;critical&quot;</span>, <span class="st">&quot;thought&quot;</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> concept_words, <span class="dt">wv =</span> my_wv)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a><span class="co"># example 2</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>concept_words &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical-thinking&quot;</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> concept_words, <span class="dt">wv =</span> my_wv)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a><span class="co"># example 3</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a>concept_words &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;critical thought&quot;</span>, <span class="st">&quot;critical-thinking&quot;</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a>terms  &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;death&quot;</span>, <span class="st">&quot;casualty&quot;</span>, <span class="st">&quot;demise&quot;</span>, <span class="st">&quot;dying&quot;</span>, <span class="st">&quot;fatality&quot;</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a>concept_vectors &lt;-<span class="st"> </span><span class="kw">get_centroid</span>(terms, my_wv)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> concept_words, <span class="dt">cv =</span> concept_vectors, <span class="dt">wv =</span> my_wv)</span></code></pre></div>
 </div>
 <div id="performance-and-parallel-cmdist" class="section level3">
 <h3>Performance and Parallel CMDist</h3>
 <p>Calculating <code>CMD</code> (as of version 0.5.0) relies on <a href="https://arxiv.org/abs/1711.07227">Linear Complexity RWMD</a> or <code>LC-RWMD</code>. The performance gain over the previous <code>RWMD</code> implementation is considerable. Nevertheless, it may be desirable to boost performance further on especially large projects.</p>
 <p>One way to reduce complexity and thus time (without a noticeable drop in accuracy) is by removing very sparse terms in your DTM. Parallelizing is another option, so we built it in. To use parallel calculations just set <code>parallel = TRUE</code>. The default number of threads is 2, but you can set it as high as you have threads/cores.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>                      <span class="dt">cw =</span> <span class="st">&quot;critical_thinking&quot;</span>, </span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>                      <span class="dt">wv =</span> my_wv, </span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>                      <span class="dt">parallel =</span> <span class="ot">TRUE</span>, </span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>                      <span class="dt">threads =</span> <span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>                      <span class="dt">cw =</span> <span class="st">&quot;critical-thinking&quot;</span>, </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>                      <span class="dt">wv =</span> my_wv, </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>                      <span class="dt">parallel =</span> <span class="ot">TRUE</span>, </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>                      <span class="dt">threads =</span> <span class="dv">2</span>)</span></code></pre></div>
 </div>
 <div id="scaling-output-and-vector-comparison-metric" class="section level3">
 <h3>Scaling Output and Vector Comparison Metric</h3>
 <p>By default, the outputs are normalized using the <code>scale()</code> function in R. If this is not desired, set <code>scale = FALSE</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a>  </span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a> doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> my_dtm, <span class="dt">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="dt">wv =</span> my_wv, <span class="dt">scale =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>                          </span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a>  </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>doc_closeness &lt;-<span class="st"> </span><span class="kw">CMDist</span>(<span class="dt">dtm =</span> dtm_plays, <span class="dt">cw =</span> <span class="st">&quot;thinking&quot;</span>, <span class="dt">wv =</span> my_wv, <span class="dt">scale =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>                          </span></code></pre></div>
 <p><code>CMDist</code> relies <code>text2vec</code> which currently uses <strong>cosine</strong> as the distance metric to solve the underlying transportation problem. Kusner et al. (2015) and Atasu et al. (2017) papers used <strong>Euclidean</strong> distance to compare word embeddings vectors. Cosine and Euclidean are mathematically similar (and in many cases identical). In all of our comparisons of Concept Mover’s Distance using Euclidean and cosine the results were nearly identical.</p>
 </div>
 <div id="note-about-linear-complexity-relaxed-word-movers-distance" class="section level3">
 <h3>Note About Linear Complexity Relaxed Word Mover’s Distance</h3>
 <p>Rather than the Relaxed Word Mover’s Distance (RWMD) as discussed in Kusner et al’s (2015) “From Word Embeddings To Document Distances”, <code>text2vec</code> uses the Linear-Complexity Relaxed Word Mover’s Distance (LC-RWMD) as described by Atasu et al. (2017). LC-RWMD not only reduces the computational demands considerably, if we take the maximum of each document pair across the upper and lower triangles (i.e., the maximum of each [<em>i,j</em>]-[<em>j,i</em>] pair), the resulting symmetric distance matrix is precisely the same as the previous algorithm using Kusner et al’s approach. As far as our tests have shown, the triangle corresponding to treating the pseudo-document as a “query” and the documents as a “collection” (see the <a href="https://cran.r-project.org/package=text2vec">text2vec documentation</a>, p. 28) will always return this set of maximums, and therefore there is no reason for the additional comparison step. If you have reason to believe this is not the case, please contact us and we will share the code necessary to reproduce results with the original Kusner et al. approach to check.</p>
-<p>For more discussion of the math behind Concept Mover’s Distance see Stoltz and Taylor (2019) “Concept Mover’s Distance” in the <em>Journal of Computational Social Science</em>.</p>
+<p>For more discussion of the math behind Concept Mover’s Distance see Stoltz and Taylor (2019) “<a href="https://doi.org/10.1007/s42001-019-00048-6">Concept Mover’s Distance</a>” in the <em>Journal of Computational Social Science</em></p>
 </div>
 </div>
 

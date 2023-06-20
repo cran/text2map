@@ -277,18 +277,18 @@ test_that("dtm resampler creates DTM of the same dimensions", {
 
 
 # tests for internal functions
-test_that(".convert_dtm_to_dgCMatrix convert all dtms to dgCMatrix", {
+test_that(".convert_mat_to_dgCMatrix convert all dtms to dgCMatrix", {
 
     ## base R matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.bse), "dgCMatrix")
+    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.bse), "dgCMatrix")
     ## dgCMatrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.dgc), "dgCMatrix")
+    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.dgc), "dgCMatrix")
     ## dfm//dgCMatrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.dfm), "dgCMatrix")
+    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.dfm), "dgCMatrix")
     ## tm//simple_triplet_matrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.tm), "dgCMatrix")
+    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.tm), "dgCMatrix")
     ## TermDocumentMatrix //  tm//simple_triplet_matrix matrix ##
-    expect_s4_class(.convert_dtm_to_dgCMatrix(dtm.tdm), "dgCMatrix")
+    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.tdm), "dgCMatrix")
 })
 
 test_that("dtm resampler works on output of .prep_cmd_INPUT", {

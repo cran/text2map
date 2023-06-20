@@ -40,10 +40,10 @@ doc_similarity <- function(x,
                            y = NULL,
                            method,
                            wv = NULL) {
-    x <- .convert_dtm_to_dgCMatrix(x)
+    x <- .convert_mat_to_dgCMatrix(x)
 
     if (!is.null(y)) {
-        y <- .convert_dtm_to_dgCMatrix(y)
+        y <- .convert_mat_to_dgCMatrix(y)
     }
 
     dsm <- switch(method,
@@ -100,7 +100,7 @@ doc_centrality <- function(mat,
                            alpha = 1L,
                            scale = FALSE,
                            two_mode = TRUE) {
-    mat <- .convert_dtm_to_dgCMatrix(mat)
+    mat <- .convert_mat_to_dgCMatrix(mat)
 
     if (two_mode) {
         mat <- Matrix::tcrossprod(mat)
@@ -127,6 +127,8 @@ doc_centrality <- function(mat,
 
 ## ---- INTERNAL TEXTNET SPECIFIC FUNCTIONS ---------------------------------- #
 #' Weighted degree centrality
+#' 
+#' @importFrom Matrix rowSums
 #'
 #' @param mat Input matrix
 #'
@@ -141,6 +143,11 @@ doc_centrality <- function(mat,
 }
 
 #' Weighted betweenness centrality
+#' 
+#' @importFrom igraph betweenness
+#' @importFrom igraph E
+#' @importFrom igraph graph.adjacency
+#' 
 #' @param mat Input matrix
 #'
 #' @keywords internal
@@ -167,6 +174,10 @@ doc_centrality <- function(mat,
 }
 
 #' Textual spanning
+#' 
+#' @importFrom Matrix rowSums
+#' @importFrom stats sd
+#' 
 #' @param mat Input matrix
 #'
 #' @keywords internal
@@ -189,6 +200,9 @@ doc_centrality <- function(mat,
 }
 
 #' Centroid Similarity
+#' 
+#' @importFrom text2vec sim2
+#' 
 #' @param x Input matrix
 #' @param wv Matrix of word embedding vectors
 #'
@@ -210,6 +224,10 @@ doc_centrality <- function(mat,
 }
 
 #' Word Mover's Distance (Similarity)
+#' 
+#' @importFrom text2vec RWMD
+#' @importFrom text2vec sim2
+#' 
 #' @param x Input matrix
 #' @param wv Matrix of word embedding vectors
 #'

@@ -29,15 +29,12 @@ vignette("CMDist-concept-movers-distance", package = "text2map")
 
 ### Related Packages
 
-There are three related packages in development, and hosted on GitLab: 
+There are four related packages hosted on GitLab: 
 
-- text2map.corpora: collection of 13+ text datasets
-- text2map.dictionaries: collection of dictionaries, currently:
-    - Sensorimotor Norms Dictionary for English, N = 40,000 (Lynott, et al. 2020)
-    - Concreteness Dictionary for English, N = 40,000 (Brysbaert et al. 2014)
-    - NRC Valence, Arousal, and Dominance Dictionary for English (Mohammad et al. 2018)
-- text2map.theme: changes `ggplot2` aesthetics and loads viridis color scheme as default
-- text2map.pretrained: collection of pretrained embeddings and stm models
+- [`text2map.corpora`](https://culturalcartography.gitlab.io/text2map.corpora/): 13+ text datasets
+- [`text2map.dictionaries`](https://culturalcartography.gitlab.io/text2map.dictionaries/): norm dictionaries and word frequency lists
+- [`text2map.pretrained`](https://culturalcartography.gitlab.io/text2map.pretrained/): pretrained embeddings and topic models
+- [`text2map.theme`](https://culturalcartography.gitlab.io/text2map.theme): changes `ggplot2` aesthetics and loads viridis color scheme as default
 
 The above packages can be installed using the following:
 
@@ -71,8 +68,12 @@ Any questions and requests for support can also be directed to the package maint
 
 [![repo status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
-[![license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
+[![license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit/) 
 
 [![](https://cranlogs.r-pkg.org/badges/text2map)](https://cran.r-project.org/package=text2map)
 
 <!-- badges: end -->
+
+
+<a rel="me" href="https://fediscience.org/@dustinstoltz"></a>
+<a rel="me" href="https://sciences.social/@mtaylor_soc"></a>

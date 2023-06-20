@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
-<meta name="date" content="2022-08-17" />
+<meta name="date" content="2023-06-19" />
 
 <title>CoCA: Concept Class Analysis</title>
 
@@ -25,22 +25,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
     if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
     a = h.attributes;
     while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
   }
 });
 </script>
@@ -354,13 +338,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">CoCA: Concept Class Analysis</h1>
-<h4 class="date">2022-08-17</h4>
+<h4 class="date">2023-06-19</h4>
 
 
 
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">library</span>(text2map)</span></code></pre></div>
-<p>Concept Class Analysis (CoCA) is a method for grouping documents based on the schematic similarities in their engagement with multiple semantic directions (as measured in the previous section). This is a generalization of <a href="https://sociologicalscience.com/articles-v4-15-353/">Correlational Class Analysis</a> for survey data. We outline this method in more detail in our <em>Sociological Science</em> paper, “<a href="http://dx.doi.org/10.15195/v7.a23">Concept Class Analysis: A Method for Identifying Cultural Schemas in Texts</a>.”</p>
-<p>The first step to use CoCA is build two or more semantic directions. For example, here are three semantic directions related to socio-economic status. Note that you must load or create word embeddings.</p>
+<p>Concept Class Analysis (CoCA) is a method for grouping documents based on the schematic similarities in their engagement with multiple semantic directions. This is a generalization of <a href="https://sociologicalscience.com/articles-v4-15-353/">Correlational Class Analysis</a> for survey data. We outline this method in more detail in our <em>Sociological Science</em> paper, “<a href="http://dx.doi.org/10.15195/v7.a23">Concept Class Analysis: A Method for Identifying Cultural Schemas in Texts</a>.”</p>
+<p>After getting familiar with using <code>CMDist()</code>, the first step to use CoCA is building two or more semantic directions. For example, here are three semantic directions related to socio-economic status. Note that you must load or create word embeddings.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>    <span class="co"># build juxtaposed pairs for each semantic directions</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    pairs_<span class="dv">01</span> &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">additions  =</span> <span class="kw">c</span>(<span class="st">&quot;rich&quot;</span>, <span class="st">&quot;richer&quot;</span>, <span class="st">&quot;affluence&quot;</span>, <span class="st">&quot;wealthy&quot;</span>),</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>                           <span class="dt">substracts =</span> <span class="kw">c</span>(<span class="st">&quot;poor&quot;</span>, <span class="st">&quot;poorer&quot;</span>, <span class="st">&quot;poverty&quot;</span>, <span class="st">&quot;impoverished&quot;</span>) )</span>

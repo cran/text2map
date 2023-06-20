@@ -13,9 +13,9 @@ vignette: >
 library(text2map)
 ```
 
-Concept Class Analysis (CoCA) is a method for grouping documents based on the schematic similarities in their engagement with multiple semantic directions (as measured in the previous section). This is a generalization of [Correlational Class Analysis](https://sociologicalscience.com/articles-v4-15-353/) for survey data. We outline this method in more detail in our _Sociological Science_ paper, "[Concept Class Analysis: A Method for Identifying Cultural Schemas in Texts](http://dx.doi.org/10.15195/v7.a23)."
+Concept Class Analysis (CoCA) is a method for grouping documents based on the schematic similarities in their engagement with multiple semantic directions. This is a generalization of [Correlational Class Analysis](https://sociologicalscience.com/articles-v4-15-353/) for survey data. We outline this method in more detail in our _Sociological Science_ paper, "[Concept Class Analysis: A Method for Identifying Cultural Schemas in Texts](http://dx.doi.org/10.15195/v7.a23)."
 
-The first step to use CoCA is build two or more semantic directions. For example, here are three semantic directions related to socio-economic status. Note that you must load or create word embeddings.
+After getting familiar with using `CMDist()`, the first step to use CoCA is building two or more semantic directions. For example, here are three semantic directions related to socio-economic status. Note that you must load or create word embeddings.
 
 ```r
     # build juxtaposed pairs for each semantic directions

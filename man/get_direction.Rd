@@ -60,15 +60,15 @@ data(ft_wv_sample)
 
 # create anchor list
 gen <- data.frame(
-    add = c("woman"),
-    subtract = c("man")
+  add = c("woman"),
+  subtract = c("man")
 )
 
 dir <- get_direction(anchors = gen, wv = ft_wv_sample)
 
 dir <- get_direction(
-    anchors = gen, wv = ft_wv_sample,
-    method = "PCA", n = 1L
+  anchors = gen, wv = ft_wv_sample,
+  method = "PCA", n = 1L
 )
 }
 \references{

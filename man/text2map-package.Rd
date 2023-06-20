@@ -19,7 +19,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Dustin Stoltz \email{maintainers@textmapping.com} (\href{https://orcid.org/0000-0002-4774-0765}{ORCID})
+\strong{Maintainer}: Dustin Stoltz \email{dss219@lehigh.edu} (\href{https://orcid.org/0000-0002-4774-0765}{ORCID})
 
 Authors:
 \itemize{

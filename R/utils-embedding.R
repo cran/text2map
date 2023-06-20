@@ -43,12 +43,11 @@
 #' gen <- get_anchors(relation = "gender")
 #' @export
 get_anchors <- function(relation) {
+  # this allows the data to be accessed without attaching the package
+  alist <- eval(parse(text = "text2map::anchor_lists"))
+  anchor_list <- alist[alist$relation == relation, c("add", "subtract")]
 
-    # this allows the data to be accessed without attaching the package
-    alist <- eval(parse(text = "text2map::anchor_lists"))
-    anchor_list <- alist[alist$relation == relation, c("add", "subtract")]
-
-    return(anchor_list)
+  return(anchor_list)
 }
 
 #' Word embedding semantic direction extractor
@@ -128,107 +127,107 @@ get_anchors <- function(relation) {
 #'
 #' # create anchor list
 #' gen <- data.frame(
-#'     add = c("woman"),
-#'     subtract = c("man")
+#'   add = c("woman"),
+#'   subtract = c("man")
 #' )
 #'
 #' dir <- get_direction(anchors = gen, wv = ft_wv_sample)
 #'
 #' dir <- get_direction(
-#'     anchors = gen, wv = ft_wv_sample,
-#'     method = "PCA", n = 1L
+#'   anchors = gen, wv = ft_wv_sample,
+#'   method = "PCA", n = 1L
 #' )
 #' @export
 get_direction <- function(anchors, wv,
                           method = "paired",
                           missing = "stop",
                           n_dirs = 1L) {
+  # ensure UTF-8 encoding
+  rownames(wv) <- stringi::stri_encode(rownames(wv), to = "UTF-8")
+  # check that word vectors exist for each word
+  anchors[] <- .check_term_in_embeddings(anchors[], wv, action = missing)
 
-    # check that word vectors exist for each word
-    anchors <- .check_term_in_embeddings(anchors, wv, action = missing)
-
-    if (!is.null(ncol(anchors)) &&
-        ncol(anchors) == 2) {
-        anchors_add <- anchors[, 1, drop = TRUE]
-        anchors_sub <- anchors[, 2, drop = TRUE]
+  if (!is.null(ncol(anchors)) &&
+    ncol(anchors) == 2) {
+    anchors_add <- anchors[, 1, drop = TRUE]
+    anchors_sub <- anchors[, 2, drop = TRUE]
+  } else {
+    if (length(anchors) == 2) {
+      anchors_add <- anchors[[1]]
+      anchors_sub <- anchors[[2]]
     } else {
-        if (length(anchors) == 2) {
-            anchors_add <- anchors[[1]]
-            anchors_sub <- anchors[[2]]
-        } else {
-            stop("get_direction requires two sets of juxtaposing terms")
-        }
+      stop("get_direction requires two sets of juxtaposing terms")
     }
+  }
 
-    # PAIRED
-    # take the mean of a set of word vector differences
-    # between a collection of antonym word pairs as used
-    # in Kozlowski et al. 2019 and Stoltz and Taylor 2019
-    if (method == "paired") {
+  # PAIRED
+  # take the mean of a set of word vector differences
+  # between a collection of antonym word pairs as used
+  # in Kozlowski et al. 2019 and Stoltz and Taylor 2019
+  if (method == "paired") {
+    # subtract vectors for words in column 2 from words in column 1
+    direction <- wv[anchors_add, , drop = FALSE] -
+      wv[anchors_sub, , drop = FALSE]
+    # get the average of the resulting differences
+    direction <- t(as.matrix(colMeans(direction)))
+  }
 
-        # subtract vectors for words in column 2 from words in column 1
-        direction <- wv[anchors_add, , drop = FALSE] -
-            wv[anchors_sub, , drop = FALSE]
-        # get the average of the resulting differences
-        direction <- t(as.matrix(colMeans(direction)))
-    }
+  # POOLED
+  # average  the vectors for words on each pole,
+  # then take the difference between these two average
+  # as used in Larsen et al 2015 and Arseniev-Koehler and Foster 2020
+  if (method == "pooled") {
+    mu1 <- t(as.matrix(colMeans(
+      wv[anchors_add, , drop = FALSE]
+    )))
+    mu2 <- t(as.matrix(colMeans(
+      wv[anchors_sub, , drop = FALSE]
+    )))
+    direction <- mu1 - mu2
+  }
 
-    # POOLED
-    # average  the vectors for words on each pole,
-    # then take the difference between these two average
-    # as used in Larsen et al 2015 and Arseniev-Koehler and Foster 2020
-    if (method == "pooled") {
-        mu1 <- t(as.matrix(colMeans(
-            wv[anchors_add, , drop = FALSE]
-        )))
-        mu2 <- t(as.matrix(colMeans(
-            wv[anchors_sub, , drop = FALSE]
-        )))
-        direction <- mu1 - mu2
-    }
+  # L^2 Euclidean norm of PAIRED
+  # as used in Bolukbasi et al. 2016
+  # Quantifying and Reducing Stereotypes in Word Embeddings
+  if (method == "L2") {
+    direction <- wv[anchors_add, , drop = FALSE] -
+      wv[anchors_sub, , drop = FALSE]
+    # get the average of the resulting differences
+    direction <- t(as.matrix(colMeans(direction)))
+    # divide by Euclidean norm
+    direction <- direction / norm(direction, type = "2")
+  }
 
-    # L^2 Euclidean norm of PAIRED
-    # as used in Bolukbasi et al. 2016
-    # Quantifying and Reducing Stereotypes in Word Embeddings
-    if (method == "L2") {
-        direction <- wv[anchors_add, , drop = FALSE] -
-            wv[anchors_sub, , drop = FALSE]
-        # get the average of the resulting differences
-        direction <- t(as.matrix(colMeans(direction)))
-        # divide by Euclidean norm
-        direction <- direction / norm(direction, type = "2")
-    }
-
-    # Direction is the first principal component
-    # as used in Bolukbasi et al. 2016
-    # Man is to Computer Programmer as Woman is to Homemaker?
-    if (method == "PCA") {
-        # yes, these are inverted for a reason
-        direction <- wv[anchors_sub, , drop = FALSE] -
-            wv[anchors_add, , drop = FALSE]
-        direction <- Matrix::t(
-            stats::prcomp(direction,
-                center = TRUE,
-                scale. = nrow(direction) > 1L,
-                rank. = n_dirs
-            )$rotation
-        )
-    }
-
-    if (!method %in% c("pooled", "paired", "L2", "PCA")) {
-        stop("method must be 'pooled', 'paired', 'L2' or 'PCA'")
-    }
-
-    # create unique name for new vector
-    rownames(direction) <- make.unique(
-        replicate(
-            n_dirs,
-            paste0(anchors_add[1], "_pole")
-        ),
-        sep = "_"
+  # Direction is the first principal component
+  # as used in Bolukbasi et al. 2016
+  # Man is to Computer Programmer as Woman is to Homemaker?
+  if (method == "PCA") {
+    # yes, these are inverted for a reason
+    direction <- wv[anchors_sub, , drop = FALSE] -
+      wv[anchors_add, , drop = FALSE]
+    direction <- Matrix::t(
+      stats::prcomp(direction,
+        center = TRUE,
+        scale. = nrow(direction) > 1L,
+        rank. = n_dirs
+      )$rotation
     )
+  }
 
-    return(direction)
+  if (!method %in% c("pooled", "paired", "L2", "PCA")) {
+    stop("method must be 'pooled', 'paired', 'L2' or 'PCA'")
+  }
+
+  # create unique name for new vector
+  rownames(direction) <- make.unique(
+    replicate(
+      n_dirs,
+      paste0(anchors_add[1], "_pole")
+    ),
+    sep = "_"
+  )
+
+  return(direction)
 }
 
 #' Word embedding semantic centroid extractor
@@ -271,50 +270,53 @@ get_direction <- function(anchors, wv,
 #' identical(cen1, cen2)
 #' @export
 get_centroid <- function(anchors, wv, missing = "stop") {
+  # ensure UTF-8 encoding
+  rownames(wv) <- stringi::stri_encode(rownames(wv), to = "UTF-8")
+  anchors[] <- .check_term_in_embeddings(anchors[], wv, action = missing)
 
-    # if data.frame or matrix convert first column to list of terms
-    if (!is.null(ncol(anchors))) {
-        anchors <- unlist(anchors[, 1],
-            recursive = FALSE,
-            use.names = FALSE
-        )
-    } else {
-        if (is.recursive(anchors)) {
-            # if nested list, only first list is used
-            anchors <- unlist(anchors[[1]],
-                recursive = FALSE,
-                use.names = FALSE
-            )
-        } else {
-            anchors <- unlist(anchors,
-                recursive = FALSE,
-                use.names = FALSE
-            )
-        }
-    }
-
-    anchors <- unlist(
-        stringi::stri_split(
-            anchors,
-            fixed = " ",
-            omit_empty = TRUE
-        ),
+  # if data.frame or matrix convert first column to list of terms
+  if (!is.null(ncol(anchors))) {
+    anchors <- unlist(anchors[, 1],
+      recursive = FALSE,
+      use.names = FALSE
+    )
+  } else {
+    if (is.recursive(anchors)) {
+      # if nested list, only first list is used
+      anchors <- unlist(anchors[[1]],
         recursive = FALSE,
         use.names = FALSE
-    )
+      )
+    } else {
+      anchors <- unlist(anchors,
+        recursive = FALSE,
+        use.names = FALSE
+      )
+    }
+  }
 
-    # check that word vectors exist for each word
-    anchors <- .check_term_in_embeddings(anchors, wv, action = missing)
+  anchors <- unlist(
+    stringi::stri_split(
+      anchors,
+      fixed = " ",
+      omit_empty = TRUE
+    ),
+    recursive = FALSE,
+    use.names = FALSE
+  )
 
-    # select vectors for anchor words
-    centroid <- wv[anchors[(anchors %in% rownames(wv))], , drop = FALSE]
-    # average the resulting vector
-    centroid <- t(as.matrix(colMeans(centroid)))
+  # check that word vectors exist for each word
+  anchors <- .check_term_in_embeddings(anchors, wv, action = missing)
 
-    # create unique name for new vector
-    first_word <- strsplit(anchors[1], " ")[[1]][1]
-    rownames(centroid) <- paste0(first_word, "_centroid")
-    return(centroid)
+  # select vectors for anchor words
+  centroid <- wv[anchors[(anchors %in% rownames(wv))], , drop = FALSE]
+  # average the resulting vector
+  centroid <- t(as.matrix(colMeans(centroid)))
+
+  # create unique name for new vector
+  first_word <- strsplit(anchors[1], " ")[[1]][1]
+  rownames(centroid) <- paste0(first_word, "_centroid")
+  return(centroid)
 }
 
 #' Word embedding semantic region extractor
@@ -383,10 +385,10 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' data(ft_wv_sample)
 #'
 #' my.regions <- get_regions(
-#'     wv = ft_wv_sample,
-#'     k_regions = 10L,
-#'     max_iter = 10L,
-#'     seed = 01984
+#'   wv = ft_wv_sample,
+#'   k_regions = 10L,
+#'   max_iter = 10L,
+#'   seed = 01984
 #' )
 #' @export
 #'
@@ -394,21 +396,21 @@ get_regions <- function(wv,
                         k_regions = 5L,
                         max_iter = 20L,
                         seed = 0) {
-    regions <- ClusterR::KMeans_arma(
-        data = wv,
-        clusters = k_regions,
-        n_iter = max_iter,
-        seed = seed,
-        verbose = FALSE
-    )
+  regions <- ClusterR::KMeans_arma(
+    data = wv,
+    clusters = k_regions,
+    n_iter = max_iter,
+    seed = seed,
+    verbose = FALSE
+  )
 
-    regions <- as(regions, "matrix")
+  regions <- as(regions, "matrix")
 
-    rownames(regions) <- paste0("region_", seq_len(nrow(regions)))
+  rownames(regions) <- paste0("region_", seq_len(nrow(regions)))
 
-    regions <- Matrix::Matrix(regions, sparse = TRUE)
+  regions <- Matrix::Matrix(regions, sparse = TRUE)
 
-    return(regions)
+  return(regions)
 }
 
 #' Find the 'projection matrix' to a semantic vector
@@ -433,23 +435,23 @@ get_regions <- function(wv,
 #'
 #' @export
 find_projection <- function(wv, vec) {
-    stopifnot(ncol(wv) == length(vec))
+  stopifnot(ncol(wv) == length(vec))
 
-    # provides the projection of one vector
-    # to another vector (as opposed to a matrix)
-    # https://stackoverflow.com/a/62495884/15855390
-    # as.vector( (u %*% v) / (v %*% v) ) * v
-    vec <- as.vector(vec)
-    # RESULT will be orthogonal to vec
-    # adapted from `wordVectors` package
-    # t(x) %*% y is crossprod()
-    RESULT <- crossprod(
-        t(wv %*% vec) /
-            as.vector(vec %*% vec),
-        vec
-    )
+  # provides the projection of one vector
+  # to another vector (as opposed to a matrix)
+  # https://stackoverflow.com/a/62495884/15855390
+  # as.vector( (u %*% v) / (v %*% v) ) * v
+  vec <- as.vector(vec)
+  # RESULT will be orthogonal to vec
+  # adapted from `wordVectors` package
+  # t(x) %*% y is crossprod()
+  RESULT <- crossprod(
+    t(wv %*% vec) /
+      as.vector(vec %*% vec),
+    vec
+  )
 
-    return(RESULT)
+  return(RESULT)
 }
 
 #' Find the 'rejection matrix' from a semantic vector
@@ -469,12 +471,12 @@ find_projection <- function(wv, vec) {
 #'
 #' @export
 find_rejection <- function(wv, vec) {
-    stopifnot(ncol(wv) == length(vec))
-    # The projection of the matrix that
-    # is not parallel to the vector
-    # adapted from `wordVectors` package
-    RESULT <- wv - find_projection(wv, vec)
-    return(RESULT)
+  stopifnot(ncol(wv) == length(vec))
+  # The projection of the matrix that
+  # is not parallel to the vector
+  # adapted from `wordVectors` package
+  RESULT <- wv - find_projection(wv, vec)
+  return(RESULT)
 }
 
 
@@ -556,88 +558,87 @@ find_rejection <- function(wv, vec) {
 find_transformation <- function(wv,
                                 ref = NULL,
                                 method = c(
-                                    "align", "norm",
-                                    "center", "retrofit"
+                                  "align", "norm",
+                                  "center", "retrofit"
                                 )) {
-    stopifnot(inherits(wv, "matrix") || inherits(wv, "sparseMatrix"))
-    method <- match.arg(method)
+  stopifnot(inherits(wv, "matrix") || inherits(wv, "sparseMatrix"))
+  method <- match.arg(method)
 
-    RESULT <- switch(method,
-        align = .procustes_align(wv, ref),
-        norm = .l2_normalize(wv),
-        center = .colmeans_translate(wv),
-        retrofit = .retrofit(wv, ref)
-    )
+  RESULT <- switch(method,
+    align = .procustes_align(wv, ref),
+    norm = .l2_normalize(wv),
+    center = .colmeans_translate(wv),
+    retrofit = .retrofit(wv, ref)
+  )
 
-    return(RESULT)
+  return(RESULT)
 }
 
 
 ## INTERNAL FUNCTIONS ## -------------------------------------------------------
 
 .procustes_align <- function(wv, ref) {
-    stopifnot(ncol(wv) == ncol(ref))
+  stopifnot(ncol(wv) == ncol(ref))
 
-    # scaling (scale to unit length)
-    wv <- .l2_normalize(wv)
-    ref <- .l2_normalize(ref)
-    # column center (translation)
-    # following Schlechtweg et al. (2019)
-    wv <- .colmeans_translate(wv)
-    ref <- .colmeans_translate(ref)
-    # svd (rotation/reflection)
-    rot <- rsvd::rsvd(Matrix::crossprod(ref, wv))
-    Q <- Matrix::tcrossprod(rot$v, rot$u) # Q = VU^T
+  # scaling (scale to unit length)
+  wv <- .l2_normalize(wv)
+  ref <- .l2_normalize(ref)
+  # column center (translation)
+  # following Schlechtweg et al. (2019)
+  wv <- .colmeans_translate(wv)
+  ref <- .colmeans_translate(ref)
+  # svd (rotation/reflection)
+  rot <- rsvd::rsvd(Matrix::crossprod(ref, wv))
+  Q <- Matrix::tcrossprod(rot$v, rot$u) # Q = VU^T
 
-    return(wv %*% Q)
+  return(wv %*% Q)
 }
 
 .colmeans_translate <- function(wv) {
-    return(wv - rep(
-        Matrix::colMeans(wv),
-        rep.int(
-            nrow(wv),
-            ncol(wv)
-        )
-    ))
+  return(wv - rep(
+    Matrix::colMeans(wv),
+    rep.int(
+      nrow(wv),
+      ncol(wv)
+    )
+  ))
 }
 
 .l2_normalize <- function(x) {
-    norm_vec <- 1 / sqrt(Matrix::rowSums(x^2))
-    # when sum row elements == 0
-    norm_vec[is.infinite(norm_vec)] <- 0
-    norm_vec[is.na(norm_vec)] <- 0
+  norm_vec <- 1 / sqrt(Matrix::rowSums(x^2))
+  # when sum row elements == 0
+  norm_vec[is.infinite(norm_vec)] <- 0
+  norm_vec[is.na(norm_vec)] <- 0
 
-    # This is the old way...
-    # if (inherits(wv, "sparseMatrix")) {
-    #     return(Matrix::Diagonal(x = norm_vec) %*% wv)
-    # } else {
-    #     return(wv * norm_vec)
-    # }
-    return(x * norm_vec)
+  # This is the old way...
+  # if (inherits(wv, "sparseMatrix")) {
+  #     return(Matrix::Diagonal(x = norm_vec) %*% wv)
+  # } else {
+  #     return(wv * norm_vec)
+  # }
+  return(x * norm_vec)
 }
 
 .retrofit <- function(wv, ref) {
+  # only keep shared vocab (this could be tweaked later)
+  vocab <- intersect(rownames(wv), rownames(ref))
+  wv <- wv[vocab, ]
+  ref <- ref[vocab, vocab]
 
-    # only keep shared vocab (this could be tweaked later)
-    vocab <- intersect(rownames(wv), rownames(ref))
-    wv <- wv[vocab, ]
-    ref <- ref[vocab, vocab]
+  # get SVD embeddings for TCM
+  ref <- find_transformation(ref, method = "norm")
+  ref <- rsvd::rsvd(ref, k = ncol(wv))
+  ref <- ref$v %*% diag(ref$d)
 
-    # get SVD embeddings for TCM
-    ref <- find_transformation(ref, method = "norm")
-    ref <- rsvd::rsvd(ref, k = ncol(wv))
-    ref <- ref$v %*% diag(ref$d)
+  # align ref embeddings to pretrained
+  wv <- find_transformation(wv, method = "norm")
+  ref <- find_transformation(ref, wv, method = "align")
 
-    # align ref embeddings to pretrained
-    wv <- find_transformation(wv, method = "norm")
-    ref <- find_transformation(ref, wv, method = "align")
+  # add ref embeddings to pretrained
+  ref <- wv + ref
+  ref <- find_transformation(ref, method = "norm")
 
-    # add ref embeddings to pretrained
-    ref <- wv + ref
-    ref <- find_transformation(ref, method = "norm")
-
-    return(ref)
+  return(ref)
 }
 
 
@@ -668,105 +669,104 @@ find_transformation <- function(wv,
 #'         missing terms or rows with missing terms removed
 #' @noRd
 .check_term_in_embeddings <- function(terms, wv, action = "stop") {
-    vocab <- kit::funique(unlist(strsplit(unlist(terms), " ")))
-    bad_words <- unlist(vocab)[!(unlist(vocab) %in% rownames(wv))]
+  vocab <- kit::funique(unlist(strsplit(unlist(terms), " ")))
+  bad_words <- unlist(vocab)[!(unlist(vocab) %in% rownames(wv))]
 
-    ## If no missing terms, return terms ##
-    if (identical(bad_words, character(0))) {
-        return(terms)
-    }
-
-    ## Create the stop message ##
-    if (length(bad_words) > 10L) {
-        n_words <- length(bad_words) - 10L
-        bad_words_msg <- paste(bad_words[seq_len(10)], collapse = "; ")
-        bad_words_msg <- paste(bad_words_msg, " and ", n_words, " more term(s)")
-    } else {
-        bad_words_msg <- bad_words
-    }
-
-    stop_msg <- paste0(
-        "The following have no matching word vectors: ",
-        paste(bad_words, collapse = "; ")
-    )
-
-    if (action == "stop") {
-        stop(stop_msg)
-    }
-
-    ### If we want to remove the missing terms ###
-    if (action == "remove") {
-
-        # for DATA FRAMES or TIBBLES
-        if (is.data.frame(terms)) {
-            any_words <- paste(bad_words, collapse = "|")
-
-            if (ncol(terms) == 2) {
-                terms <- terms[!grepl(any_words, unlist(terms[, 1])), ]
-                terms <- terms[!grepl(any_words, unlist(terms[, 2])), ]
-                # stop if removing term creates an empty list
-                if (nrow(terms) == 0) {
-                    stop(stop_msg)
-                }
-            }
-
-            if (ncol(terms) == 1) {
-                terms <- terms[!grepl(any_words, unlist(terms[, 1])), ,
-                    drop = FALSE
-                ]
-                # stop if removing term creates an empty list
-                if (identical(terms, character(0)) ||
-                    nrow(terms) == 0) {
-                    stop(stop_msg)
-                }
-            }
-        }
-
-        # if LIST
-        # lists are used for pooling rather than paired
-        if (!is.data.frame(terms) && is.list(terms)) {
-            if (length(terms) == 2) {
-                terms <- lapply(
-                    terms,
-                    function(x) {
-                        x[!x %in% bad_words]
-                    }
-                )
-
-                # stop if removing term creates an empty list
-                if (identical(terms[[1]], character(0))) {
-                    stop(stop_msg)
-                }
-                if (identical(terms[[2]], character(0))) {
-                    stop(stop_msg)
-                }
-            }
-
-            if (length(terms) == 1) {
-                terms <- list(terms[[1]][!terms[[1]] %in% bad_words])
-                # stop if removing term creates an empty list
-                if (identical(terms[[1]], character(0))) {
-                    stop(stop_msg)
-                }
-            }
-        }
-
-        # if VECTOR
-        if (is.vector(terms)) {
-            terms <- terms[!terms %in% bad_words]
-            # stop if removing term creates an vector
-            if (length(unlist(terms)) == 0) {
-                stop(stop_msg)
-            }
-        }
-    }
-
-
-    message(
-        "The following (and any associated terms) removed
-because there are no matching word vectors: ",
-        paste0(paste(bad_words, collapse = "; "))
-    )
-
+  ## If no missing terms, return terms ##
+  if (identical(bad_words, character(0))) {
     return(terms)
+  }
+
+  ## Create the stop message ##
+  if (length(bad_words) > 10L) {
+    n_words <- length(bad_words) - 10L
+    bad_words_msg <- paste(bad_words[seq_len(10)], collapse = "; ")
+    bad_words_msg <- paste(bad_words_msg, " and ", n_words, " more term(s)")
+  } else {
+    bad_words_msg <- bad_words
+  }
+
+  stop_msg <- paste0(
+    "The following have no matching word vectors: ",
+    paste(bad_words, collapse = "; ")
+  )
+
+  if (action == "stop") {
+    stop(stop_msg)
+  }
+
+  ### If we want to remove the missing terms ###
+  if (action == "remove") {
+    # for DATA FRAMES or TIBBLES
+    if (is.data.frame(terms)) {
+      any_words <- paste(bad_words, collapse = "|")
+
+      if (ncol(terms) == 2) {
+        terms <- terms[!grepl(any_words, unlist(terms[, 1])), ]
+        terms <- terms[!grepl(any_words, unlist(terms[, 2])), ]
+        # stop if removing term creates an empty list
+        if (nrow(terms) == 0) {
+          stop(stop_msg)
+        }
+      }
+
+      if (ncol(terms) == 1) {
+        terms <- terms[!grepl(any_words, unlist(terms[, 1])), ,
+          drop = FALSE
+        ]
+        # stop if removing term creates an empty list
+        if (identical(terms, character(0)) ||
+          nrow(terms) == 0) {
+          stop(stop_msg)
+        }
+      }
+    }
+
+    # if LIST
+    # lists are used for pooling rather than paired
+    if (!is.data.frame(terms) && is.list(terms)) {
+      if (length(terms) == 2) {
+        terms <- lapply(
+          terms,
+          function(x) {
+            x[!x %in% bad_words]
+          }
+        )
+
+        # stop if removing term creates an empty list
+        if (identical(terms[[1]], character(0))) {
+          stop(stop_msg)
+        }
+        if (identical(terms[[2]], character(0))) {
+          stop(stop_msg)
+        }
+      }
+
+      if (length(terms) == 1) {
+        terms <- list(terms[[1]][!terms[[1]] %in% bad_words])
+        # stop if removing term creates an empty list
+        if (identical(terms[[1]], character(0))) {
+          stop(stop_msg)
+        }
+      }
+    }
+
+    # if VECTOR
+    if (is.vector(terms)) {
+      terms <- terms[!terms %in% bad_words]
+      # stop if removing term creates an vector
+      if (length(unlist(terms)) == 0) {
+        stop(stop_msg)
+      }
+    }
+  }
+
+
+  message(
+    "The following (and any associated terms) removed
+because there are no matching word vectors: ",
+    paste0(paste(bad_words, collapse = "; "))
+  )
+
+  return(terms)
 }
