@@ -61,7 +61,7 @@
 #' Taylor, Marshall A. (2020)
 #' 'Visualization Strategies for Regression Estimates with Randomization
 #' Inference' \emph{Stata Journal} 20(2):309-335.
-#' \doi{110.1177/1536867X20930999}.\cr
+#' \doi{10.1177/1536867X20930999}.\cr
 #'
 #' #' Darlington, Richard B. and Andrew F. Hayes (2016)
 #' \emph{Regression analysis and linear models: Concepts, applications, and implementation}.
@@ -84,8 +84,9 @@
 #'
 #' @param model The model which will be estimated and re-estimated.
 #'
-#' @param perm_var The variable in the model that will be permuted. Default is `NULL`
-#'                 which takes the first `Y`n term in the formula of the model
+#' @param perm_var The variable in the model that will be permuted.
+#'                  Default is `NULL` which takes the first `Y`n term
+#'                  in the formula of the model
 #'
 #' @param strat_var Categorical variable for within-stratum permutations.
 #'                  Defaults to `NULL`.
@@ -96,16 +97,20 @@
 #'
 #' @param perm_n The total number of permutations. Defaults to 1000.
 #'
-#' @param alternative The alternative hypothesis. One of `"two.sided"` (default), `"left"`,
-#'                    `"right"`, and `"all"`. Defaults to `"all"`, which reports
-#'                    the p-value statistics for all three alternative hypotheses.
+#' @param alternative The alternative hypothesis. One of `"two.sided"` 
+#'                     (default),
+#'                    `"left"`, `"right"`, and `"all"`. Defaults to `"all"`,
+#'                    which reports the p-value statistics for all three
+#'                    alternative hypotheses.
 #'
 #' @param alpha Alpha level for the hypothesis test. Defaults to 0.05.
 #'
-#' @param seed Optional seed for reproducibility of the p-value statistics. Defaults to null.
+#' @param seed Optional seed for reproducibility of the p-value statistics.
+#'             Defaults to null.
 #'
 #' @returns Returns a data frame with the observed statistic (`stat`), the
-#'          p-values (`P_left`, for left-tailed, `P_right` for right-tailed, and/or
+#'          p-values (`P_left`, for left-tailed, `P_right` for right-tailed, 
+#'          and/or
 #'          `P_two` for two-tailed), and the standard errors and confidence
 #'          intervals for those p-values, respectively.
 #'
@@ -120,7 +125,7 @@
 #' @seealso [CMDist], [CoCA], [get_direction]
 #'
 #' @examples
-#'
+#' \donttest{
 #' data <- text2map::meta_shakespeare
 #'
 #' model <- lm(body_count ~ boas_problem_plays + year + genre, data = data)
@@ -130,7 +135,7 @@
 #'   data = data,
 #'   model = model,
 #'   statistic = "coefficients",
-#'   perm_n = 500,
+#'   perm_n = 40,
 #'   alternative = "two.sided",
 #'   alpha = .01,
 #'   seed = 8675309
@@ -142,11 +147,12 @@
 #'   model = model,
 #'   strat_var = "boas_problem_plays",
 #'   statistic = "coefficients",
-#'   perm_n = 500,
+#'   perm_n = 40,
 #'   alternative = "two.sided",
 #'   alpha = .01,
 #'   seed = 8675309
 #' )
+#' }
 #'
 #' @export
 perm_tester <- function(data,
@@ -212,11 +218,13 @@ perm_tester <- function(data,
     mat$P_two <- rowSums(abs(perm_mat) >= abs(model[[statistic]])) / perm_n
     mat$SE_two <- sqrt((mat$P_two * (1 - mat$P_two)) / perm_n)
     mat$CI_two_lo <- mat$P_two - (stats::qnorm(alpha / 2,
-      mean = 0, sd = 1,
+      mean = 0,
+      sd = 1,
       lower.tail = FALSE
     ) * mat$SE_two)
     mat$CI_two_up <- mat$P_two + (stats::qnorm(alpha / 2,
-      mean = 0, sd = 1,
+      mean = 0,
+      sd = 1,
       lower.tail = FALSE
     ) * mat$SE_two)
   }
@@ -225,11 +233,13 @@ perm_tester <- function(data,
     mat$P_left <- rowSums(perm_mat <= model[[statistic]]) / perm_n
     mat$SE_left <- sqrt((mat$P_left * (1 - mat$P_left)) / perm_n)
     mat$CI_left_lo <- mat$P_left - (stats::qnorm(alpha / 2,
-      mean = 0, sd = 1,
+      mean = 0,
+      sd = 1,
       lower.tail = FALSE
     ) * mat$SE_left)
     mat$CI_left_up <- mat$P_left + (stats::qnorm(alpha / 2,
-      mean = 0, sd = 1,
+      mean = 0,
+      sd = 1,
       lower.tail = FALSE
     ) * mat$SE_left)
   }
@@ -238,11 +248,13 @@ perm_tester <- function(data,
     mat$P_right <- rowSums(perm_mat >= model[[statistic]]) / perm_n
     mat$SE_right <- sqrt((mat$P_right * (1 - mat$P_right)) / perm_n)
     mat$CI_right_lo <- mat$P_right - (stats::qnorm(alpha / 2,
-      mean = 0, sd = 1,
+      mean = 0,
+      sd = 1,
       lower.tail = FALSE
     ) * mat$SE_right)
     mat$CI_right_up <- mat$P_right + (stats::qnorm(alpha / 2,
-      mean = 0, sd = 1,
+      mean = 0,
+      sd = 1,
       lower.tail = FALSE
     ) * mat$SE_right)
   }
@@ -260,10 +272,11 @@ perm_tester <- function(data,
 #' `rancor_builder()` generates a random corpus (rancor) based on a user
 #' defined term probabilities and vocabulary. Users can set the number of
 #' documents, as well as the mean, standard deviation, minimum, and maximum
-#' document lengths (i.e. number of tokens). The output is a single
+#' document lengths (i.e., number of tokens) of the parent normal distribution
+#' from which the document lengths are randomly sampled. The output is a single
 #' document-term matrix. To produce multiple random corpora, use
 #' `rancors_builder()` (note the plural). Term probabilities/vocabulary can
-#' come from a users own corpus, or a pre-compiled frequency list, such 
+#' come from a users own corpus, or a pre-compiled frequency list, such
 #' as the one derived from the Google Book N-grams corpus
 #'
 #'
@@ -278,11 +291,14 @@ perm_tester <- function(data,
 #' @param vocab Name of the column containing vocabulary
 #' @param probs Name of the column containing probabilities
 #' @param n_docs Integer indicating the number of documents to be returned
-#' @param len_mean Integer indicating the mean of the document lengths
-#' @param len_var Integer indicating the standard deviation
-#'                of the document lengths
+#' @param len_mean Integer indicating the mean of the document lengths in the
+#'                parent normal sampling distribution
+#' @param len_var Integer indicating the standard deviation of the 
+#'                document lengths in the parent normal sampling distribution
 #' @param len_min Integer indicating the minimum of the document lengths
+#'                 in the parent normal sampling distribution
 #' @param len_max Integer indicating the maximum of the document lengths
+#'                 in the parent normal sampling distribution
 #' @param seed Optional seed for reproducibility
 #'
 #' @examples
@@ -395,9 +411,10 @@ rancor_builder <- function(data,
 #' Build Multiple Random Corpora
 #'
 #' `rancors_builder()` generates multiple random corpus (rancor) based on a user
-#' defined term probabilities and vocabulary. Users can set the number of
+#' defined term probabilities and vocabulary. sers can set the number of
 #' documents, as well as the mean, standard deviation, minimum, and maximum
-#' document lengths (i.e. number of tokens). The output is a list of
+#' document lengths (i.e., number of tokens) of the parent normal distribution
+#' from which the document lengths are randomly sampled. The output is a list of
 #' document-term matrices. To produce a *single* random corpus, use
 #' `rancor_builder()` (note the singular).
 #'
@@ -413,22 +430,27 @@ rancor_builder <- function(data,
 #' @param n_docs Integer(s) indicating the number of documents to be returned
 #'               If two numbers are provide, number will be randomly sampled
 #'               within the range for each corpora.
-#' @param len_mean Integer(s) indicating the mean of the document lengths.
-#'                 If two numbers are provide, number will be randomly sampled
+#' @param len_mean Integer(s) indicating the mean of the document lengths
+#'                in the parent normal sampling distribution. If two 
+#'                numbers are provided, number will be randomly sampled
 #'                within the range for each corpora.
-#' @param len_var Integer(s) indicating the standard deviation
-#'                of the document lengths. If two numbers are provide,
-#'                number will be randomly sampled
-#'               within the range for each corpora.
-#' @param len_min Integer(s) indicating the minimum of the document lengths.
-#'                If two numbers are provide, number will be randomly sampled
-#'               within the range for each corpora.
-#' @param len_max Integer(s) indicating the maximum of the document lengths.
-#'                If two numbers are provide, number will be randomly sampled
-#'               within the range for each corpora.
+#' @param len_var Integer(s) indicating the standard deviation of the 
+#'                document lengths in the parent normal sampling distribution.
+#'                If two numbers are provided, number will be randomly sampled 
+#'                within the range for each corpora.
+#' @param len_min Integer(s) indicating the minimum of the document lengths
+#'                in the parent normal sampling distribution. If two numbers
+#'                are provided, number will be randomly sampled within the 
+#'                range for each corpora.
+#' @param len_max Integer(s) indicating the maximum of the document lengths
+#'                in the parent normal sampling distribution. If two numbers
+#'                are provided, number will be randomly sampled within the
+#'                range for each corpora.
 #' @param seed Optional seed for reproducibility
 #'
 #' @examples
+#' 
+#' \donttest{
 #' # create corpus and DTM
 #' my_corpus <- data.frame(
 #'   text = c(
@@ -459,19 +481,19 @@ rancor_builder <- function(data,
 #' df$probs <- df$freqs / sum(df$freqs)
 #'
 #' # create random DTM
-#' ls_dtms <- df |> 
-#' rancors_builder(vocab,
-#'    probs,
-#'    n_cors = 20,
-#'    n_docs = 100,
-#'    len_mean = c(50, 200),
-#'    len_var = 5,
-#'    len_min = 20,
-#'    len_max = 1000,
-#'    seed = 59801
-#' )
+#' ls_dtms <- df |>
+#'   rancors_builder(vocab,
+#'     probs,
+#'     n_cors = 20,
+#'     n_docs = 100,
+#'     len_mean = c(50, 200),
+#'     len_var = 5,
+#'     len_min = 20,
+#'     len_max = 1000,
+#'     seed = 59801
+#'   )
 #' length(ls_dtms)
-#'
+#' }
 #' @export
 rancors_builder <- function(data,
                             vocab,
@@ -513,7 +535,7 @@ rancors_builder <- function(data,
 
     # assure new seed must be greater
     # than the number of docs
-    seed <- as.integer(seed + (max(n_docs)*i))
+    seed <- as.integer(seed + (max(n_docs) * i))
   }
 
   return(ls_rdtms)

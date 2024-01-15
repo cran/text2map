@@ -4,9 +4,12 @@ This is an R Package with libraries and utility functions for computational text
 
 The functions are optimized for working with various kinds of **text matrices**. Focusing on the text matrix as the primary object -- which is represented either as a base `R` dense matrix or a `Matrix` package sparse matrix -- allows for a consistent and intuitive interface that stays close to the underlying mathematical foundation of computational text analysis. In particular, the package includes functions for working with word embeddings, text networks, and document-term matrices.
 
-Related text datasets are available on GitLab in text2map.corpora and text dictionaries are available in text2map.dictionaries.
+Please check out our book [_Mapping Texts: Computational Text Analysis for the Social Sciences_](https://www.textmapping.com)
+
 
 ### Installation
+
+>Note (2024-01-13): the CRAN version is currently "archived" because of a tight turnaround during the holidays and an error on a particular dev environment. We're working on it. Please use the development version in the meantime. 
 
 Install the CRAN version:
 

@@ -13,8 +13,8 @@
 #' - cosine: compares row vectors using cosine  similarity
 #' - jaccard: compares proportion of common words to unique words in
 #' both documents
-#' - wmd: uses word mover's distance to compare documents (requires word
-#' embedding vectors)
+#' - wmd: word mover's distance to compare documents (requires word
+#' embedding vectors), using linear-complexity relaxed word mover's distance
 #' - centroid: represents each document as a centroid of their respective
 #' vocabulary, then uses cosine similarity to compare centroid vectors
 #' (requires word embedding vectors)
@@ -34,6 +34,27 @@
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words. Required for "wmd" and "centroid"
 #'           similarities.
+#' 
+#' @examples
+#' 
+#' # load example word embeddings
+#' data(ft_wv_sample)
+#'
+#' # load example text
+#' data(jfk_speech)
+#'
+#' # minimal preprocessing
+#' jfk_speech$sentence <- tolower(jfk_speech$sentence)
+#' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+#'
+#' # create DTM
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+#' 
+#' dsm_prj <- doc_similarity(dtm, method = "projection")
+#' dsm_cos <- doc_similarity(dtm, method = "cosine")
+#' dsm_wmd <- doc_similarity(dtm, method = "wmd", wv = ft_wv_sample)
+#' dsm_cen <- doc_similarity(dtm, method = "centroid", wv = ft_wv_sample)
+#' 
 #'
 #' @export
 doc_similarity <- function(x,
@@ -61,7 +82,7 @@ doc_similarity <- function(x,
 #'
 #' Given a document-term matrix or a document-similarity matrix,
 #' this function returns specified text network-based centrality measures.
-#' Currently, this includes weighted degree, eigenvector, betweenness, and
+#' Currently, this includes degree, eigenvector, betweenness, and
 #' spanning.
 #'
 #' @details
@@ -69,8 +90,28 @@ doc_similarity <- function(x,
 #' document-level projection to get the document-similarity matrix using
 #' `tcrossprod()`. If a one-mode document-similarity matrix is provided, then
 #' this step is skipped. This way document similiarities may be obtained
-#' using other methods, such as Word-Mover's Distance. The diagonal is ignored
-#' in all calculations.
+#' using other methods, such as Word-Mover's Distance (see `doc_similarity`). 
+#' The diagonal is ignored in all calculations.
+#' 
+#' Document centrality methods include:
+#' - degree: Opsahl's weighted degree centrality with tuning parameter "alpha"
+#' - between: vertex betweenness centrality using Brandes' method
+#' - eigen: eigenvector centrality using Freeman's method
+#' - span: Modified Burt's constraint following Stoltz and Taylor's method,
+#'   uses a tuning parameter "alpha" and the output is scaled.
+#' 
+#' @references
+#' Brandes, Ulrik 
+#' (2000) 'A faster algorithm for betweenness centrality'
+#' \emph{Journal of Mathematical Sociology}. 25(2):163-177
+#' \doi{10.1080/0022250X.2001.9990249}.\cr
+#' Opsahl, Tore, et al.
+#' (2010) 'Node centrality in weighted networks: Generalizing degree 
+#' and shortest paths.' \emph{Social Networks}. 32(3)245:251
+#' \doi{10.1016/j.socnet.2010.03.006}\cr
+#' Stoltz, Dustin; Taylor, Marshall 
+#' (2019) 'Textual Spanning: Finding Discursive Holes in Text Networks'
+#' \emph{Socius}. \doi{10.1177/2378023119827674}\cr
 #'
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowSums
@@ -84,21 +125,41 @@ doc_similarity <- function(x,
 #' @param mat Document-term matrix with terms as columns or a
 #'            document-similarity matrix with documents as rows and columns.
 #' @param method Character vector indicating centrality method, including
-#'               weighted degree, eigenvector, spanning, and betweenness.
+#'               "degree", "eigen", "span", and "between".
 #' @param alpha Number (default = 1) indicating the tuning parameter for
 #'              weighted metrics.
-#' @param scale Logical (default = FALSE), indicating whether to scale output.
 #' @param two_mode Logical (default = TRUE), indicating whether the input matrix
 #'                 is two mode (i.e. a document-term matrix) or one-mode
 #'                 (i.e. document-similarity matrix)
 #'
 #' @return A dataframe with two columns
+#' 
+#' @examples
+#' 
+#' # load example text
+#' data(jfk_speech)
 #'
+#' # minimal preprocessing
+#' jfk_speech$sentence <- tolower(jfk_speech$sentence)
+#' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+#'
+#' # create DTM
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+#' 
+#' ddeg <- doc_centrality(dtm, method = "degree")
+#' deig <- doc_centrality(dtm, method = "eigen")
+#' dbet <- doc_centrality(dtm, method = "between")
+#' dspa <- doc_centrality(dtm, method = "span")
+#' 
+#' # with a document-similarity matrix (dsm)
+#' 
+#' dsm <- doc_similarity(dtm, method = "cosine")
+#' ddeg <- doc_centrality(dsm, method = "degree", two_mode = FALSE)
+#' 
 #' @export
 doc_centrality <- function(mat,
                            method,
                            alpha = 1L,
-                           scale = FALSE,
                            two_mode = TRUE) {
     mat <- .convert_mat_to_dgCMatrix(mat)
 

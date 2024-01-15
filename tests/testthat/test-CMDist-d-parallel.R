@@ -180,10 +180,10 @@ test_that("check error if threads greater than available", {
         threads = n_cores,
         sens_interval = FALSE))
 
-    dtm.triple <- rbind(dtm.dgc, dtm.dgc, dtm.dgc)
+    dtm_triple <- rbind(dtm.dgc, dtm.dgc, dtm.dgc)
     # more threads than available on computer
     expect_message(paralleled <- CMDist(
-        dtm=dtm.triple,
+        dtm = dtm_triple,
         cw = cw,
         wv = fake_word_vectors,
         parallel = TRUE,

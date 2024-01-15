@@ -1,3 +1,8 @@
+# text2map 0.1.8
+
+Fixes for changes to the Matrix package
+Updating documentation and added examples
+
 # text2map 0.1.6.9003
 
 Fix encoding issue for non-ASCII characters to work with `fastmatch`

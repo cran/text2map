@@ -228,6 +228,8 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' Divides matrix into schematic classes based on row correlations.
 #'
 #' @importFrom utils capture.output
+#' @importFrom igraph graph.adjacency
+#' @importFrom igraph cluster_leading_eigen
 #'
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
 #'             as output from [CMDist()]
@@ -246,7 +248,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
                            filter_sig = TRUE,
                            filter_value = 0.01,
                            zero_action = c("drop", "ownclass")) {
-  cormat <- .make.cormat(cmds, zero_action)
+  cormat <- .make_cormat(cmds, zero_action)
 
   if (filter_sig == TRUE) {
     cormat <- .filter.insignif(cormat,
@@ -261,7 +263,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
     diag = FALSE
   )
 
-  comm <- igraph::leading.eigenvector.community(graph)
+  comm <- igraph::cluster_leading_eigen(graph)
 
   modules <- .separate(attr(cormat, "cmds"), membership = comm$membership)
 
@@ -278,7 +280,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 }
 
 
-#' .make.cormat
+#' .make_cormat
 #'
 #' Modified from Boutyline's cca function in the `corclass` package
 #' Make a correlation matrix from data frame
@@ -291,14 +293,13 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #'                    0-variance rows and all other rows is set 0, and the
 #'                    correlations between all pairs of 0-var rows are set to 1
 #' @noRd
-.make.cormat <- function(cmds, zero_action) {
+.make_cormat <- function(cmds, zero_action) {
   cmds2 <- cmds
   # Floating point imprecision may make 0-variance rows
   # appear to have variance slightly higher than 0.
   zeros <- which(apply(cmds2, 1, stats::var) <= 0.000000001)
 
-  if (zero_action[1] == "drop" &
-    (length(zeros) > 0)) {
+  if (zero_action[1] == "drop" && (length(zeros) > 0)) {
     cmds2 <- cmds2[-zeros, ]
   }
 
@@ -308,7 +309,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
   attributes(rv)$zero_action <- zero_action[1]
   attributes(rv)$cmds <- cmds2
 
-  if ((zero_action[1] == "ownclass") & length(zeros) > 0) {
+  if ((zero_action[1] == "ownclass") && length(zeros) > 0) {
     rv[zeros, ] <- 0
     rv[, zeros] <- 0
     rv[zeros, zeros] <- 1

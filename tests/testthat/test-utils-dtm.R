@@ -86,55 +86,31 @@ test_that("dtm_melter works on both base and sparse", {
 test_that("dtm_builder produces identical dtm to cast_dtm", {
 
     # example 1
-    dtm.a <- my_corpus %>%
-        dtm_builder(clean_text, line_id)
+    dtm.a <- jfk_corpus %>%
+        dtm_builder(clean_text, doc_id)
 
     # example 2
-    dtm.b <- dtm_builder(my_corpus, text = clean_text, doc_id = line_id)
-
-    # example 3
-    dtm.c <- my_corpus %>%
-        dplyr::mutate(
-            clean_text = gsub("'", "", text),
-            clean_text = tolower(clean_text)
-        ) %>%
-        dtm_builder(clean_text, line_id)
-
-    # compare to tidy
-    dtm.tidy <- my_corpus %>%
-        tidytext::unnest_tokens(word, clean_text) %>%
-        dplyr::count(line_id, word, sort = TRUE) %>%
-        tidytext::cast_dtm(line_id, word, n)
+    dtm.b <- dtm_builder(jfk_corpus, text = clean_text, doc_id = doc_id)
 
     expect_identical(dim(dtm.a), dim(dtm.b))
-    expect_identical(dim(dtm.a), dim(dtm.c))
-    expect_identical(dim(dtm.b), dim(dtm.c))
-    expect_identical(dim(dtm.a), dim(dtm.tidy))
+    expect_identical(dim(dtm.a), dim(dtm.tm))
 
     expect_identical(sum(dtm.a), sum(dtm.b))
-    expect_identical(sum(dtm.a), sum(dtm.c))
-    expect_identical(sum(dtm.b), sum(dtm.c))
-    expect_identical(sum(dtm.a), sum(dtm.tidy))
+    expect_identical(sum(dtm.a), sum(dtm.tm))
 
     expect_identical(
         as.vector(colnames(dtm.a)),
         as.vector(colnames(dtm.b))
     )
     expect_identical(
-        as.vector(colnames(dtm.a)),
-        as.vector(colnames(dtm.c))
-    )
-    expect_identical(
-        as.vector(colnames(dtm.b)),
-        as.vector(colnames(dtm.c))
-    )
-    expect_identical(
         as.vector(sort(colnames(dtm.a))),
-        as.vector(sort(colnames(dtm.tidy)))
+        as.vector(sort(colnames(dtm.tm)))
     )
+
 })
 
 test_that("dtm_builder error/message if last row is blank", {
+
     my_corpus <- data.frame(
         my_text = c(
             "I hear babies crying I watch them grow",
@@ -156,25 +132,26 @@ test_that("dtm_builder error/message if last row is blank", {
 
 
 test_that("dtm_builder works with vocab", {
-    vocab <- vocab_builder(corpus, text)
+
+    vocab <- vocab_builder(jfk_corpus, text)
     new.vocab <- vocab[!vocab %in% c("moon")]
 
     expect_identical(
-        dim(dtm_builder(corpus, text, doc_id,
+        dim(dtm_builder(jfk_corpus, text, doc_id,
             vocab = new.vocab
         )),
         as.integer(c(10, 43))
     )
 
     expect_identical(
-        dim(dtm_builder(corpus, text, doc_id,
+        dim(dtm_builder(jfk_corpus, text, doc_id,
             vocab = new.vocab, chunk = 4L
         )),
         as.integer(c(19, 43))
     )
 
     expect_identical(
-        dim(dtm_builder(corpus, text, doc_id,
+        dim(dtm_builder(jfk_corpus, text, doc_id,
             vocab = new.vocab
         )),
         as.integer(c(10, 43))
@@ -182,7 +159,7 @@ test_that("dtm_builder works with vocab", {
 
     expect_error(
         expect_message(
-            dtm_builder(corpus, text, doc_ids,
+            dtm_builder(jfk_corpus, text, doc_ids,
                 vocab = c(
                     "hear", "babies",
                     "world", "picklespit"
@@ -192,14 +169,14 @@ test_that("dtm_builder works with vocab", {
     )
     expect_error(
         expect_message(
-            dtm_builder(corpus, text, doc_ids,
+            dtm_builder(jfk_corpus, text, doc_ids,
                 vocab = new.vocab, chunk = 5L
             )
         )
     )
     expect_error(
         expect_message(
-            dtm_builder(corpus, text, doc_ids,
+            dtm_builder(jfk_corpus, text, doc_ids,
                 vocab = new.vocab
             )
         )
@@ -227,17 +204,18 @@ test_that("dtm_builder error/message if doc_id is wrong...", {
 })
 
 test_that("dtm_builder chunks correctly", {
+
     chunk <- 3L
-    dtm.e <- corpus %>%
+    dtm.e <- jfk_corpus %>%
         dtm_builder(text, doc_id, chunk = chunk)
     expect_equal(sum(dtm.e[1, ]), chunk)
 
-    dtm.f <- corpus %>%
+    dtm.f <- jfk_corpus %>%
         dtm_builder(text, doc_id)
     expect_equal(sum(dtm.e), sum(dtm.f))
 
     chunk <- 100L
-    dtm.g <- corpus %>%
+    dtm.g <- jfk_corpus %>%
         dtm_builder(text, doc_id, chunk = chunk)
     expect_equal(sum(dtm.g[1, ]), sum(dtm.f))
 })
@@ -309,10 +287,10 @@ test_that("dtm resampler works on output of .prep_cmd_INPUT", {
 })
 
 test_that("compare dtm dense and sparse", {
-    dtm_sp <- corpus %>%
+    dtm_sp <- jfk_corpus %>%
         dtm_builder(text, doc_id, dense = FALSE)
 
-    dtm_de <- corpus %>%
+    dtm_de <- jfk_corpus %>%
         dtm_builder(text, doc_id, dense = TRUE)
 
     expect_s4_class(dtm_sp, "dgCMatrix")
@@ -324,15 +302,15 @@ test_that("compare dtm dense and sparse", {
     expect_equal(ncol(dtm_sp), ncol(dtm_de))
 
     # compare with vocab
-    vocab <- vocab_builder(corpus, text)
+    vocab <- vocab_builder(jfk_corpus, text)
     new.vocab <- vocab[!vocab %in% c("moon")]
 
-    dtm_sp <- dtm_builder(corpus, text, doc_id,
+    dtm_sp <- dtm_builder(jfk_corpus, text, doc_id,
         vocab = new.vocab,
         dense = FALSE
     )
 
-    dtm_de <- dtm_builder(corpus, text, doc_id,
+    dtm_de <- dtm_builder(jfk_corpus, text, doc_id,
         vocab = new.vocab,
         dense = TRUE
     )
@@ -347,9 +325,9 @@ test_that("compare dtm dense and sparse", {
 })
 
 test_that("works w/o doc_id", {
-    dtm1 <- corpus %>%
+    dtm1 <- jfk_corpus %>%
         dtm_builder(text, doc_id, dense = FALSE)
-    dtm2 <- corpus %>%
+    dtm2 <- jfk_corpus %>%
         dtm_builder(text, dense = FALSE)
 
     expect_equal(nrow(dtm1), nrow(dtm2))
@@ -357,7 +335,7 @@ test_that("works w/o doc_id", {
 })
 
 test_that("dtm functions with one document", {
-    dtm1 <- dtm_builder(corpus[1, ], text, doc_id, dense = FALSE)
+    dtm1 <- dtm_builder(jfk_corpus[1, ], text, doc_id, dense = FALSE)
     expect_identical(dim(dtm1), as.integer(c(1, 6)))
 
     dtm2 <- dtm_stopper(dtm1, stop_list = c("we", "moon"))
@@ -368,7 +346,7 @@ test_that("dtm functions with one document", {
         as.integer(c(6, 3))
     )
 
-    dtm_c <- dtm_builder(corpus[1, ], text, chunk = 1L, dense = FALSE)
+    dtm_c <- dtm_builder(jfk_corpus[1, ], text, chunk = 1L, dense = FALSE)
     expect_identical(dim(dtm_c), as.integer(c(7, 6)))
 
     expect_identical(

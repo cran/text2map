@@ -21,8 +21,9 @@ perm_tester(
 
 \item{model}{The model which will be estimated and re-estimated.}
 
-\item{perm_var}{The variable in the model that will be permuted. Default is \code{NULL}
-which takes the first \code{Y}n term in the formula of the model}
+\item{perm_var}{The variable in the model that will be permuted.
+Default is \code{NULL} which takes the first \code{Y}n term
+in the formula of the model}
 
 \item{strat_var}{Categorical variable for within-stratum permutations.
 Defaults to \code{NULL}.}
@@ -33,17 +34,21 @@ the original model statistic.}
 
 \item{perm_n}{The total number of permutations. Defaults to 1000.}
 
-\item{alternative}{The alternative hypothesis. One of \code{"two.sided"} (default), \code{"left"},
-\code{"right"}, and \code{"all"}. Defaults to \code{"all"}, which reports
-the p-value statistics for all three alternative hypotheses.}
+\item{alternative}{The alternative hypothesis. One of \code{"two.sided"}
+(default),
+\code{"left"}, \code{"right"}, and \code{"all"}. Defaults to \code{"all"},
+which reports the p-value statistics for all three
+alternative hypotheses.}
 
 \item{alpha}{Alpha level for the hypothesis test. Defaults to 0.05.}
 
-\item{seed}{Optional seed for reproducibility of the p-value statistics. Defaults to null.}
+\item{seed}{Optional seed for reproducibility of the p-value statistics.
+Defaults to null.}
 }
 \value{
 Returns a data frame with the observed statistic (\code{stat}), the
-p-values (\code{P_left}, for left-tailed, \code{P_right} for right-tailed, and/or
+p-values (\code{P_left}, for left-tailed, \code{P_right} for right-tailed,
+and/or
 \code{P_two} for two-tailed), and the standard errors and confidence
 intervals for those p-values, respectively.
 }
@@ -105,7 +110,7 @@ intervals for the p-values.
 variable to be he grouping variable.
 }
 \examples{
-
+\donttest{
 data <- text2map::meta_shakespeare
 
 model <- lm(body_count ~ boas_problem_plays + year + genre, data = data)
@@ -115,7 +120,7 @@ out1 <- perm_tester(
   data = data,
   model = model,
   statistic = "coefficients",
-  perm_n = 500,
+  perm_n = 40,
   alternative = "two.sided",
   alpha = .01,
   seed = 8675309
@@ -127,18 +132,19 @@ out2 <- perm_tester(
   model = model,
   strat_var = "boas_problem_plays",
   statistic = "coefficients",
-  perm_n = 500,
+  perm_n = 40,
   alternative = "two.sided",
   alpha = .01,
   seed = 8675309
 )
+}
 
 }
 \references{
 Taylor, Marshall A. (2020)
 'Visualization Strategies for Regression Estimates with Randomization
 Inference' \emph{Stata Journal} 20(2):309-335.
-\doi{110.1177/1536867X20930999}.\cr
+\doi{10.1177/1536867X20930999}.\cr
 
 #' Darlington, Richard B. and Andrew F. Hayes (2016)
 \emph{Regression analysis and linear models: Concepts, applications, and implementation}.

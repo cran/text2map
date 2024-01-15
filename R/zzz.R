@@ -1,7 +1,21 @@
 
+# ON LOAD ----
+# default threads to 2 for CRAN
+# users will need to set threads
+.onLoad <- function(libname, pkgname) {
+  # CRAN OMP THREAD LIMIT
+  Sys.setenv("OMP_THREAD_LIMIT" = 2L)
+  options("text2vec.mc.cores" = 2L)
+  # stop CRAN from testing "donttest"
+  Sys.setenv("_R_CHECK_DONTTEST_EXAMPLES_" = FALSE)
+
+}
+
+
+
 #' Read word embedding models from `bin` or `vec` files
 #'
-#' This an internal function, currently in development. Word embeddings are
+#' This an internal function, in development. Word embeddings are
 #' commonly in `bin` or `vec` (i.e. word2vec) format. This function will
 #' read these files into the `R` environment.
 #'

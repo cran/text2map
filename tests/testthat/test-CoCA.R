@@ -1,6 +1,34 @@
-test_that("CoCA works on different data types", {
+
+test_that("CoCA prepare", {
   testthat::skip_on_cran()
 
+    # classes <- CoCA(dtm=dtm.bse,
+    #                 wv=fake_word_vectors_coca,
+    #                 directions = sem.dirs,
+    #                 filter_sig = TRUE,
+    #                 filter_value = 0.05,
+    #                 zero_action = 'drop')
+
+    coca.msg <- "CoCA found 2 schematic classes in the corpus. Sizes: 5 5"
+
+    # Make a degenerate class
+    classes.d <- CoCA(
+          dtm = dtm.bse,
+          wv = fake_word_vectors_coca,
+          directions = sem.dirs,
+          filter_sig = TRUE,
+          filter_value = 0.05,
+          zero_action = 'drop'
+          )
+
+    coca.msg.d <- "CoCA found 2 schematic classes in the corpus. Sizes: 5 5"
+  
+})
+
+
+test_that("CoCA works on different data types", {
+
+  testthat::skip_on_cran()
   ## base R matrix ##
   classes <- CoCA(
     dtm = dtm.bse,
@@ -94,6 +122,7 @@ test_that("CoCA works on different data types", {
   expect_equal(dim(classes$cormat), cor.dims)
 })
 
+
 test_that("CoCA prints a solution", {
 
   testthat::skip_on_cran()
@@ -140,4 +169,5 @@ test_that("CoCA plot", {
     p$Arguments$alpha,
     0.05
   )
+
 })

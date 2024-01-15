@@ -112,6 +112,7 @@ dtm <- dtm_builder(
 )
 
 # example 3 with dplyr pipe and mutate
+\donttest{
 dtm <- my_corpus \%>\%
   mutate(
     clean_text = gsub("'", "", text),
@@ -125,6 +126,7 @@ dtm <- my_corpus \%>\%
     line_id,
     chunk = 3L
   )
+}
 
 # example 5 with user defined vocabulary
 my.vocab <- c("wonderful", "world", "haiku", "think")

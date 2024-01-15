@@ -215,7 +215,8 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #' number of pseudo-documents and the labels for concept words and concept
 #' vectors. Ensures unique labeling, and adds out of vocabulary words to DTM.
 #'
-#' @importFrom stringr str_trim
+#' @importFrom stringi stri_trim
+#' @importFrom stringi stri_encode
 #' @importFrom kit funique
 #' @importFrom Matrix sparseMatrix
 #'
@@ -252,7 +253,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
     ## ensure UTF-8 encoding
     cw <- stringi::stri_encode(cw, to = "UTF-8")
     ## Make sure there are no extra spaces for concept words
-    cw <- stringr::str_trim(cw)
+    cw <- stringi::stri_trim(cw)
 
     # check that concept words are in embeddings
     cw <- .check_term_in_embeddings(cw, wv, action = missing)

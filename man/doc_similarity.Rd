@@ -32,12 +32,34 @@ using \code{tcrossprod()} which measures the shared vocabulary overlap
 \item cosine: compares row vectors using cosine  similarity
 \item jaccard: compares proportion of common words to unique words in
 both documents
-\item wmd: uses word mover's distance to compare documents (requires word
-embedding vectors)
+\item wmd: word mover's distance to compare documents (requires word
+embedding vectors), using linear-complexity relaxed word mover's distance
 \item centroid: represents each document as a centroid of their respective
 vocabulary, then uses cosine similarity to compare centroid vectors
 (requires word embedding vectors)
 }
+}
+\examples{
+
+# load example word embeddings
+data(ft_wv_sample)
+
+# load example text
+data(jfk_speech)
+
+# minimal preprocessing
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+
+# create DTM
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+
+dsm_prj <- doc_similarity(dtm, method = "projection")
+dsm_cos <- doc_similarity(dtm, method = "cosine")
+dsm_wmd <- doc_similarity(dtm, method = "wmd", wv = ft_wv_sample)
+dsm_cen <- doc_similarity(dtm, method = "centroid", wv = ft_wv_sample)
+
+
 }
 \author{
 Dustin Stoltz

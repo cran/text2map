@@ -30,34 +30,40 @@ rancors_builder(
 If two numbers are provide, number will be randomly sampled
 within the range for each corpora.}
 
-\item{len_mean}{Integer(s) indicating the mean of the document lengths.
-If two numbers are provide, number will be randomly sampled
+\item{len_mean}{Integer(s) indicating the mean of the document lengths
+in the parent normal sampling distribution. If two
+numbers are provided, number will be randomly sampled
 within the range for each corpora.}
 
-\item{len_var}{Integer(s) indicating the standard deviation
-of the document lengths. If two numbers are provide,
-number will be randomly sampled
+\item{len_var}{Integer(s) indicating the standard deviation of the
+document lengths in the parent normal sampling distribution.
+If two numbers are provided, number will be randomly sampled
 within the range for each corpora.}
 
-\item{len_min}{Integer(s) indicating the minimum of the document lengths.
-If two numbers are provide, number will be randomly sampled
-within the range for each corpora.}
+\item{len_min}{Integer(s) indicating the minimum of the document lengths
+in the parent normal sampling distribution. If two numbers
+are provided, number will be randomly sampled within the
+range for each corpora.}
 
-\item{len_max}{Integer(s) indicating the maximum of the document lengths.
-If two numbers are provide, number will be randomly sampled
-within the range for each corpora.}
+\item{len_max}{Integer(s) indicating the maximum of the document lengths
+in the parent normal sampling distribution. If two numbers
+are provided, number will be randomly sampled within the
+range for each corpora.}
 
 \item{seed}{Optional seed for reproducibility}
 }
 \description{
 \code{rancors_builder()} generates multiple random corpus (rancor) based on a user
-defined term probabilities and vocabulary. Users can set the number of
+defined term probabilities and vocabulary. sers can set the number of
 documents, as well as the mean, standard deviation, minimum, and maximum
-document lengths (i.e. number of tokens). The output is a list of
+document lengths (i.e., number of tokens) of the parent normal distribution
+from which the document lengths are randomly sampled. The output is a list of
 document-term matrices. To produce a \emph{single} random corpus, use
 \code{rancor_builder()} (note the singular).
 }
 \examples{
+
+\donttest{
 # create corpus and DTM
 my_corpus <- data.frame(
   text = c(
@@ -88,19 +94,19 @@ df <- data.frame(
 df$probs <- df$freqs / sum(df$freqs)
 
 # create random DTM
-ls_dtms <- df |> 
-rancors_builder(vocab,
-   probs,
-   n_cors = 20,
-   n_docs = 100,
-   len_mean = c(50, 200),
-   len_var = 5,
-   len_min = 20,
-   len_max = 1000,
-   seed = 59801
-)
+ls_dtms <- df |>
+  rancors_builder(vocab,
+    probs,
+    n_cors = 20,
+    n_docs = 100,
+    len_mean = c(50, 200),
+    len_var = 5,
+    len_min = 20,
+    len_max = 1000,
+    seed = 59801
+  )
 length(ls_dtms)
-
+}
 }
 \author{
 Dustin Stoltz and Marshall Taylor

@@ -101,6 +101,7 @@
 #' )
 #'
 #' # example 3 with dplyr pipe and mutate
+#' \donttest{
 #' dtm <- my_corpus %>%
 #'   mutate(
 #'     clean_text = gsub("'", "", text),
@@ -114,6 +115,7 @@
 #'     line_id,
 #'     chunk = 3L
 #'   )
+#' }
 #'
 #' # example 5 with user defined vocabulary
 #' my.vocab <- c("wonderful", "world", "haiku", "think")
@@ -133,7 +135,7 @@ dtm_builder <- function(data,
                         dense = FALSE,
                         omit_empty = FALSE) {
   # checks/creates doc_ids
-  doc_id <- enquo(doc_id)
+  doc_id <- rlang::enquo(doc_id)
   if (!rlang::quo_is_null(doc_id)) {
     docs <- tryCatch(
       {
@@ -147,7 +149,7 @@ dtm_builder <- function(data,
     # add padding to numbers so it sorts in the order of data
     docs <- paste0(
       "doc_",
-      stringr::str_pad(
+      stringi::stri_pad_left(
         seq_len(nrow(data)),
         nchar(nrow(data)),
         pad = "0"
@@ -183,7 +185,7 @@ dtm_builder <- function(data,
       # create chunk IDs
       ch_ids <- paste0(
         "chunk_",
-        stringr::str_pad(
+        stringi::stri_pad_left(
           seq_len(nrow(dtm)),
           nchar(nrow(dtm)),
           pad = "0"
@@ -990,10 +992,12 @@ dtm_melter <- function(dtm) {
 #' return a list of integer sequences. The vocabulary will either
 #' be each unique token in the corpus, or a the list of words
 #' provided to the `vocab` argument. This kind of text
-#' representation is used in [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer) and [keras](https://tensorflow.rstudio.com/reference/keras/texts_to_sequences).
+#' representation is used in [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer)
+#' and [keras](https://tensorflow.rstudio.com/reference/keras/texts_to_sequences).
 #'
 #'
-#' @importFrom stringr str_pad
+#' @importFrom stringi stri_pad_left
+#' @importFrom stringi stri_split
 #' @importFrom kit funique
 #' @importFrom fastmatch fmatch
 #'
@@ -1021,7 +1025,7 @@ seq_builder <- function(data,
                         maxlen = NULL,
                         matrix = TRUE) {
   # checks/creates doc_ids
-  doc_id <- enquo(doc_id)
+  doc_id <- rlang::enquo(doc_id)
 
   if (!rlang::quo_is_null(doc_id)) {
     docs <- dplyr::pull(data, {{ doc_id }})
@@ -1029,7 +1033,7 @@ seq_builder <- function(data,
     # add padding to numbers so it sorts in the order of data
     docs <- paste0(
       "doc_",
-      stringr::str_pad(
+      stringi::stri_pad_left(
         seq_len(nrow(data)),
         nchar(nrow(data)),
         pad = "0"

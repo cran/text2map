@@ -48,7 +48,8 @@ dictionary will be an attribute of the matrix accessed with
 return a list of integer sequences. The vocabulary will either
 be each unique token in the corpus, or a the list of words
 provided to the \code{vocab} argument. This kind of text
-representation is used in \href{https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer}{tensorflow} and \href{https://tensorflow.rstudio.com/reference/keras/texts_to_sequences}{keras}.
+representation is used in \href{https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer}{tensorflow}
+and \href{https://tensorflow.rstudio.com/reference/keras/texts_to_sequences}{keras}.
 }
 \author{
 Dustin Stoltz

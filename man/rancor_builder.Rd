@@ -25,14 +25,17 @@ rancor_builder(
 
 \item{n_docs}{Integer indicating the number of documents to be returned}
 
-\item{len_mean}{Integer indicating the mean of the document lengths}
+\item{len_mean}{Integer indicating the mean of the document lengths in the
+parent normal sampling distribution}
 
-\item{len_var}{Integer indicating the standard deviation
-of the document lengths}
+\item{len_var}{Integer indicating the standard deviation of the
+document lengths in the parent normal sampling distribution}
 
-\item{len_min}{Integer indicating the minimum of the document lengths}
+\item{len_min}{Integer indicating the minimum of the document lengths
+in the parent normal sampling distribution}
 
-\item{len_max}{Integer indicating the maximum of the document lengths}
+\item{len_max}{Integer indicating the maximum of the document lengths
+in the parent normal sampling distribution}
 
 \item{seed}{Optional seed for reproducibility}
 }
@@ -40,7 +43,8 @@ of the document lengths}
 \code{rancor_builder()} generates a random corpus (rancor) based on a user
 defined term probabilities and vocabulary. Users can set the number of
 documents, as well as the mean, standard deviation, minimum, and maximum
-document lengths (i.e. number of tokens). The output is a single
+document lengths (i.e., number of tokens) of the parent normal distribution
+from which the document lengths are randomly sampled. The output is a single
 document-term matrix. To produce multiple random corpora, use
 \code{rancors_builder()} (note the plural). Term probabilities/vocabulary can
 come from a users own corpus, or a pre-compiled frequency list, such
