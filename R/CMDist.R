@@ -104,7 +104,7 @@
 #'
 #' @examples
 #'
-#' 
+#'
 #' # load example word embeddings
 #' data(ft_wv_sample)
 #'
@@ -205,6 +205,10 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
   }
 }
 
+#' Create lowercase alias for CMDist
+#' @rdname CMDist
+#' @export
+cmdist <- CMDist
 
 
 ### INTERNAL CMD FUNCTIONS ### ------------------------------------------------
@@ -239,6 +243,15 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
   if (class(dtm)[[1]] != "dgCMatrix") {
     dtm <- .convert_mat_to_dgCMatrix(dtm)
   }
+
+  ## Output ##
+  # Initialize list of:
+  # (1) three matrices: dtm, pDTM, and subset word embeddings
+  # (2) number of pseudo-docs
+  # (3) labels for cmd output
+  output <- list()
+  length(output) <- 5L
+  names(output) <- c("DTM", "pDTM", "wem", "n_pd", "labels")
 
 
   # ensure UTF-8 encoding
@@ -296,23 +309,30 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
     )
   }
 
-
+  # Find shared vocabulary
+  vocab <- base::intersect(colnames(dtm), rownames(wv))
   ## Prepare vocab of Word Embeddings and DTM
-  wem <- wv[intersect(rownames(wv), colnames(dtm)), ]
-  # This is rare, but remove any NAs or RWMD won't like it
-  wem <- wem[rowSums(is.na(wem)) != ncol(wem), ]
+  wv <- wv[vocab, ]
   # Remove words in the DTM without word vectors
-  dtm <- dtm[, intersect(colnames(dtm), rownames(wem))]
+  dtm <- dtm[, vocab]
+
+  # ---- OLD method of subsetting -------
+  # ## Prepare vocab of Word Embeddings and DTM
+  # wem <- wv[intersect(rownames(wv), colnames(dtm)), ]
+  # # This is rare, but remove any NAs or RWMD won't like it
+  # wem <- wem[rowSums(is.na(wem)) != ncol(wem), ]
+  # # Remove words in the DTM without word vectors
+  # dtm <- dtm[, intersect(colnames(dtm), rownames(wem))]
 
   ## New Concept Vocab
   # Create full list of unique vocab for each pseudo-doc
-  if (!is.null(cv) & !is.null(cw)) {
+  if (!is.null(cv) && !is.null(cw)) {
     st <- c(st_cw, st_cv)
   }
-  if (!is.null(cv) & is.null(cw)) {
+  if (!is.null(cv) && is.null(cw)) {
     st <- st_cv
   }
-  if (is.null(cv) & !is.null(cw)) {
+  if (is.null(cv) && !is.null(cw)) {
     st <- st_cw
   }
 
@@ -368,12 +388,11 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
   # (1) three matrices: dtm, pDTM, and subset word embeddings
   # (2) number of pseudo-docs
   # (3) labels for cmd output
-  output <- list(
-    DTM = dtm, pDTM = pDTM, wem = wem,
-    n_pd = n_pd, labels = labs
-  )
-  # clean up
-  rm(dtm, pDTM, wem, cw, cv, wv, n_pd, labs)
+  output$DTM <- dtm
+  output$pDTM <- pDTM
+  output$wem <- wv
+  output$n_pd <- n_pd
+  output$labels <- labs
 
   return(output)
 }

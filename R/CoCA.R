@@ -22,7 +22,7 @@
 #' @name CoCA
 #' @author Dustin Stoltz and Marshall Taylor
 #'
-#' @importFrom igraph leading.eigenvector.community graph.adjacency
+#' @importFrom igraph leading.eigenvector.community graph_from_adjacency_matrix
 #'
 #' @param dtm Document-term matrix with words as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
@@ -76,10 +76,10 @@
 #'   subtract = c("die")
 #' )
 #'
-#' gen.dir <- get_direction(anchors = gen, wv = ft_wv_sample)
-#' die.dir <- get_direction(anchors = die, wv = ft_wv_sample)
+#' gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
+#' die_dir <- get_direction(anchors = die, wv = ft_wv_sample)
 #'
-#' sem_dirs <- rbind(gen.dir, die.dir)
+#' sem_dirs <- rbind(gen_dir, die_dir)
 #'
 #' classes <- CoCA(
 #'   dtm = dtm,
@@ -117,6 +117,12 @@ CoCA <- function(dtm, wv = NULL, directions = NULL,
 
   return(classes)
 }
+
+#' Create lowercase alias for CoCA
+#' @rdname CoCA
+#' @export
+coca <- CoCA
+
 
 
 ## Modified from Boutyline's print.cca method in the corclass package
@@ -228,7 +234,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' Divides matrix into schematic classes based on row correlations.
 #'
 #' @importFrom utils capture.output
-#' @importFrom igraph graph.adjacency
+#' @importFrom igraph graph_from_adjacency_matrix
 #' @importFrom igraph cluster_leading_eigen
 #'
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
@@ -257,7 +263,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
     )
   }
 
-  graph <- igraph::graph.adjacency(cormat,
+  graph <- igraph::graph_from_adjacency_matrix(cormat,
     mode = "undirected",
     weighted = TRUE,
     diag = FALSE

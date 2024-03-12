@@ -1,6 +1,4 @@
-
 test_that("dtm_stats returns expect output", {
-
     # simplified, base R dtm
     out <- dtm_stats(dtm.bse,
         richness = TRUE,
@@ -84,7 +82,6 @@ test_that("dtm_melter works on both base and sparse", {
 
 
 test_that("dtm_builder produces identical dtm to cast_dtm", {
-
     # example 1
     dtm.a <- jfk_corpus %>%
         dtm_builder(clean_text, doc_id)
@@ -106,11 +103,9 @@ test_that("dtm_builder produces identical dtm to cast_dtm", {
         as.vector(sort(colnames(dtm.a))),
         as.vector(sort(colnames(dtm.tm)))
     )
-
 })
 
 test_that("dtm_builder error/message if last row is blank", {
-
     my_corpus <- data.frame(
         my_text = c(
             "I hear babies crying I watch them grow",
@@ -132,7 +127,6 @@ test_that("dtm_builder error/message if last row is blank", {
 
 
 test_that("dtm_builder works with vocab", {
-
     vocab <- vocab_builder(jfk_corpus, text)
     new.vocab <- vocab[!vocab %in% c("moon")]
 
@@ -204,7 +198,6 @@ test_that("dtm_builder error/message if doc_id is wrong...", {
 })
 
 test_that("dtm_builder chunks correctly", {
-
     chunk <- 3L
     dtm.e <- jfk_corpus %>%
         dtm_builder(text, doc_id, chunk = chunk)
@@ -256,7 +249,6 @@ test_that("dtm resampler creates DTM of the same dimensions", {
 
 # tests for internal functions
 test_that(".convert_mat_to_dgCMatrix convert all dtms to dgCMatrix", {
-
     ## base R matrix ##
     expect_s4_class(.convert_mat_to_dgCMatrix(dtm.bse), "dgCMatrix")
     ## dgCMatrix matrix ##
@@ -270,7 +262,6 @@ test_that(".convert_mat_to_dgCMatrix convert all dtms to dgCMatrix", {
 })
 
 test_that("dtm resampler works on output of .prep_cmd_INPUT", {
-
     ## dgCMatrix matrix ##
     out <- .prep_cmd_INPUT(
         dtm = dtm.dgc[, seq_len(35)],
@@ -401,3 +392,39 @@ test_that("seq_builder", {
         )
     )
 })
+
+
+
+# test_that(".remove_empty_rows works", {
+#     dtm1 <- jfk_corpus |>
+#         dtm_builder(text, doc_id, dense = FALSE)
+
+#     dtm1 <- rbind(dtm1, rep(0, ncol(dtm1)))
+#     rownames(dtm1)[nrow(dtm1)] <- "empty"
+
+
+#     expect_message(
+#         dtm0 <- .remove_empty_rows(dtm1),
+#         "The following rows were empty and removed from the DTM: empty"
+#     )
+
+#     expect_equal(nrow(dtm1) - 1, nrow(dtm0))
+#     expect_equal(ncol(dtm1), ncol(dtm0))
+
+#     jfk_corpus0 <- rbind(
+#         jfk_corpus,
+#         data.frame(
+#             text = "",
+#             clean_text = "",
+#             doc_id = "empty"
+#         )
+#     )
+
+#     jfk_corpus0 |>
+#         dtm_builder(text, doc_id,
+#              dense = FALSE,
+#              omit_empty = TRUE
+#              )
+    
+
+# })

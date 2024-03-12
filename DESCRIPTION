@@ -1,7 +1,7 @@
 Type: Package
 Package: text2map
 Title: R Tools for Text Matrices, Embeddings, and Networks
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: 
    c(person(given = "Dustin", 
             family = "Stoltz", 
@@ -31,7 +31,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 BugReports: https://gitlab.com/culturalcartography/text2map/-/issues
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.1
 Depends: R (>= 3.5.0), Matrix (>= 1.4.2)
 Imports: text2vec, parallel, doParallel, foreach, stringi, dplyr, kit,
         fastmatch, methods, qgraph (>= 1.6.9), igraph (>= 1.2.6),
@@ -39,9 +39,9 @@ Imports: text2vec, parallel, doParallel, foreach, stringi, dplyr, kit,
 Suggests: testthat (>= 3.0.0), quanteda, tm
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-01-15 14:33:50 UTC; dss
+Packaged: 2024-03-12 18:48:32 UTC; dss
 Author: Dustin Stoltz [aut, cre] (<https://orcid.org/0000-0002-4774-0765>),
   Marshall Taylor [aut] (<https://orcid.org/0000-0002-7440-0723>)
 Maintainer: Dustin Stoltz <dss219@lehigh.edu>
 Repository: CRAN
-Date/Publication: 2024-01-15 15:50:02 UTC
+Date/Publication: 2024-03-12 19:10:02 UTC

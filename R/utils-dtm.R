@@ -1135,7 +1135,7 @@ seq_builder <- function(data,
   }
 
   # explicitly declare class for all DTMs
-  # from Matrix maintainers:
+  # From Matrix maintainers:
   #  I'd rather quite strongly recommend to *only* replace
   #   as(<matrix>, "dgCMatrix")     by
   #   as(<matrix>, "CsparseMatrix")

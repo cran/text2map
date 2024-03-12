@@ -9,8 +9,6 @@ Please check out our book [_Mapping Texts: Computational Text Analysis for the S
 
 ### Installation
 
->Note (2024-01-13): the CRAN version is currently "archived" because of a tight turnaround during the holidays and an error on a particular dev environment. We're working on it. Please use the development version in the meantime. 
-
 Install the CRAN version:
 
 ```r
@@ -24,11 +22,6 @@ library(remotes)
 install_gitlab("culturalcartography/text2map")
 ```
 
-Get started with "Concept Mover's Distance by reading:
-
-```r
-vignette("CMDist-concept-movers-distance", package = "text2map")
-```
 
 ### Related Packages
 
@@ -71,7 +64,7 @@ Any questions and requests for support can also be directed to the package maint
 
 [![repo status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
-[![license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit/) 
+[![license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit) 
 
 [![](https://cranlogs.r-pkg.org/badges/text2map)](https://cran.r-project.org/package=text2map)
 

@@ -2,9 +2,25 @@
 % Please edit documentation in R/CMDist.R
 \name{CMDist}
 \alias{CMDist}
+\alias{cmdist}
 \title{Calculate Concept Mover's Distance}
 \usage{
 CMDist(
+  dtm,
+  cw = NULL,
+  cv = NULL,
+  wv,
+  missing = "stop",
+  scale = TRUE,
+  sens_interval = FALSE,
+  alpha = 1,
+  n_iters = 20L,
+  parallel = FALSE,
+  threads = 2L,
+  setup_timeout = 120L
+)
+
+cmdist(
   dtm,
   cw = NULL,
   cv = NULL,

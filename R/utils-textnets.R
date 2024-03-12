@@ -1,4 +1,3 @@
-
 #' Find a similarities between documents
 #'
 #' Given a document-term matrix (DTM) this function returns the
@@ -34,9 +33,9 @@
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words. Required for "wmd" and "centroid"
 #'           similarities.
-#' 
+#'
 #' @examples
-#' 
+#'
 #' # load example word embeddings
 #' data(ft_wv_sample)
 #'
@@ -49,12 +48,11 @@
 #'
 #' # create DTM
 #' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
-#' 
+#'
 #' dsm_prj <- doc_similarity(dtm, method = "projection")
 #' dsm_cos <- doc_similarity(dtm, method = "cosine")
 #' dsm_wmd <- doc_similarity(dtm, method = "wmd", wv = ft_wv_sample)
 #' dsm_cen <- doc_similarity(dtm, method = "centroid", wv = ft_wv_sample)
-#' 
 #'
 #' @export
 doc_similarity <- function(x,
@@ -90,32 +88,32 @@ doc_similarity <- function(x,
 #' document-level projection to get the document-similarity matrix using
 #' `tcrossprod()`. If a one-mode document-similarity matrix is provided, then
 #' this step is skipped. This way document similiarities may be obtained
-#' using other methods, such as Word-Mover's Distance (see `doc_similarity`). 
+#' using other methods, such as Word-Mover's Distance (see `doc_similarity`).
 #' The diagonal is ignored in all calculations.
-#' 
+#'
 #' Document centrality methods include:
 #' - degree: Opsahl's weighted degree centrality with tuning parameter "alpha"
 #' - between: vertex betweenness centrality using Brandes' method
 #' - eigen: eigenvector centrality using Freeman's method
 #' - span: Modified Burt's constraint following Stoltz and Taylor's method,
 #'   uses a tuning parameter "alpha" and the output is scaled.
-#' 
+#'
 #' @references
-#' Brandes, Ulrik 
+#' Brandes, Ulrik
 #' (2000) 'A faster algorithm for betweenness centrality'
 #' \emph{Journal of Mathematical Sociology}. 25(2):163-177
 #' \doi{10.1080/0022250X.2001.9990249}.\cr
 #' Opsahl, Tore, et al.
-#' (2010) 'Node centrality in weighted networks: Generalizing degree 
+#' (2010) 'Node centrality in weighted networks: Generalizing degree
 #' and shortest paths.' \emph{Social Networks}. 32(3)245:251
 #' \doi{10.1016/j.socnet.2010.03.006}\cr
-#' Stoltz, Dustin; Taylor, Marshall 
+#' Stoltz, Dustin; Taylor, Marshall
 #' (2019) 'Textual Spanning: Finding Discursive Holes in Text Networks'
 #' \emph{Socius}. \doi{10.1177/2378023119827674}\cr
 #'
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowSums
-#' @importFrom igraph graph.adjacency
+#' @importFrom igraph graph_from_adjacency_matrix
 #' @importFrom igraph betweenness
 #' @importFrom igraph E
 #'
@@ -133,9 +131,9 @@ doc_similarity <- function(x,
 #'                 (i.e. document-similarity matrix)
 #'
 #' @return A dataframe with two columns
-#' 
+#'
 #' @examples
-#' 
+#'
 #' # load example text
 #' data(jfk_speech)
 #'
@@ -145,17 +143,17 @@ doc_similarity <- function(x,
 #'
 #' # create DTM
 #' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
-#' 
+#'
 #' ddeg <- doc_centrality(dtm, method = "degree")
 #' deig <- doc_centrality(dtm, method = "eigen")
 #' dbet <- doc_centrality(dtm, method = "between")
 #' dspa <- doc_centrality(dtm, method = "span")
-#' 
+#'
 #' # with a document-similarity matrix (dsm)
-#' 
+#'
 #' dsm <- doc_similarity(dtm, method = "cosine")
 #' ddeg <- doc_centrality(dsm, method = "degree", two_mode = FALSE)
-#' 
+#'
 #' @export
 doc_centrality <- function(mat,
                            method,
@@ -188,7 +186,7 @@ doc_centrality <- function(mat,
 
 ## ---- INTERNAL TEXTNET SPECIFIC FUNCTIONS ---------------------------------- #
 #' Weighted degree centrality
-#' 
+#'
 #' @importFrom Matrix rowSums
 #'
 #' @param mat Input matrix
@@ -204,17 +202,17 @@ doc_centrality <- function(mat,
 }
 
 #' Weighted betweenness centrality
-#' 
+#'
 #' @importFrom igraph betweenness
 #' @importFrom igraph E
-#' @importFrom igraph graph.adjacency
-#' 
+#' @importFrom igraph graph_from_adjacency_matrix
+#'
 #' @param mat Input matrix
 #'
 #' @keywords internal
 #' @noRd
 .doc_centrality.between <- function(mat, alpha) {
-    mat <- igraph::graph.adjacency(mat,
+    mat <- igraph::graph_from_adjacency_matrix(mat,
         mode = "undirected",
         weighted = TRUE, diag = FALSE
     )
@@ -228,23 +226,21 @@ doc_centrality <- function(mat,
 #' @keywords internal
 #' @noRd
 .doc_centrality.eigen <- function(mat) {
-
     # first eigenvector of the adjacency matrix
     res <- abs(eigen(mat)$vector[, 1])
     return(res)
 }
 
 #' Textual spanning
-#' 
+#'
 #' @importFrom Matrix rowSums
 #' @importFrom stats sd
-#' 
+#'
 #' @param mat Input matrix
 #'
 #' @keywords internal
 #' @noRd
 .doc_centrality.span <- function(mat, alpha) {
-
     mat[] <- mat[] / .doc_centrality.degree(mat, alpha)
     # --------------------
     # invert PS for division
@@ -261,41 +257,40 @@ doc_centrality <- function(mat,
 }
 
 #' Centroid Similarity
-#' 
+#'
 #' @importFrom text2vec sim2
-#' 
+#'
 #' @param x Input matrix
 #' @param wv Matrix of word embedding vectors
 #'
 #' @keywords internal
 #' @noRd
 .doc_similarity.centroid <- function(x, wv) {
-
+    # Find shared vocabulary
+    vocab <- base::intersect(colnames(x), rownames(wv))
     ## Prepare vocab of Word Embeddings and DTM
-    wem <- wv[intersect(rownames(wv), colnames(x)), ]
-    # This is rare, but remove any NAs or RWMD won't like it
-    wem <- wem[rowSums(is.na(wem)) != ncol(wem), ]
+    wv <- wv[vocab, ]
     # Remove words in the DTM without word vectors
-    x <- x[, intersect(colnames(x), rownames(wem))]
+    x <- x[, vocab]
+    # DTM weight by RF
     x <- find_transformation(x, method = "norm")
-
-    cen <- as.matrix(x %*% wem)
+    # multiple RF DTM by word vectors
+    cen <- as.matrix(x %*% wv)
     res <- text2vec::sim2(cen, method = "cosine")
     return(res)
 }
 
 #' Word Mover's Distance (Similarity)
-#' 
+#'
 #' @importFrom text2vec RWMD
 #' @importFrom text2vec sim2
-#' 
+#'
 #' @param x Input matrix
 #' @param wv Matrix of word embedding vectors
 #'
 #' @keywords internal
 #' @noRd
 .doc_similarity.wmd <- function(x, wv) {
-
     ## Prepare vocab of Word Embeddings and DTM
     wem <- wv[intersect(rownames(wv), colnames(x)), ]
     # This is rare, but remove any NAs or RWMD won't like it

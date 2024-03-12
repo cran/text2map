@@ -59,7 +59,6 @@ dsm_cos <- doc_similarity(dtm, method = "cosine")
 dsm_wmd <- doc_similarity(dtm, method = "wmd", wv = ft_wv_sample)
 dsm_cen <- doc_similarity(dtm, method = "centroid", wv = ft_wv_sample)
 
-
 }
 \author{
 Dustin Stoltz

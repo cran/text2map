@@ -1,3 +1,10 @@
+# text2map 0.1.9
+
+Added `test_anchor` 
+Added more unit tests
+Fixed a bug in `doc_centrality` using the `centroid` method
+
+
 # text2map 0.1.8
 
 Fixes for changes to the Matrix package

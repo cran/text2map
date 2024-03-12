@@ -2,9 +2,19 @@
 % Please edit documentation in R/CoCA.R
 \name{CoCA}
 \alias{CoCA}
+\alias{coca}
 \title{Performs Concept Class Analysis (CoCA)}
 \usage{
 CoCA(
+  dtm,
+  wv = NULL,
+  directions = NULL,
+  filter_sig = TRUE,
+  filter_value = 0.05,
+  zero_action = c("drop", "ownclass")
+)
+
+coca(
   dtm,
   wv = NULL,
   directions = NULL,
@@ -78,10 +88,10 @@ die <- data.frame(
   subtract = c("die")
 )
 
-gen.dir <- get_direction(anchors = gen, wv = ft_wv_sample)
-die.dir <- get_direction(anchors = die, wv = ft_wv_sample)
+gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
+die_dir <- get_direction(anchors = die, wv = ft_wv_sample)
 
-sem_dirs <- rbind(gen.dir, die.dir)
+sem_dirs <- rbind(gen_dir, die_dir)
 
 classes <- CoCA(
   dtm = dtm,
