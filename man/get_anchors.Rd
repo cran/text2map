@@ -2,29 +2,26 @@
 % Please edit documentation in R/utils-embedding-vectors.R
 \name{get_anchors}
 \alias{get_anchors}
-\title{Produces a data.frame of juxtaposed word pairs used to extract
-a semantic direction in word embeddings. Can be used as input
-to \code{\link[=get_direction]{get_direction()}}.}
+\title{Gets anchor terms from precompiled anchor lists}
 \usage{
 get_anchors(relation)
 }
 \arguments{
 \item{relation}{String indicating a semantic relation, 26 relations are
-available in the dataset (see details) but should be used
-as a starting point.}
+available in the dataset (see details).}
 }
 \value{
 returns a tibble with two columns
 }
 \description{
 Produces a data.frame of juxtaposed word pairs used to extract
-a semantic direction in word embeddings. Can be used as input
+a semantic direction from word embeddings. Can be used as input
 to \code{\link[=get_direction]{get_direction()}}.
 }
 \details{
 Sets of juxtaposed "anchor" pairs are adapted from published work
 and associated with a particular semantic relation. These should
-be used as a starting point, not as "ground truth."
+be used as a starting point, not as a "ground truth."
 
 Available relations include:
 \itemize{

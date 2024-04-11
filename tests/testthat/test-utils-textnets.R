@@ -1,9 +1,9 @@
 test_that("doc_centrality, degree", {
-    out1 <- doc_centrality(dtm.dgc, method = "degree")
-    out2 <- doc_centrality(dtm.dgc, method = "degree", alpha = 0.5)
-    out3 <- doc_centrality(dtm.bse, method = "degree")
+    out1 <- doc_centrality(dtm_dgc, method = "degree")
+    out2 <- doc_centrality(dtm_dgc, method = "degree", alpha = 0.5)
+    out3 <- doc_centrality(dtm_bse, method = "degree")
 
-    dsm <- Matrix::tcrossprod(dtm.dgc)
+    dsm <- Matrix::tcrossprod(dtm_dgc)
     out4 <- doc_centrality(dsm, method = "degree", two_mode = FALSE)
 
     expect_s3_class(out1, "data.frame")
@@ -27,10 +27,10 @@ test_that("doc_centrality, degree", {
 })
 
 test_that("doc_centrality, eigen", {
-    out1 <- doc_centrality(dtm.dgc, method = "eigen")
-    out3 <- doc_centrality(dtm.bse, method = "eigen")
+    out1 <- doc_centrality(dtm_dgc, method = "eigen")
+    out3 <- doc_centrality(dtm_bse, method = "eigen")
 
-    dsm <- Matrix::tcrossprod(dtm.dgc)
+    dsm <- Matrix::tcrossprod(dtm_dgc)
     out4 <- doc_centrality(dsm, method = "eigen", two_mode = FALSE)
 
     expect_s3_class(out1, "data.frame")
@@ -49,11 +49,11 @@ test_that("doc_centrality, eigen", {
 })
 
 test_that("doc_centrality, between", {
-    out1 <- doc_centrality(dtm.dgc, method = "between")
-    out2 <- doc_centrality(dtm.dgc, method = "between", alpha = 0.5)
-    out3 <- doc_centrality(dtm.bse, method = "between")
+    out1 <- doc_centrality(dtm_dgc, method = "between")
+    out2 <- doc_centrality(dtm_dgc, method = "between", alpha = 0.5)
+    out3 <- doc_centrality(dtm_bse, method = "between")
 
-    dsm <- Matrix::tcrossprod(dtm.dgc)
+    dsm <- Matrix::tcrossprod(dtm_dgc)
     out4 <- doc_centrality(dsm, method = "between", two_mode = FALSE)
 
     expect_s3_class(out1, "data.frame")
@@ -76,17 +76,16 @@ test_that("doc_centrality, between", {
 })
 
 test_that("doc_centrality, span", {
-
     # spanning is (currently) undefined for
     # disconnected graphs
-    dtm.dgc1 <- cbind(dtm.dgc, 1)
-    dtm.bse1 <- as.matrix(dtm.dgc1)
+    dtm_dgc1 <- cbind(dtm_dgc, 1)
+    dtm_bse1 <- as.matrix(dtm_dgc1)
 
-    out1 <- doc_centrality(dtm.dgc1, method = "span")
-    out2 <- doc_centrality(dtm.dgc1, method = "span", alpha = 0.5)
-    out3 <- doc_centrality(dtm.bse1, method = "span")
+    out1 <- doc_centrality(dtm_dgc1, method = "span")
+    out2 <- doc_centrality(dtm_dgc1, method = "span", alpha = 0.5)
+    out3 <- doc_centrality(dtm_bse1, method = "span")
 
-    dsm <- Matrix::tcrossprod(dtm.dgc1)
+    dsm <- Matrix::tcrossprod(dtm_dgc1)
     out4 <- doc_centrality(dsm, method = "span", two_mode = FALSE)
 
     expect_s3_class(out1, "data.frame")
@@ -111,24 +110,24 @@ test_that("doc_centrality, span", {
 
 
 test_that("doc_similarity, projection", {
-    out1 <- doc_similarity(dtm.dgc, method = "projection")
+    out1 <- doc_similarity(dtm_dgc, method = "projection")
     expect_true(ncol(out1) == nrow(out1))
 })
 
 test_that("doc_similarity, cosine", {
-    out1 <- doc_similarity(dtm.dgc, method = "cosine")
+    out1 <- doc_similarity(dtm_dgc, method = "cosine")
     expect_true(ncol(out1) == nrow(out1))
 })
 
 
 test_that("doc_similarity, cosine, x and y", {
-    out1 <- doc_similarity(dtm.dgc, dtm.dgc, method = "cosine")
+    out1 <- doc_similarity(dtm_dgc, dtm_dgc, method = "cosine")
     expect_true(ncol(out1) == nrow(out1))
 })
 
 
 test_that("doc_similarity, wmd", {
-    out1 <- doc_similarity(dtm.dgc,
+    out1 <- doc_similarity(dtm_dgc,
         wv = fake_word_vectors,
         method = "wmd"
     )
@@ -136,7 +135,7 @@ test_that("doc_similarity, wmd", {
 })
 
 test_that("doc_similarity, centroid", {
-    out1 <- doc_similarity(dtm.dgc,
+    out1 <- doc_similarity(dtm_dgc,
         wv = fake_word_vectors,
         method = "centroid"
     )

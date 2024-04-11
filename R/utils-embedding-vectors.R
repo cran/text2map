@@ -1,13 +1,13 @@
-" Gets anchor terms from precompiled anchor lists
-#"
+#' Gets anchor terms from precompiled anchor lists
+#' 
 #' Produces a data.frame of juxtaposed word pairs used to extract
-#' a semantic direction in word embeddings. Can be used as input
+#' a semantic direction from word embeddings. Can be used as input
 #' to [get_direction()].
 #'
 #' @details
 #' Sets of juxtaposed "anchor" pairs are adapted from published work
 #' and associated with a particular semantic relation. These should
-#' be used as a starting point, not as "ground truth."
+#' be used as a starting point, not as a "ground truth."
 #'
 #' Available relations include:
 #' - activity
@@ -33,8 +33,7 @@
 #' @author Dustin Stoltz
 #'
 #' @param relation String indicating a semantic relation, 26 relations are
-#'                 available in the dataset (see details) but should be used
-#'                 as a starting point.
+#'                 available in the dataset (see details).
 #'
 #' @return returns a tibble with two columns
 #'
@@ -421,16 +420,21 @@ get_regions <- function(wv,
 #' defines a semantic direction. Anchors must be a
 #' two-column data.frame or a list of length == 2.
 #' Currently, the function only implements the "PairDir" metric
-#' developed by Boutyline and Johnston (2023). As the authors explain:
-#'
-#' "We find that  PairDir—a measure of parallelism between the offset
-#' vectors (and thus of the internal reliability of the estimated relation)
-#' —consistently outperforms other reliability metrics in
-#'  explaining axis accuracy."
+#' developed by Boutyline and Johnston (2023).
 #'
 #' @details
-#' If `all = TRUE`, all pairwise combinations of terms between each set
-#' are evaluated. This increases computational complexity considerably.
+#'
+#' According to Boutyline and Johnston (2023):
+#'
+#' "We find that  PairDir -- a measure of parallelism between the offset
+#' vectors (and thus of the internal reliability of the estimated relation)
+#'  -- consistently outperforms other reliability metrics in
+#' explaining axis accuracy."
+#'
+#' Boutyline and Johnston only consider analyst specified pairs. However,
+#' if `all = TRUE`, all pairwise combinations of terms between each set
+#' are evaluated. This can allow for unequal sets of anchors, however this 
+#' increases computational complexity considerably.
 #'
 #' @references
 #' Boutyline, Andrei, and Ethan Johnston. 2023.
@@ -553,7 +557,7 @@ test_anchors <- function(anchors, wv, method = c("pairdir"), all = FALSE, summar
 test_anchors.pairdir <- function(a_anchors, z_anchors, wv, all = FALSE) {
   res <- list()
   res$offset <- wv[z_anchors, ] - wv[a_anchors, ]
-  rownames(res$offset) <- paste0(z_anchors, "-", a_anchors)
+  rownames(res$offset) <- paste0(a_anchors, "-", z_anchors)
   res$cosine <- text2vec::sim2(res$offset, method = "cosine", norm = "l2")
 
   diag(res$cosine) <- 0

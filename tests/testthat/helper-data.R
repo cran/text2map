@@ -1,13 +1,11 @@
-
 # Helper functions for testhat
 #' @importFrom tidytext unnest_tokens cast_dtm cast_dfm
 #' @importFrom dplyr count pipe
 #' @importFrom stringi stri_trim_both
 #' @importFrom testthat
-#' 
+#'
 
-require(tm)
-require(quanteda)
+
 
 ## -----------------------------------------------------------------------------
 # create some text
@@ -17,11 +15,11 @@ jfk_text <- c("We choose to go to the moon. We choose to go to the moon in this
            and measure the best of our energies and skills, because that
            challenge is one that we are willing to accept, one we are unwilling
            to postpone, and one which we intend to win, and the others, too.")
-cleaned <- gsub("[,.]+", "", tolower(jfk_text) )
+cleaned <- gsub("[,.]+", "", tolower(jfk_text))
 cleaned <- stringi::stri_trim_both(gsub("[\n]", "", cleaned))
 words <- unique(unlist(strsplit(cleaned, " ")))
 
-# Create minicorpus
+# Create mini corpus
 sentences <- strsplit(jfk_text, "[,.]")[[1]]
 sentences <- stringi::stri_trim_both(gsub("[\n]", "", sentences))
 jfk_corpus <- data.frame(
@@ -72,7 +70,7 @@ fake_word_vectors_oov <- readRDS("fake_word_vectors_oov.Rds")
 # Create fake word vectors with out of vocab words
 # set.seed(46556);rnorm(400) |> round(6) -> rnums
 # fake_word_vectors_coca <- matrix(rnums, nrow=40)
-# rownames(fake_word_vectors_coca) <- c(words[1:30], new.words)
+# rownames(fake_word_vectors_coca) <- c(words[1:30], new_words)
 # saveRDS(fake_word_vectors_coca, "tests/testthat/fake_word_vectors_coca.Rds")
 # fake_word_vectors_coca <- readRDS("tests/testthat/fake_word_vectors_coca.Rds")
 fake_word_vectors_coca <- readRDS("fake_word_vectors_coca.Rds")
@@ -80,17 +78,21 @@ fake_word_vectors_coca <- readRDS("fake_word_vectors_coca.Rds")
 
 # create concept word vector
 cw <- c("choose")
-cw.2 <- c("choose", "decade")
-cw.3 <- c("choose", "decade", "the moon")
-cw.4 <- c("choose", "decade", "decade moon")
+cw_2 <- c("choose", "decade")
+cw_3 <- c("choose", "decade", "the moon")
+cw_4 <- c("choose", "decade", "decade moon")
 # create concept vector not in DTM
-cw.oov <- c("victory")
+cw_oov <- c("victory")
 #
-wv.dims <- c(as.integer(nrow(fake_word_vectors)),
-             as.integer(ncol(fake_word_vectors)))
+wv_dims <- c(
+    as.integer(nrow(fake_word_vectors)),
+    as.integer(ncol(fake_word_vectors))
+)
 
-wv.oov.dims <- c(as.integer(nrow(fake_word_vectors_oov) - 4),
-                 as.integer(ncol(fake_word_vectors_oov)))
+wv_oov_dims <- c(
+    as.integer(nrow(fake_word_vectors_oov) - 4),
+    as.integer(ncol(fake_word_vectors_oov))
+)
 
 # -----------------------------------------------------------------------------
 ## create fake anchors
@@ -98,65 +100,81 @@ wv.oov.dims <- c(as.integer(nrow(fake_word_vectors_oov) - 4),
 
 ## Single
 # character list
-anchor.solo.c <- c("choose", "moon")
-anchor.solo.d <- c("moon", "choose")
+anchor_solo_c <- c("choose", "moon")
+anchor_solo_d <- c("moon", "choose")
 
 # actual list list
-anchor.solo.list <- list(c("choose", "moon"))
+anchor_solo_list <- list(c("choose", "moon"))
 # data.frame
-anchor.solo.df <- data.frame(add = c("choose", "moon"))
+anchor_solo_df <- data.frame(add = c("choose", "moon"))
 # tibble
-anchor.solo.tbl <- tibble::tibble(add = c("choose", "moon"))
+anchor_solo_tbl <- tibble::tibble(add = c("choose", "moon"))
 
 ## Paired ## paired list of terms ##
 # actual list list
 # anchors <- list(add=c("choose", "moon"),
 #                 sub=c("decade", "this"))
 
-anchor.pair.list <- list(add=c("choose", "moon"),
-                         sub=c("decade", "this"))
+anchor_pair_list <- list(
+    add = c("choose", "moon"),
+    sub = c("decade", "this")
+)
 # data.frame
-anchor.pair.df <- data.frame(add=c("choose", "moon"),
-                             sub=c("decade", "this"))
+anchor_pair_df <- data.frame(
+    add = c("choose", "moon"),
+    sub = c("decade", "this")
+)
 # tibble
-anchor.pair.tbl <- tibble::tibble(add=c("choose", "moon"),
-                                  sub=c("decade", "this"))
+anchor_pair_tbl <- tibble::tibble(
+    add = c("choose", "moon"),
+    sub = c("decade", "this")
+)
 
 
 # expected dimensions
-ce.dims <- c(1L, as.integer(ncol(fake_word_vectors)))
-di.dims <- c(1L, as.integer(ncol(fake_word_vectors)))
+ce_dims <- c(1L, as.integer(ncol(fake_word_vectors)))
+di_dims <- c(1L, as.integer(ncol(fake_word_vectors)))
 
-ce.name <- "choose_centroid"
-di.name <- "choose_pole"
+ce_name <- "choose_centroid"
+di_name <- "choose_pole"
 
-wv.cv.dims <- c(as.integer(nrow(fake_word_vectors)+1),
-                as.integer(ncol(fake_word_vectors)))
+wv_cv_dims <- c(
+    as.integer(nrow(fake_word_vectors) + 1),
+    as.integer(ncol(fake_word_vectors))
+)
 
-wv.cv.cw.dims <- c(as.integer(nrow(fake_word_vectors)+2),
-                as.integer(ncol(fake_word_vectors)))
+wv_cv_cw_dims <- c(
+    as.integer(nrow(fake_word_vectors) + 2),
+    as.integer(ncol(fake_word_vectors))
+)
 
-new.words <- c("rich", "richer", "affluence",
-                "poor", "poorer", "poverty",
-                "skilled", "competent",
-                "unskilled", "incompetent") #14
+new_words <- c(
+    "rich", "richer", "affluence",
+    "poor", "poorer", "poverty",
+    "skilled", "competent",
+    "unskilled", "incompetent"
+) # 14
 
 
 
 # build juxtaposed pairs for each semantic directions
-pairs.01 <- data.frame(additions  = c("rich", "richer", "affluence"),
-                        substracts = c("poor", "poorer", "poverty") )
+pairs_01 <- data.frame(
+    additions = c("rich", "richer", "affluence"),
+    substracts = c("poor", "poorer", "poverty")
+)
 
-pairs.02 <- data.frame(additions  = c("skilled", "competent"),
-                        substracts = c("unskilled", "incompetent") )
+pairs_02 <- data.frame(
+    additions = c("skilled", "competent"),
+    substracts = c("unskilled", "incompetent")
+)
 
 
 # get the vectors for each direction
-sd.01 <- get_direction(pairs.01, fake_word_vectors_coca )
-sd.02 <- get_direction(pairs.02, fake_word_vectors_coca )
+sd_01 <- get_direction(pairs_01, fake_word_vectors_coca)
+sd_02 <- get_direction(pairs_02, fake_word_vectors_coca)
 
 # row bind each direction
-sem.dirs <- rbind(sd.01, sd.02)
+sem_dirs <- rbind(sd_01, sd_02)
 
 
 
@@ -208,8 +226,8 @@ sem.dirs <- rbind(sd.01, sd.02)
 # }
 
 # # base matrix
-# dtm.bse <- dtm_builder(jfk_corpus, text, doc_id, dense = TRUE)
-# saveRDS(dtm.bse, "tests/testthat/fake_dtm_bse.Rds")
+# dtm_bse <- dtm_builder(jfk_corpus, text, doc_id, dense = TRUE)
+# saveRDS(dtm_bse, "tests/testthat/fake_dtm_bse.Rds")
 
 # # sparse __dgCMatrix__ matrix
 # # corpustools::get_dtm()
@@ -218,34 +236,41 @@ sem.dirs <- rbind(sd.01, sd.02)
 # # textTinyR::sparse_term_matrix
 # # wactor::dtm()
 # # udpipe::document_term_matrix()
-# #dtm.dgc <- dtm_simple_sparse(jfk_corpus$text, jfk_corpus$doc_id)
-# dtm.dgc <- dtm_builder(jfk_corpus, text, doc_id)
-# saveRDS(dtm.dgc, "tests/testthat/fake_dtm_dgc.Rds")
+# #dtm_dgc <- dtm_simple_sparse(jfk_corpus$text, jfk_corpus$doc_id)
+# dtm_dgc <- dtm_builder(jfk_corpus, text, doc_id)
+# saveRDS(dtm_dgc, "tests/testthat/fake_dtm_dgc.Rds")
 
 # # class __dfm__ matrix
 # # tidytext::cast_dfm()
 # # quanteda::dfm()
 # # corpustools::get_dfm()
-# dtm.dfm <- tidytext_dfm(jfk_corpus)
-# saveRDS(dtm.dfm, "tests/testthat/fake_dtm_dfm.Rds")
+# dtm_dfm <- tidytext_dfm(jfk_corpus)
+# saveRDS(dtm_dfm, "tests/testthat/fake_dtm_dfm.Rds")
 
 # # sparse __simple_triplet_matrix__ matrix
 # # gofastr::q_dtm() # also class __DocumentTermMatrix__
 # # tidytext::cast_dtm() # also class __DocumentTermMatrix__
 # # tm::DocumentTermMatrix() # also class __DocumentTermMatrix__
-# dtm.tm <- tidytext_dtm(jfk_corpus)
-# saveRDS(dtm.tm, "tests/testthat/fake_dtm_tm.Rds")
+# dtm_tm <- tidytext_dtm(jfk_corpus)
+# saveRDS(dtm_tm, "tests/testthat/fake_dtm_tm.Rds")
 
 # # sparse __simple_triplet_matrix__ matrix
 # # tm::TermDocumentMatrix() # TermDocumentMatrx
-# dtm.tdm <- tidytext_tdm(jfk_corpus)
-# saveRDS(dtm.tdm, "tests/testthat/fake_dtm_tdm.Rds")
+# dtm_tdm<- tidytext_tdm(jfk_corpus)
+# saveRDS(dtm_tdm, "tests/testthat/fake_dtm_tdm.Rds")
 
-dtm.bse <- readRDS("fake_dtm_bse.Rds")
-dtm.dgc <- readRDS("fake_dtm_dgc.Rds")
-dtm.dfm <- readRDS("fake_dtm_dfm.Rds")
-dtm.tm  <- readRDS("fake_dtm_tm.Rds")
-dtm.tdm <- readRDS("fake_dtm_tdm.Rds")
+dtm_bse <- readRDS("fake_dtm_bse.Rds")
+dtm_dgc <- readRDS("fake_dtm_dgc.Rds")
+
+if (requireNamespace("quanteda", quietly = TRUE)) {
+    dtm_dfm <- readRDS("fake_dtm_dfm.Rds")
+}
+
+if (requireNamespace("tm", quietly = TRUE)) {
+    dtm_tm  <- readRDS("fake_dtm_tm.Rds")
+    dtm_tdm <- readRDS("fake_dtm_tdm.Rds")
+}
+
 
 # create JFK dtm
 # # base matrix
@@ -265,8 +290,8 @@ dtm.tdm <- readRDS("fake_dtm_tdm.Rds")
 #     tri = FALSE
 # )
 
-# # tcm.dgc <- as(tcm, "dgCMatrix")
-# tcm.dgc <- methods::as(
+# # tcm_dgc<- as(tcm, "dgCMatrix")
+# tcm_dgc<- methods::as(
 #       methods::as(
 #           methods::as(tcm, "dMatrix"),
 #           "generalMatrix"
@@ -275,17 +300,13 @@ dtm.tdm <- readRDS("fake_dtm_tdm.Rds")
 
 
 # saveRDS(tcm, "tests/testthat/fake_tcm_quanteda.Rds")
-# saveRDS(tcm.dgc, "tests/testthat/fake_tcm_quanteda.Rds")
+# saveRDS(tcm_dgc, "tests/testthat/fake_tcm_quanteda.Rds")
+# tcm <- readRDS("tests/testthat/fake_tcm_quanteda.Rds")
 
-tcm <- readRDS("fake_tcm_quanteda.Rds")
-tcm.dgc <- readRDS("fake_tcm_quanteda.Rds")
+# tcm <- readRDS("fake_tcm_quanteda.Rds")
+tcm_dgc <- readRDS("fake_tcm_quanteda.Rds")
 
 
 # -----------------------------------------------------------------------------
 ## FOR CoCA
 # -----------------------------------------------------------------------------
-
-# Get CoCA print message
-cor.dims <- c(as.integer(nrow(dtm.bse)),
-              as.integer(nrow(dtm.bse)))
-

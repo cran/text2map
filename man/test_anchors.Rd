@@ -32,16 +32,20 @@ This function evaluates how well an anchor set
 defines a semantic direction. Anchors must be a
 two-column data.frame or a list of length == 2.
 Currently, the function only implements the "PairDir" metric
-developed by Boutyline and Johnston (2023). As the authors explain:
+developed by Boutyline and Johnston (2023).
 }
 \details{
-"We find that  PairDir—a measure of parallelism between the offset
+According to Boutyline and Johnston (2023):
+
+"We find that  PairDir -- a measure of parallelism between the offset
 vectors (and thus of the internal reliability of the estimated relation)
-—consistently outperforms other reliability metrics in
+-- consistently outperforms other reliability metrics in
 explaining axis accuracy."
 
-If \code{all = TRUE}, all pairwise combinations of terms between each set
-are evaluated. This increases computational complexity considerably.
+Boutyline and Johnston only consider analyst specified pairs. However,
+if \code{all = TRUE}, all pairwise combinations of terms between each set
+are evaluated. This can allow for unequal sets of anchors, however this
+increases computational complexity considerably.
 }
 \examples{
 

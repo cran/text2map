@@ -1,64 +1,35 @@
-
 test_that("CMDist works on different DTMtypes", {
   ## base R matrix ##
-  out.bse <- CMDist(
-    dtm = dtm.bse,
+  out_bse <- CMDist(
+    dtm = dtm_bse,
     cw = cw,
     cv = NULL,
     wv = fake_word_vectors,
     missing = "stop"
   )
 
-  expect_s3_class(out.bse, "data.frame")
-  expect_type(out.bse[, 2], "double")
-  expect_identical(out.bse$doc_id, rownames(dtm.bse))
+  expect_s3_class(out_bse, "data.frame")
+  expect_type(out_bse[, 2], "double")
+  expect_identical(out_bse$doc_id, rownames(dtm_bse))
 
   ## dgCMatrix matrix ##
-  out.dgc <- CMDist(
-    dtm = dtm.dgc,
+  out_dgc <- CMDist(
+    dtm = dtm_dgc,
     cw = cw,
     cv = NULL,
     wv = fake_word_vectors,
     missing = "stop"
   )
 
-  expect_s3_class(out.dgc, "data.frame")
-  expect_type(out.dgc[, 2], "double")
-  expect_identical(out.dgc$doc_id, rownames(dtm.dgc))
-
-  ## dfm//dgCMatrix matrix ##
-  out.dfm <- CMDist(
-    dtm = dtm.dfm,
-    cw = cw,
-    cv = NULL,
-    wv = fake_word_vectors,
-    missing = "stop"
-  )
-
-  expect_s3_class(out.dfm, "data.frame")
-  expect_type(out.dfm[, 2], "double")
-  expect_identical(out.dfm$doc_id, rownames(dtm.dfm))
-
-  ## tm//simple_triplet_matrix matrix ##
-  out.tm <- CMDist(
-    dtm = dtm.tm,
-    cw = cw,
-    cv = NULL,
-    wv = fake_word_vectors,
-    missing = "stop"
-  )
-
-  expect_s3_class(out.tm, "data.frame")
-  expect_type(out.tm[, 2], "double")
-  expect_identical(out.tm$doc_id, rownames(dtm.tm))
-
-  expect_identical(out.bse, out.dgc, out.dfm, out.tm)
+  expect_s3_class(out_dgc, "data.frame")
+  expect_type(out_dgc[, 2], "double")
+  expect_identical(out_dgc$doc_id, rownames(dtm_dgc))
 })
 
 test_that("CMDist, the same doc has identical outputs across
           different runs with scale=FALSE", {
-  out.2 <- CMDist(
-    dtm = dtm.dgc[1:2, ],
+  out2 <- CMDist(
+    dtm = dtm_dgc[1:2, ],
     cw = cw,
     cv = NULL,
     wv = fake_word_vectors,
@@ -66,8 +37,8 @@ test_that("CMDist, the same doc has identical outputs across
     missing = "stop"
   )
 
-  out.4 <- CMDist(
-    dtm = dtm.dgc[1:4, ],
+  out4 <- CMDist(
+    dtm = dtm_dgc[1:4, ],
     cw = cw,
     cv = NULL,
     wv = fake_word_vectors,
@@ -75,15 +46,15 @@ test_that("CMDist, the same doc has identical outputs across
     missing = "stop"
   )
 
-  expect_identical(out.2[1, 2], out.4[1, 2])
-  expect_identical(out.2[2, 2], out.4[2, 2])
+  expect_identical(out2[1, 2], out4[1, 2])
+  expect_identical(out2[2, 2], out4[2, 2])
 })
 
 test_that("CMDist, handles dtm's with zero words", {
   out <- CMDist(
-    dtm = dtm.dgc[, 1:35],
+    dtm = dtm_dgc[, 1:35],
     cw = cw,
-    cv = sd.01,
+    cv = sd_01,
     wv = fake_word_vectors,
     scale = FALSE,
     missing = "remove"
@@ -96,8 +67,8 @@ test_that("CMDist, handles dtm's with zero words", {
 test_that("CMDist works with multiple words/compound concepts", {
   ## two concept words ##
   out <- CMDist(
-    dtm = dtm.dgc,
-    cw = cw.2,
+    dtm = dtm_dgc,
+    cw = cw_2,
     cv = NULL,
     wv = fake_word_vectors,
     missing = "stop"
@@ -106,13 +77,13 @@ test_that("CMDist works with multiple words/compound concepts", {
   expect_s3_class(out, "data.frame")
   expect_type(out[, 2], "double")
   expect_type(out[, 3], "double")
-  expect_identical(out$doc_id, rownames(dtm.dgc))
-  expect_identical(colnames(out), c("doc_id", cw.2))
+  expect_identical(out$doc_id, rownames(dtm_dgc))
+  expect_identical(colnames(out), c("doc_id", cw_2))
 
   ## compound concept ##
   out <- CMDist(
-    dtm = dtm.dgc,
-    cw = cw.3,
+    dtm = dtm_dgc,
+    cw = cw_3,
     cv = NULL,
     wv = fake_word_vectors,
     missing = "stop"
@@ -122,13 +93,13 @@ test_that("CMDist works with multiple words/compound concepts", {
   expect_type(out[, 2], "double")
   expect_type(out[, 3], "double")
   expect_type(out[, 4], "double")
-  expect_identical(out$doc_id, rownames(dtm.dgc))
+  expect_identical(out$doc_id, rownames(dtm_dgc))
   expect_identical(colnames(out), c("doc_id", "choose", "decade", "the"))
 
   ## compound concept with duplicated first words ##
   out <- CMDist(
-    dtm = dtm.dgc,
-    cw = cw.4,
+    dtm = dtm_dgc,
+    cw = cw_4,
     cv = NULL,
     wv = fake_word_vectors,
     missing = "stop"
@@ -138,20 +109,20 @@ test_that("CMDist works with multiple words/compound concepts", {
   expect_type(out[, 2], "double")
   expect_type(out[, 3], "double")
   expect_type(out[, 4], "double")
-  expect_identical(out$doc_id, rownames(dtm.dgc))
+  expect_identical(out$doc_id, rownames(dtm_dgc))
   expect_identical(colnames(out), c("doc_id", "choose", "decade", "decade_1"))
 
   ## compound concept with duplicated vector labels ##
 
-  sem.dirs <- rbind(
-    get_centroid(anchor.solo.c, fake_word_vectors),
-    get_centroid(anchor.solo.c, fake_word_vectors)
+  sem_dirs <- rbind(
+    get_centroid(anchor_solo_c, fake_word_vectors),
+    get_centroid(anchor_solo_c, fake_word_vectors)
   )
 
   out <- CMDist(
-    dtm = dtm.dgc,
-    cw = cw.4,
-    cv = sem.dirs,
+    dtm = dtm_dgc,
+    cw = cw_4,
+    cv = sem_dirs,
     wv = fake_word_vectors,
     missing = "stop"
   )
@@ -160,7 +131,7 @@ test_that("CMDist works with multiple words/compound concepts", {
   expect_type(out[, 2], "double")
   expect_type(out[, 3], "double")
   expect_type(out[, 4], "double")
-  expect_identical(out$doc_id, rownames(dtm.dgc))
+  expect_identical(out$doc_id, rownames(dtm_dgc))
   expect_identical(
     colnames(out),
     c(

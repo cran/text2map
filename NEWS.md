@@ -1,3 +1,17 @@
+# text2map 0.2.0
+
+- fix testing Suggests for CRAN
+- minor change to output labeling for `test_anchor` 
+- updated documentation for `test_anchor`
+- added vignette for `test_anchor`
+
+
+# text2map 0.1.9.9000
+
+- minor change to output labeling for `test_anchor` 
+- updated documentation for `test_anchor`
+- added vignette for `test_anchor`
+
 # text2map 0.1.9
 
 Added `test_anchor` 

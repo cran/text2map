@@ -1,7 +1,7 @@
 Type: Package
 Package: text2map
 Title: R Tools for Text Matrices, Embeddings, and Networks
-Version: 0.1.9
+Version: 0.2.0
 Authors@R: 
    c(person(given = "Dustin", 
             family = "Stoltz", 
@@ -36,12 +36,13 @@ Depends: R (>= 3.5.0), Matrix (>= 1.4.2)
 Imports: text2vec, parallel, doParallel, foreach, stringi, dplyr, kit,
         fastmatch, methods, qgraph (>= 1.6.9), igraph (>= 1.2.6),
         rlang, ClusterR, tibble, rsvd, permute
-Suggests: testthat (>= 3.0.0), quanteda, tm
+Suggests: testthat (>= 3.0.0), tm, quanteda
 Config/testthat/edition: 3
+Config/Needs/website: rmarkdown
 NeedsCompilation: no
-Packaged: 2024-03-12 18:48:32 UTC; dss
+Packaged: 2024-04-10 18:28:40 UTC; dss
 Author: Dustin Stoltz [aut, cre] (<https://orcid.org/0000-0002-4774-0765>),
   Marshall Taylor [aut] (<https://orcid.org/0000-0002-7440-0723>)
 Maintainer: Dustin Stoltz <dss219@lehigh.edu>
 Repository: CRAN
-Date/Publication: 2024-03-12 19:10:02 UTC
+Date/Publication: 2024-04-11 08:10:02 UTC

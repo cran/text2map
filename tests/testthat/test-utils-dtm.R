@@ -1,6 +1,6 @@
 test_that("dtm_stats returns expect output", {
     # simplified, base R dtm
-    out <- dtm_stats(dtm.bse,
+    out <- dtm_stats(dtm_bse,
         richness = TRUE,
         distribution = TRUE,
         central = TRUE,
@@ -9,12 +9,12 @@ test_that("dtm_stats returns expect output", {
     )
     expect_equal(dim(out), as.integer(c(1L, 26L)))
     expect_type(out, "list")
-    expect_equal(unlist(out$n_docs), nrow(dtm.bse))
-    expect_equal(unlist(out$n_types), ncol(dtm.bse))
-    expect_equal(unlist(out$n_tokens), sum(dtm.bse))
+    expect_equal(unlist(out$n_docs), nrow(dtm_bse))
+    expect_equal(unlist(out$n_types), ncol(dtm_bse))
+    expect_equal(unlist(out$n_tokens), sum(dtm_bse))
 
     # not simplified, base R dtm
-    out <- dtm_stats(dtm.bse)
+    out <- dtm_stats(dtm_bse)
     expect_equal(length(out), 5L)
     expect_equal(dim(out[[1]]), as.integer(c(5L, 2L)))
     expect_equal(dim(out[[2]]), as.integer(c(4L, 2L)))
@@ -22,12 +22,12 @@ test_that("dtm_stats returns expect output", {
     expect_equal(dim(out[[4]]), as.integer(c(4L, 2L)))
     expect_equal(dim(out[[5]]), as.integer(c(3L, 2L)))
     expect_type(out, "list")
-    expect_equal(as.character(out[[1]][1, 2]), as.character(nrow(dtm.bse)))
-    expect_equal(as.character(out[[1]][3, 2]), as.character(ncol(dtm.bse)))
-    expect_equal(as.character(out[[1]][4, 2]), as.character(sum(dtm.bse)))
+    expect_equal(as.character(out[[1]][1, 2]), as.character(nrow(dtm_bse)))
+    expect_equal(as.character(out[[1]][3, 2]), as.character(ncol(dtm_bse)))
+    expect_equal(as.character(out[[1]][4, 2]), as.character(sum(dtm_bse)))
 
     # simplified, dgCMatrix R dtm
-    out <- dtm_stats(dtm.dgc,
+    out <- dtm_stats(dtm_dgc,
         richness = TRUE,
         distribution = TRUE,
         central = TRUE,
@@ -36,26 +36,26 @@ test_that("dtm_stats returns expect output", {
     )
     expect_equal(dim(out), as.integer(c(1L, 26L)))
     expect_type(out, "list")
-    expect_equal(unlist(out$n_docs), nrow(dtm.bse))
-    expect_equal(unlist(out$n_types), ncol(dtm.bse))
-    expect_equal(unlist(out$n_tokens), sum(dtm.bse))
+    expect_equal(unlist(out$n_docs), nrow(dtm_bse))
+    expect_equal(unlist(out$n_types), ncol(dtm_bse))
+    expect_equal(unlist(out$n_tokens), sum(dtm_bse))
 
     # not simplified, dgCMatrix R dtm
-    out <- dtm_stats(dtm.dgc)
+    out <- dtm_stats(dtm_dgc)
     expect_equal(dim(out[[1]]), as.integer(c(5L, 2L)))
     expect_equal(dim(out[[2]]), as.integer(c(4L, 2L)))
     expect_equal(dim(out[[3]]), as.integer(c(10L, 2L)))
     expect_equal(dim(out[[4]]), as.integer(c(4L, 2L)))
     expect_equal(dim(out[[5]]), as.integer(c(3L, 2L)))
     expect_type(out, "list")
-    expect_equal(as.character(out[[1]][1, 2]), as.character(nrow(dtm.bse)))
-    expect_equal(as.character(out[[1]][3, 2]), as.character(ncol(dtm.bse)))
-    expect_equal(as.character(out[[1]][4, 2]), as.character(sum(dtm.bse)))
+    expect_equal(as.character(out[[1]][1, 2]), as.character(nrow(dtm_bse)))
+    expect_equal(as.character(out[[1]][3, 2]), as.character(ncol(dtm_bse)))
+    expect_equal(as.character(out[[1]][4, 2]), as.character(sum(dtm_bse)))
 })
 
 test_that("dtm_stats returns basic output alone", {
     out <- dtm_stats(
-        dtm = dtm.bse,
+        dtm = dtm_bse,
         richness = FALSE,
         distribution = FALSE,
         central = FALSE,
@@ -68,42 +68,18 @@ test_that("dtm_stats returns basic output alone", {
 })
 
 test_that("dtm_melter works on both base and sparse", {
-    out_a <- dtm_melter(dtm = dtm.bse)
-    out_b <- dtm_melter(dtm = dtm.dgc)
+    out_a <- dtm_melter(dtm = dtm_bse)
+    out_b <- dtm_melter(dtm = dtm_dgc)
 
     expect_type(out_a, "list")
     expect_type(out_b, "list")
     expect_equal(ncol(out_a), as.integer(3L))
     expect_equal(ncol(out_b), as.integer(3L))
     expect_equal(out_a, out_b)
-    expect_equal(sum(out_a$freq), sum(dtm.bse))
-    expect_equal(sum(out_b$freq), sum(dtm.dgc))
+    expect_equal(sum(out_a$freq), sum(dtm_bse))
+    expect_equal(sum(out_b$freq), sum(dtm_dgc))
 })
 
-
-test_that("dtm_builder produces identical dtm to cast_dtm", {
-    # example 1
-    dtm.a <- jfk_corpus %>%
-        dtm_builder(clean_text, doc_id)
-
-    # example 2
-    dtm.b <- dtm_builder(jfk_corpus, text = clean_text, doc_id = doc_id)
-
-    expect_identical(dim(dtm.a), dim(dtm.b))
-    expect_identical(dim(dtm.a), dim(dtm.tm))
-
-    expect_identical(sum(dtm.a), sum(dtm.b))
-    expect_identical(sum(dtm.a), sum(dtm.tm))
-
-    expect_identical(
-        as.vector(colnames(dtm.a)),
-        as.vector(colnames(dtm.b))
-    )
-    expect_identical(
-        as.vector(sort(colnames(dtm.a))),
-        as.vector(sort(colnames(dtm.tm)))
-    )
-})
 
 test_that("dtm_builder error/message if last row is blank", {
     my_corpus <- data.frame(
@@ -214,58 +190,45 @@ test_that("dtm_builder chunks correctly", {
 })
 
 test_that("dtm resampler creates DTM of the same dimensions", {
-    out <- dtm_resampler(dtm.dgc, alpha = 0.2)
+    out <- dtm_resampler(dtm_dgc, alpha = 0.2)
     expect_s4_class(out, "dgCMatrix")
-    expect_identical(dim(out), dim(dtm.dgc))
-    expect_equal(sum(out), sum(dtm.dgc) * 0.2, tolerance = 0.1)
+    expect_identical(dim(out), dim(dtm_dgc))
+    expect_equal(sum(out), sum(dtm_dgc) * 0.2, tolerance = 0.1)
 
-    out <- dtm_resampler(dtm.dgc, alpha = 0.5)
+    out <- dtm_resampler(dtm_dgc, alpha = 0.5)
     expect_s4_class(out, "dgCMatrix")
-    expect_identical(dim(out), dim(dtm.dgc))
-    expect_equal(sum(out), sum(dtm.dgc) * 0.5, tolerance = 0.1)
+    expect_identical(dim(out), dim(dtm_dgc))
+    expect_equal(sum(out), sum(dtm_dgc) * 0.5, tolerance = 0.1)
 
-    out <- dtm_resampler(dtm.dgc, alpha = 0.7)
+    out <- dtm_resampler(dtm_dgc, alpha = 0.7)
     expect_s4_class(out, "dgCMatrix")
-    expect_identical(dim(out), dim(dtm.dgc))
-    expect_equal(sum(out), sum(dtm.dgc) * 0.7, tolerance = 0.1)
+    expect_identical(dim(out), dim(dtm_dgc))
+    expect_equal(sum(out), sum(dtm_dgc) * 0.7, tolerance = 0.1)
 
-    out <- dtm_resampler(dtm.dgc, alpha = 1)
+    out <- dtm_resampler(dtm_dgc, alpha = 1)
     expect_s4_class(out, "dgCMatrix")
-    expect_identical(dim(out), dim(dtm.dgc))
-    expect_equal(sum(out), sum(dtm.dgc) * 1, tolerance = 0.1)
+    expect_identical(dim(out), dim(dtm_dgc))
+    expect_equal(sum(out), sum(dtm_dgc) * 1, tolerance = 0.1)
 
-    out <- dtm_resampler(dtm.dgc, n = 20)
+    out <- dtm_resampler(dtm_dgc, n = 20)
     expect_s4_class(out, "dgCMatrix")
     expect_true(all(rowSums(out) == 20))
 
-    out <- dtm_resampler(dtm.dgc)
+    out <- dtm_resampler(dtm_dgc)
     expect_s4_class(out, "dgCMatrix")
-    expect_true(all(rowSums(out) == rowSums(dtm.dgc)))
-    expect_equal(sum(out), sum(dtm.dgc))
+    expect_true(all(rowSums(out) == rowSums(dtm_dgc)))
+    expect_equal(sum(out), sum(dtm_dgc))
 
-    expect_warning(dtm_resampler(dtm.dgc, alpha = 0.5, n = 20))
+    expect_warning(dtm_resampler(dtm_dgc, alpha = 0.5, n = 20))
 })
 
 
 # tests for internal functions
-test_that(".convert_mat_to_dgCMatrix convert all dtms to dgCMatrix", {
-    ## base R matrix ##
-    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.bse), "dgCMatrix")
-    ## dgCMatrix matrix ##
-    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.dgc), "dgCMatrix")
-    ## dfm//dgCMatrix matrix ##
-    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.dfm), "dgCMatrix")
-    ## tm//simple_triplet_matrix matrix ##
-    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.tm), "dgCMatrix")
-    ## TermDocumentMatrix //  tm//simple_triplet_matrix matrix ##
-    expect_s4_class(.convert_mat_to_dgCMatrix(dtm.tdm), "dgCMatrix")
-})
-
 test_that("dtm resampler works on output of .prep_cmd_INPUT", {
     ## dgCMatrix matrix ##
     out <- .prep_cmd_INPUT(
-        dtm = dtm.dgc[, seq_len(35)],
-        cw = cw.oov,
+        dtm = dtm_dgc[, seq_len(35)],
+        cw = cw_oov,
         cv = NULL,
         wv = fake_word_vectors_oov,
         missing = "stop"
@@ -278,10 +241,10 @@ test_that("dtm resampler works on output of .prep_cmd_INPUT", {
 })
 
 test_that("compare dtm dense and sparse", {
-    dtm_sp <- jfk_corpus %>%
+    dtm_sp <- jfk_corpus |>
         dtm_builder(text, doc_id, dense = FALSE)
 
-    dtm_de <- jfk_corpus %>%
+    dtm_de <- jfk_corpus |>
         dtm_builder(text, doc_id, dense = TRUE)
 
     expect_s4_class(dtm_sp, "dgCMatrix")
@@ -425,6 +388,6 @@ test_that("seq_builder", {
 #              dense = FALSE,
 #              omit_empty = TRUE
 #              )
-    
+
 
 # })
