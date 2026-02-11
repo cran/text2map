@@ -44,7 +44,7 @@
 get_anchors <- function(relation) {
   # this allows the data to be accessed without attaching the package
   alist <- eval(parse(text = "text2map::anchor_lists"))
-  anchor_list <- alist[alist$relation == relation, c("add", "subtract")]
+  anchor_list <- alist[alist$relation == relation, c("pole1", "pole2")]
 
   return(anchor_list)
 }
@@ -82,7 +82,7 @@ get_anchors <- function(relation) {
 #' Adam Kalai (2016). 'Man Is to Computer Programmer as Woman Is to Homemaker?
 #' Debiasing Word Embeddings.' Proceedings of the 30th International Conference
 #' on Neural Information Processing Systems. 4356-4364.
-#' \url{https://dl.acm.org/doi/10.5555/3157382.3157584}.\cr
+#' \doi{10.5555/3157382.3157584}.\cr
 #' Taylor, Marshall A., and Dustin S. Stoltz. (2020)
 #' 'Concept Class Analysis: A Method for Identifying Cultural
 #' Schemas in Texts.' \emph{Sociological Science} 7:544-569.
@@ -127,8 +127,8 @@ get_anchors <- function(relation) {
 #'
 #' # create anchor list
 #' gen <- data.frame(
-#'   add = c("woman"),
-#'   subtract = c("man")
+#'   pole1 = c("woman"),
+#'   pole2 = c("man")
 #' )
 #'
 #' dir <- get_direction(anchors = gen, wv = ft_wv_sample)
@@ -149,12 +149,12 @@ get_direction <- function(anchors, wv,
 
   if (!is.null(ncol(anchors)) &&
     ncol(anchors) == 2) {
-    anchors_add <- anchors[, 1, drop = TRUE]
-    anchors_sub <- anchors[, 2, drop = TRUE]
+    anchors_a <- anchors[, 1, drop = TRUE]
+    anchors_z <- anchors[, 2, drop = TRUE]
   } else {
     if (length(anchors) == 2) {
-      anchors_add <- anchors[[1]]
-      anchors_sub <- anchors[[2]]
+      anchors_a <- anchors[[1]]
+      anchors_z <- anchors[[2]]
     } else {
       stop("get_direction requires two sets of juxtaposing terms")
     }
@@ -166,8 +166,8 @@ get_direction <- function(anchors, wv,
   # in Kozlowski et al. 2019 and Stoltz and Taylor 2019
   if (method == "paired") {
     # subtract vectors for words in column 2 from words in column 1
-    direction <- wv[anchors_add, , drop = FALSE] -
-      wv[anchors_sub, , drop = FALSE]
+    direction <- wv[anchors_a, , drop = FALSE] -
+      wv[anchors_z, , drop = FALSE]
     # get the average of the resulting differences
     direction <- t(as.matrix(colMeans(direction)))
   }
@@ -178,10 +178,10 @@ get_direction <- function(anchors, wv,
   # as used in Larsen et al 2015 and Arseniev-Koehler and Foster 2020
   if (method == "pooled") {
     mu1 <- t(as.matrix(colMeans(
-      wv[anchors_add, , drop = FALSE]
+      wv[anchors_a, , drop = FALSE]
     )))
     mu2 <- t(as.matrix(colMeans(
-      wv[anchors_sub, , drop = FALSE]
+      wv[anchors_z, , drop = FALSE]
     )))
     direction <- mu1 - mu2
   }
@@ -190,8 +190,8 @@ get_direction <- function(anchors, wv,
   # as used in Bolukbasi et al. 2016
   # Quantifying and Reducing Stereotypes in Word Embeddings
   if (method == "L2") {
-    direction <- wv[anchors_add, , drop = FALSE] -
-      wv[anchors_sub, , drop = FALSE]
+    direction <- wv[anchors_a, , drop = FALSE] -
+      wv[anchors_z, , drop = FALSE]
     # get the average of the resulting differences
     direction <- t(as.matrix(colMeans(direction)))
     # divide by Euclidean norm
@@ -203,8 +203,8 @@ get_direction <- function(anchors, wv,
   # Man is to Computer Programmer as Woman is to Homemaker?
   if (method == "PCA") {
     # yes, these are inverted for a reason
-    direction <- wv[anchors_sub, , drop = FALSE] -
-      wv[anchors_add, , drop = FALSE]
+    direction <- wv[anchors_z, , drop = FALSE] -
+      wv[anchors_a, , drop = FALSE]
     direction <- Matrix::t(
       stats::prcomp(direction,
         center = TRUE,
@@ -222,7 +222,7 @@ get_direction <- function(anchors, wv,
   rownames(direction) <- make.unique(
     replicate(
       n_dirs,
-      paste0(anchors_add[1], "_pole")
+      paste0(anchors_a[1], "_pole")
     ),
     sep = "_"
   )
@@ -384,7 +384,7 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' # load example word embeddings
 #' data(ft_wv_sample)
 #'
-#' my.regions <- get_regions(
+#' my_regions <- get_regions(
 #'   wv = ft_wv_sample,
 #'   k_regions = 10L,
 #'   max_iter = 10L,
@@ -414,17 +414,19 @@ get_regions <- function(wv,
 }
 
 
-#' Evaluate anchor sets in defining semantic directions
+#' Evaluate anchor sets in defining semantic relations
 #'
 #' This function evaluates how well an anchor set
-#' defines a semantic direction. Anchors must be a
-#' two-column data.frame or a list of length == 2.
-#' Currently, the function only implements the "PairDir" metric
-#' developed by Boutyline and Johnston (2023).
+#' defines a semantic relations using one of two methods: 
+#' pairdir (which only evaluates semantic directions) or relco
+#' which evaluations semantic directions, semantic centroids
+#' and compound concepts). See details.
+#' 
 #'
 #' @details
 #'
-#' According to Boutyline and Johnston (2023):
+#' PairDir evaluates how parallel two anchor sets are when used to define 
+#' a semantic direction. According to Boutyline and Johnston (2023):
 #'
 #' "We find that  PairDir -- a measure of parallelism between the offset
 #' vectors (and thus of the internal reliability of the estimated relation)
@@ -435,29 +437,54 @@ get_regions <- function(wv,
 #' if `all = TRUE`, all pairwise combinations of terms between each set
 #' are evaluated. This can allow for unequal sets of anchors, however this 
 #' increases computational complexity considerably.
+#' 
+#' Relco (anchor reliability coefficient) evaluates how well individual anchors
+#' index a given semantic relation in comparison to a set of non-anchor words. 
+#' This can be used on semantic directions, semantic relations, or compound concepts.
+#' See Taylor et al (2025) for details; see also the `CMDist()` function.
 #'
 #' @references
 #' Boutyline, Andrei, and Ethan Johnston. 2023.
 #' “Forging Better Axes: Evaluating and Improving
 #' the Measurement of Semantic Dimensions in Word Embeddings.”
 #' \doi{10.31235/osf.io/576h3}
+#' 
+#' Taylor, Marshall, et al. 2025. "A Simulation-Based Slope Metric 
+#' for Anchor List Reliability in Word Embedding Spaces."
+#' \doi{10.31235/osf.io/sc2ub_v3}
+
 #'
 #' @importFrom text2vec sim2
 #'
 #'
-#' @param anchors A data frame or list of juxtaposed 'anchor' terms
+#' @param anchors A data frame or list of 'anchor' terms
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as terms.
-#' @param method Which metric used to evaluate (currently only pairdir)
+#' @param non_anchors For 'relco', terms that are not anchors (random, unrelated, or
+#'                    distinctive terms).
+#' @param method Which metric used to evaluate, 'pairdir' or 'relco'
 #' @param all Logical (default `FALSE`). Whether to evaluate all possible
 #'            pairwise combinations of two sets of anchors. If `FALSE` only
 #'            the input pairs are used in evaluation and anchor sets must be
 #'            of equal lengths.
+#' @param type For 'relco', indicate which kind of relation, 
+#'             "direction", "centroid", "compound"
+#' @param conf For 'relco', confidence interval
+#' @param dir_method For 'relco' and `type = "direction"`, indicate the 
+#'                   method for calculating direction ("paired", "pooled", "L2", 
+#'                   "PCA"), See `get_direction()` for details.
+#' @param n_runs For 'relco', number of runs
+#' @param null For 'relco', null hypothesis, default is 0.
+#' @param alpha For 'relco', significance level
+#' @param seed For 'relco', set sampling seed
+#' @param order_non_anchors Logical (default `FALSE`). For 'relco', should the order of 
+#'                          the non-anchor terms be fixed between each run
 #' @param summarize Logical (default `TRUE`). Returns a dataframe with AVERAGE
 #'                  scores for input pairs along with each pairs' contribution.
 #'                  If `summarize = FALSE`, returns a list with each
 #'                  offset matrix, each contribution, and the average score.
 #'
+#' 
 #' @return dataframe or list
 #'
 #' @examples
@@ -470,61 +497,53 @@ get_regions <- function(wv,
 #'   a = c("rest", "rested", "stay", "stand"),
 #'   z = c("coming", "embarked", "fast", "move")
 #' )
-#'
-#' test_anchors(df_anchors, ft_wv_sample)
-#'
-#' test_anchors(df_anchors, ft_wv_sample, all = TRUE)
-#'
+#' 
+#' # test pairdir
+#' test_anchors(df_anchors, ft_wv_sample, method = "pairdir")
+#' test_anchors(df_anchors, ft_wv_sample, method = "pairdir", all = TRUE)
+#' 
+#' # test relco
+#' non_anchors <- c("writ", "alloys", "ills", "atlas", "saturn", "cape", "unfolds")
+#' ## centroid
+#' test_anchors(df_anchors[, 1], ft_wv_sample, method = "relco", 
+#'              type = "centroid", non_anchors = non_anchors)
+#' ## compound
+#' test_anchors(df_anchors$a, ft_wv_sample, method = "relco", 
+#'              type = "compound", non_anchors = non_anchors)
+#' ## direction
+#' test_anchors(df_anchors, ft_wv_sample, method = "relco", 
+#'              type = "direction", dir_method = "paired", 
+#'              non_anchors = non_anchors)
+#' test_anchors(df_anchors, ft_wv_sample, method = "relco", 
+#'              type = "direction", dir_method = "pooled", 
+#'              non_anchors = non_anchors)
 #' @export
-test_anchors <- function(anchors, wv, method = c("pairdir"), all = FALSE, summarize = TRUE) {
-  # as dataframe
-  if (!is.null(ncol(anchors)) &&
-    ncol(anchors) == 2) {
-    anchors_add <- anchors[, 1, drop = TRUE]
-    anchors_sub <- anchors[, 2, drop = TRUE]
-  } else {
-    # as list
-    if (length(anchors) == 2) {
-      anchors_add <- anchors[[1]]
-      anchors_sub <- anchors[[2]]
-    } else {
-      stop("get_direction requires two sets of juxtaposing terms")
-    }
-  }
-
-  if (all) {
-    # find all combinations of unique terms in each set
-    df_combos <- expand.grid(unique(anchors_add), unique(anchors_sub))
-    anchors_add <- as.character(df_combos$Var1)
-    anchors_sub <- as.character(df_combos$Var2)
-  } else {
-    # must be sets of same size
-    if (!identical(length(anchors_add), length(anchors_sub))) {
-      warn_msg <- paste0(
-        "If `all = FALSE`, anchor sets",
-        " must be of equal lengths."
-      )
-      stop(warn_msg)
-    }
-  }
-
+test_anchors <- function(anchors, 
+                         wv, 
+                         non_anchors = NULL,
+                         method, 
+                         all = FALSE, 
+                         type = c("direction", "centroid", "compound"), 
+                         conf = 0.95, 
+                         dir_method = c("paired", "pooled", "L2", "PCA"), 
+                         n_runs = 100, 
+                         null = 0, 
+                         alpha =  0.5,
+                         seed = NULL,
+                         order_non_anchors = FALSE, 
+                         summarize = TRUE) {
+  
+  
   res <- switch(method,
-    pairdir = test_anchors.pairdir(anchors_add, anchors_sub, wv, all = FALSE)
+    pairdir = test_anchors.pairdir(anchors, wv, all = all, summarize = summarize),
+    relco = test_anchors.relco(anchors, non_anchors, wv, type, dir_method, conf, 
+                               n_runs, null, alpha, seed, order_non_anchors)
   )
-
-  if (summarize) {
-    res <- data.frame(
-      anchor_pair = c("AVERAGE", names(res$contribution)),
-      pair_dir = c(res$pair_dir, res$contribution),
-      row.names = NULL
-    )
-  }
 
   return(res)
 }
 
 ## INTERNAL FUNCTIONS ## -------------------------------------------------------
-
 
 #' Evaluate anchor sets with PairDir
 #'
@@ -543,8 +562,7 @@ test_anchors <- function(anchors, wv, method = c("pairdir"), all = FALSE, summar
 #'
 #' @importFrom text2vec sim2
 #'
-#' @param a_anchors Anchor terms defining one side of a semantic direction
-#' @param z_anchors Anchor terms defining other side of a semantic direction
+#' @param anchors Anchor terms
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as terms.
 #' @param all Logical (default `FALSE`). Whether to evaluate all possible
@@ -554,10 +572,43 @@ test_anchors <- function(anchors, wv, method = c("pairdir"), all = FALSE, summar
 #'
 #' @return list
 #' @noRd
-test_anchors.pairdir <- function(a_anchors, z_anchors, wv, all = FALSE) {
+test_anchors.pairdir <- function(anchors, wv, all = FALSE, summarize = TRUE) {
+
+    
+  if (class(anchors) %fin% "data.frame") {  
+
+      if(ncol(anchors) != 2) {
+        stop("`anchors` data.frame must only have 2 columns")
+      }
+    
+    anchors <- as.list(anchors)
+
+  } else if (length(anchors) != 2) stop("`anchors` list must be of length 2")
+
+  # prep
+  anchors_a <- anchors[[1]]
+  anchors_z <- anchors[[2]]
+
+
+  if (all) {
+    # find all combinations of unique terms in each set
+    df_combos <- expand.grid(unique(anchors_a), unique(anchors_z))
+    anchors_a <- as.character(df_combos$Var1)
+    anchors_z <- as.character(df_combos$Var2)
+  } else {
+    # must be sets of same size
+    if (!identical(length(anchors_a), length(anchors_z))) {
+      warn_msg <- paste0(
+        "If method = 'pairdir' and `all = FALSE`,",
+        "anchor sets must be of equal lengths."
+      )
+      stop(warn_msg)
+    }
+  }
+
   res <- list()
-  res$offset <- wv[z_anchors, ] - wv[a_anchors, ]
-  rownames(res$offset) <- paste0(a_anchors, "-", z_anchors)
+  res$offset <- wv[anchors_z, ] - wv[anchors_a, ]
+  rownames(res$offset) <- paste0(anchors_a, "-", anchors_z)
   res$cosine <- text2vec::sim2(res$offset, method = "cosine", norm = "l2")
 
   diag(res$cosine) <- 0
@@ -566,5 +617,13 @@ test_anchors.pairdir <- function(a_anchors, z_anchors, wv, all = FALSE) {
   res$cosine[lower.tri(res$cosine, diag = TRUE)] <- NA
   res$pair_dir <- mean(res$cosine, na.rm = TRUE)
   #
+  if (summarize) {
+    res <- data.frame(
+      anchor_pair = c("AVERAGE", names(res$contribution)),
+      pair_dir = c(res$pair_dir, res$contribution),
+      row.names = NULL
+    )
+  }
   return(res)
 }
+

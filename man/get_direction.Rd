@@ -61,8 +61,8 @@ data(ft_wv_sample)
 
 # create anchor list
 gen <- data.frame(
-  add = c("woman"),
-  subtract = c("man")
+  pole1 = c("woman"),
+  pole2 = c("man")
 )
 
 dir <- get_direction(anchors = gen, wv = ft_wv_sample)
@@ -80,7 +80,7 @@ Bolukbasi, Tolga, Kai-Wei Chang, James Zou, Venkatesh Saligrama,
 Adam Kalai (2016). 'Man Is to Computer Programmer as Woman Is to Homemaker?
 Debiasing Word Embeddings.' Proceedings of the 30th International Conference
 on Neural Information Processing Systems. 4356-4364.
-\url{https://dl.acm.org/doi/10.5555/3157382.3157584}.\cr
+\doi{10.5555/3157382.3157584}.\cr
 Taylor, Marshall A., and Dustin S. Stoltz. (2020)
 'Concept Class Analysis: A Method for Identifying Cultural
 Schemas in Texts.' \emph{Sociological Science} 7:544-569.

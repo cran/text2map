@@ -1,7 +1,7 @@
 Type: Package
 Package: text2map
 Title: R Tools for Text Matrices, Embeddings, and Networks
-Version: 0.2.0
+Version: 0.2.3
 Authors@R: 
    c(person(given = "Dustin", 
             family = "Stoltz", 
@@ -26,23 +26,24 @@ Description: This is a collection of functions optimized for working with
              Taylor and Stoltz (2020) <doi:10.1007/s42001-020-00075-8>, 
              Taylor and Stoltz (2020) <doi:10.15195/v7.a23>, and
              Stoltz and Taylor (2021) <doi:10.1016/j.poetic.2021.101567>.
-URL: https://gitlab.com/culturalcartography/text2map
+URL: https://culturalcartography.gitlab.io/text2map
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 BugReports: https://gitlab.com/culturalcartography/text2map/-/issues
-RoxygenNote: 7.3.1
-Depends: R (>= 3.5.0), Matrix (>= 1.4.2)
+RoxygenNote: 7.3.3
+Depends: R (>= 4.1.0), Matrix (>= 1.4.2)
 Imports: text2vec, parallel, doParallel, foreach, stringi, dplyr, kit,
         fastmatch, methods, qgraph (>= 1.6.9), igraph (>= 1.2.6),
-        rlang, ClusterR, tibble, rsvd, permute
-Suggests: testthat (>= 3.0.0), tm, quanteda
+        rlang, ClusterR, tibble, rsvd, permute, cli, pillar
+Suggests: testthat (>= 3.0.0), tm, quanteda, knitr, rmarkdown
 Config/testthat/edition: 3
 Config/Needs/website: rmarkdown
 NeedsCompilation: no
-Packaged: 2024-04-10 18:28:40 UTC; dss
-Author: Dustin Stoltz [aut, cre] (<https://orcid.org/0000-0002-4774-0765>),
-  Marshall Taylor [aut] (<https://orcid.org/0000-0002-7440-0723>)
+Packaged: 2026-02-11 11:54:39 UTC; dss
+Author: Dustin Stoltz [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-4774-0765>),
+  Marshall Taylor [aut] (ORCID: <https://orcid.org/0000-0002-7440-0723>)
 Maintainer: Dustin Stoltz <dss219@lehigh.edu>
 Repository: CRAN
-Date/Publication: 2024-04-11 08:10:02 UTC
+Date/Publication: 2026-02-11 14:50:02 UTC

@@ -56,9 +56,11 @@ Any questions and requests for support can also be directed to the package maint
 
 [![CRAN](https://user-content.gitlab-static.net/2c1d3fa0363b0d2990145498a602380b6f39c810/68747470733a2f2f7777772e722d706b672e6f72672f6261646765732f76657273696f6e2f74657874326d6170)](https://cran.r-project.org/package=text2map)
 
+[![DOI](https://img.shields.io/badge/DOI-10.32614/CRAN.package.text2map-1f57b6?style=flat&link=https://doi.org/10.32614/CRAN.package.text2map)](https://cran.r-project.org/package=text2map)
+
 [![pipeline](https://gitlab.com/culturalcartography/text2map/badges/master/pipeline.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/master)
 
-[![DOI](https://joss.theoj.org/papers/10.21105/joss.03741/status.svg)](https://doi.org/10.21105/joss.03741)
+[![Joss DOI](https://joss.theoj.org/papers/10.21105/joss.03741/status.svg)](https://doi.org/10.21105/joss.03741)
 
 [![coverage](https://gitlab.com/culturalcartography/text2map/badges/master/coverage.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/master)
 
@@ -66,7 +68,7 @@ Any questions and requests for support can also be directed to the package maint
 
 [![license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit) 
 
-[![](https://cranlogs.r-pkg.org/badges/text2map)](https://cran.r-project.org/package=text2map)
+[![Monthly downloads from CRAN](https://cranlogs.r-pkg.org/badges/text2map)](https://cran.r-project.org/package=text2map)
 
 <!-- badges: end -->
 

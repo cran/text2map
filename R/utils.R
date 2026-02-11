@@ -120,7 +120,22 @@ tiny_gender_tagger <- function() {
   return(gender_tagger)
 }
 
+
 ## ------ INTERNAL GENERIC FUNCTIONS ----------------------------------------- #
+
+
+## ----------------------------------------------------------------------------
+# given list, gives confidence intervals
+## ----------------------------------------------------------------------------
+
+.conf_int <- function(x, ci = .95) {
+  a <- mean(x)
+  s <- sd(x)
+  n <- length(x)
+  error <- qt(ci+(1-ci)/2, df = n-1)*s/sqrt(n)
+  return(c(mean = a, lower_ci = a-error, upper_ci = a+error))
+}
+
 
 #' Fast-match `%fin%` operator masking base R `%in%`
 #'
@@ -289,3 +304,5 @@ tiny_gender_tagger <- function() {
 #' @keywords internal
 #' @noRd
 utils::globalVariables(c("i"))
+
+

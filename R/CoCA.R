@@ -67,26 +67,32 @@
 #'
 #' # create semantic directions
 #' gen <- data.frame(
-#'   add = c("woman"),
-#'   subtract = c("man")
+#'   pole1 = c("woman"),
+#'   pole2 = c("man")
 #' )
 #'
 #' die <- data.frame(
-#'   add = c("alive"),
-#'   subtract = c("die")
+#'   pole1 = c("alive"),
+#'   pole2 = c("die")
+#' )
+#' 
+#' hot <- data.frame(
+#'   pole1 = c("hot"),
+#'   pole2 = c("icebergs")
 #' )
 #'
 #' gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
 #' die_dir <- get_direction(anchors = die, wv = ft_wv_sample)
+#' hot_dir <- get_direction(anchors = hot, wv = ft_wv_sample)
 #'
-#' sem_dirs <- rbind(gen_dir, die_dir)
+#' sem_dirs <- rbind(gen_dir, die_dir, hot_dir)
 #'
 #' classes <- CoCA(
 #'   dtm = dtm,
 #'   wv = ft_wv_sample,
 #'   directions = sem_dirs,
 #'   filter_sig = TRUE,
-#'   filter_value = 0.05,
+#'   filter_value = 0.1,
 #'   zero_action = "drop"
 #' )
 #'
@@ -104,6 +110,12 @@ CoCA <- function(dtm, wv = NULL, directions = NULL,
     wv = wv,
     scale = TRUE
   )
+
+  if(ncol(cmds) < 3) {
+    if(filter_sig) 
+    message("N directions must be >= 3 to calculate significance. Setting `filter_sig = FALSE`")
+    filter_sig <- FALSE
+  }
 
   # get correlational classes
   classes <- .get_cor_class(
@@ -240,7 +252,8 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
 #'             as output from [CMDist()]
 #' @param filter_sig logical (default = TRUE), sets 'insignificant'
-#'                   ties to 0 to decrease noise and increase stability
+#'                   ties to 0 to decrease noise and increase stability.
+#'                   N directions must be > 2.
 #' @param filter_value Minimum significance cutoff.
 #'                     Absolute row correlations below
 #'                     this value will be set to 0
@@ -254,11 +267,12 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
                            filter_sig = TRUE,
                            filter_value = 0.01,
                            zero_action = c("drop", "ownclass")) {
+  
   cormat <- .make_cormat(cmds, zero_action)
 
   if (filter_sig == TRUE) {
     cormat <- .filter.insignif(cormat,
-      ncol(cmds),
+      n_dirs = ncol(cmds),
       filter_value = filter_value
     )
   }
@@ -300,20 +314,20 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #'                    correlations between all pairs of 0-var rows are set to 1
 #' @noRd
 .make_cormat <- function(cmds, zero_action) {
-  cmds2 <- cmds
+
   # Floating point imprecision may make 0-variance rows
   # appear to have variance slightly higher than 0.
-  zeros <- which(apply(cmds2, 1, stats::var) <= 0.000000001)
+  zeros <- which(apply(cmds, 1, stats::var) <= .Machine$double.xmin)
 
   if (zero_action[1] == "drop" && (length(zeros) > 0)) {
-    cmds2 <- cmds2[-zeros, ]
+    cmds <- cmds[-zeros, ]
   }
 
-  rv <- abs(stats::cor(t(cmds2)))
+  rv <- abs(stats::cor(t(cmds)))
 
   attributes(rv)$zeros <- zeros
   attributes(rv)$zero_action <- zero_action[1]
-  attributes(rv)$cmds <- cmds2
+  attributes(rv)$cmds <- cmds
 
   if ((zero_action[1] == "ownclass") && length(zeros) > 0) {
     rv[zeros, ] <- 0
@@ -334,17 +348,17 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' @importFrom stats cor qt var
 #'
 #' @param cormat correlation matrix
-#' @param n_vars number of variables correlated
+#' @param n_dirs number of directions correlated
 #' @param filter_value significance level below which to filter
 #'
 #' @noRd
-.filter.insignif <- function(cormat, n_vars, filter_value = 0.05) {
-  suppressWarnings(tvalues <- cormat * sqrt((n_vars - 2) / (1 - cormat^2)))
+.filter.insignif <- function(cormat, n_dirs, filter_value = 0.05) {
+  suppressWarnings( tvalues <- cormat * sqrt((n_dirs - 2) / (1 - cormat^2)) )
 
-  if (any(is.infinite(tvalues))) {
-    tvalues[is.infinite(tvalues)] <- 99999 # a very big number
+  if ( any(is.infinite(tvalues)) ) {
+    tvalues[is.infinite(tvalues)] <- .Machine$double.xmax # a very big number
   }
-  cutoff <- abs(stats::qt(filter_value / 2, n_vars))
+  cutoff <- abs( stats::qt(filter_value / 2, n_dirs - 2) )
 
   isolates_pre <- sum(apply(cormat, 1, sum) == 0)
   cormat[tvalues < cutoff] <- 0

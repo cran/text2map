@@ -23,8 +23,8 @@ a word embedding model.
 
 Variables:
 \itemize{
-\item add. words to be added (or the positive direction)
-\item subtract. words to be subtract (or the negative direction)
+\item pole1. words to be added (or the positive direction)
+\item pole2. words to be subtracted (or the negative direction)
 \item relation. the relation to be extracted, 26 relations available
 \item domain. 6 broader categories within which each relation falls
 

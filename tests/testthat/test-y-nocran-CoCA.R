@@ -8,23 +8,22 @@ test_that("CoCA prepare", {
     #                 filter_sig = TRUE,
     #                 filter_value = 0.05,
     #                 zero_action = 'drop')
-    coca.msg <- "CoCA found 2 schematic classes in the corpus. Sizes: 5 5"
-
+    # coca.msg <- "CoCA found 2 schematic classes in the corpus. Sizes: 5 5"
+    # coca.msg.d <- "CoCA found 2 schematic classes in the corpus. Sizes: 6 4"
 
     # Make a degenerate class
-    classes.d <- CoCA(
+    expect_warning(classes.d <- CoCA(
           dtm = dtm_bse,
           wv = fake_word_vectors_coca,
           directions = sem_dirs,
           filter_sig = TRUE,
           filter_value = 0.05,
           zero_action = 'drop'
-          )
+          ))
 
     expect_s3_class(classes.d, "CoCA")
 
-    coca.msg.d <- "CoCA found 2 schematic classes in the corpus. Sizes: 6 4"
-  
+    
 })
 
 
@@ -39,14 +38,14 @@ test_that("CoCA works on different data types", {
   )
 
   ## base R matrix ##
-  classes <- CoCA(
+  expect_warning(classes <- CoCA(
     dtm = dtm_bse,
     wv = fake_word_vectors_coca,
     directions = sem_dirs,
     filter_sig = TRUE,
     filter_value = 0.05,
     zero_action = "drop"
-  )
+  ))
 
   expect_named(classes, c("membership", "modules", "cormat"))
   expect_equal(length(classes$membership), nrow(dtm_bse))
@@ -62,14 +61,14 @@ test_that("CoCA works on different data types", {
   expect_equal(dim(classes$cormat), cor_dims)
 
   ## dgCMatrix matrix ##
-  classes <- CoCA(
+  expect_warning(classes <- CoCA(
     dtm = dtm_dgc,
     wv = fake_word_vectors_coca,
     directions = sem_dirs,
     filter_sig = TRUE,
     filter_value = 0.05,
     zero_action = "drop"
-  )
+  ))
 
   expect_named(classes, c("membership", "modules", "cormat"))
   expect_equal(length(classes$membership), nrow(dtm_bse))
@@ -102,14 +101,14 @@ test_that("CoCA works on tm/quanteda data types", {
   )
 
   ## dfm//dgCMatrix matrix ##
-  classes <- CoCA(
+  expect_warning(classes <- CoCA(
     dtm = dtm_dfm,
     wv = fake_word_vectors_coca,
     directions = sem_dirs,
     filter_sig = TRUE,
     filter_value = 0.05,
     zero_action = "drop"
-  )
+  ))
 
   expect_named(classes, c("membership", "modules", "cormat"))
   expect_equal(length(classes$membership), nrow(dtm_bse))
@@ -125,14 +124,14 @@ test_that("CoCA works on tm/quanteda data types", {
   expect_equal(dim(classes$cormat), cor_dims)
 
   ## tm//simple_triplet_matrix matrix ##
-  classes <- CoCA(
+  expect_warning(classes <- CoCA(
     dtm = dtm_tm,
     wv = fake_word_vectors_coca,
     directions = sem_dirs,
     filter_sig = TRUE,
     filter_value = 0.05,
     zero_action = "drop"
-  )
+  ))
 
   expect_named(classes, c("membership", "modules", "cormat"))
   expect_equal(length(classes$membership), nrow(dtm_bse))
@@ -156,14 +155,14 @@ test_that("CoCA prints a solution", {
 
 
   ## base R matrix ##
-  classes <- CoCA(
+  expect_warning(classes <- CoCA(
     dtm = dtm_bse,
     wv = fake_word_vectors_coca,
     directions = sem_dirs,
     filter_sig = TRUE,
     filter_value = 0.05,
     zero_action = "drop"
-  )
+  ))
 
   expect_output(print(classes))
   # expect_output(print(classes), coca.msg)
@@ -177,7 +176,7 @@ test_that("CoCA plot method", {
     dtm = dtm_bse,
     wv = fake_word_vectors_coca,
     directions = sem_dirs,
-    filter_sig = TRUE,
+    filter_sig = FALSE,
     filter_value = 0.05,
     zero_action = "drop"
   )

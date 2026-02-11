@@ -168,13 +168,20 @@ pairs_02 <- data.frame(
     substracts = c("unskilled", "incompetent")
 )
 
+pairs_03 <- data.frame(
+    additions = c("best", "rich"),
+    substracts = c("poor", "goal")
+)
+
+
 
 # get the vectors for each direction
 sd_01 <- get_direction(pairs_01, fake_word_vectors_coca)
 sd_02 <- get_direction(pairs_02, fake_word_vectors_coca)
+sd_03 <- get_direction(pairs_03, fake_word_vectors_coca)
 
 # row bind each direction
-sem_dirs <- rbind(sd_01, sd_02)
+sem_dirs <- rbind(sd_01, sd_02, sd_03)
 
 
 

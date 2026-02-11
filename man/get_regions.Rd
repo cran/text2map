@@ -52,7 +52,7 @@ uses the Armadillo library.
 # load example word embeddings
 data(ft_wv_sample)
 
-my.regions <- get_regions(
+my_regions <- get_regions(
   wv = ft_wv_sample,
   k_regions = 10L,
   max_iter = 10L,

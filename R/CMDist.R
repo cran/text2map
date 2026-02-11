@@ -402,6 +402,11 @@ cmdist <- CMDist
 #'
 #' Calculates the sensitivity intervals on a range of CMD estimates produced
 #' by resampling the DTM.
+#' 
+#' For details about the algorithm used to calculate percentiles 
+#' see documentation for the `quantile()` function in the stats 
+#' package. The Default is type `7`: \eqn{\(m = 1-p\). 
+#' \(p_k = \frac{k - 1}{n - 1}\)}, where, \(p_k = \mbox{mode}\[F(x_{k})\]\)
 #'
 #' @importFrom stats sd quantile
 #'
@@ -410,10 +415,7 @@ cmdist <- CMDist
 #' @param scale logical (default = `TRUE`) whether to scale the output
 #' @param prep a list of objects output by `.prep_cmd_INPUT`
 #' @param probs percentiles to be sampled (default = c(0.05, 0.95))
-#' @param type algorithm used to calculate percentiles (see documentation
-#'             for the `quantile()` function in the stats package). Default is
-#'             type `7`: \eqn{\(m = 1-p\). \(p_k = \frac{k - 1}{n - 1}\)},
-#'             where, \(p_k = \mbox{mode}[F(x_{k})]\).
+#' @param type algorithm used to calculate percentiles (see details)
 #' @keywords internal
 #' @noRd
 .get_sensitivity_intervals <- function(sampList,

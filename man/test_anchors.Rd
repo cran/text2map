@@ -2,22 +2,60 @@
 % Please edit documentation in R/utils-embedding-vectors.R
 \name{test_anchors}
 \alias{test_anchors}
-\title{Evaluate anchor sets in defining semantic directions}
+\title{Evaluate anchor sets in defining semantic relations}
 \usage{
-test_anchors(anchors, wv, method = c("pairdir"), all = FALSE, summarize = TRUE)
+test_anchors(
+  anchors,
+  wv,
+  non_anchors = NULL,
+  method,
+  all = FALSE,
+  type = c("direction", "centroid", "compound"),
+  conf = 0.95,
+  dir_method = c("paired", "pooled", "L2", "PCA"),
+  n_runs = 100,
+  null = 0,
+  alpha = 0.5,
+  seed = NULL,
+  order_non_anchors = FALSE,
+  summarize = TRUE
+)
 }
 \arguments{
-\item{anchors}{A data frame or list of juxtaposed 'anchor' terms}
+\item{anchors}{A data frame or list of 'anchor' terms}
 
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
 with rows as terms.}
 
-\item{method}{Which metric used to evaluate (currently only pairdir)}
+\item{non_anchors}{For 'relco', terms that are not anchors (random, unrelated, or
+distinctive terms).}
+
+\item{method}{Which metric used to evaluate, 'pairdir' or 'relco'}
 
 \item{all}{Logical (default \code{FALSE}). Whether to evaluate all possible
 pairwise combinations of two sets of anchors. If \code{FALSE} only
 the input pairs are used in evaluation and anchor sets must be
 of equal lengths.}
+
+\item{type}{For 'relco', indicate which kind of relation,
+"direction", "centroid", "compound"}
+
+\item{conf}{For 'relco', confidence interval}
+
+\item{dir_method}{For 'relco' and \code{type = "direction"}, indicate the
+method for calculating direction ("paired", "pooled", "L2",
+"PCA"), See \code{get_direction()} for details.}
+
+\item{n_runs}{For 'relco', number of runs}
+
+\item{null}{For 'relco', null hypothesis, default is 0.}
+
+\item{alpha}{For 'relco', significance level}
+
+\item{seed}{For 'relco', set sampling seed}
+
+\item{order_non_anchors}{Logical (default \code{FALSE}). For 'relco', should the order of
+the non-anchor terms be fixed between each run}
 
 \item{summarize}{Logical (default \code{TRUE}). Returns a dataframe with AVERAGE
 scores for input pairs along with each pairs' contribution.
@@ -29,13 +67,14 @@ dataframe or list
 }
 \description{
 This function evaluates how well an anchor set
-defines a semantic direction. Anchors must be a
-two-column data.frame or a list of length == 2.
-Currently, the function only implements the "PairDir" metric
-developed by Boutyline and Johnston (2023).
+defines a semantic relations using one of two methods:
+pairdir (which only evaluates semantic directions) or relco
+which evaluations semantic directions, semantic centroids
+and compound concepts). See details.
 }
 \details{
-According to Boutyline and Johnston (2023):
+PairDir evaluates how parallel two anchor sets are when used to define
+a semantic direction. According to Boutyline and Johnston (2023):
 
 "We find that  PairDir -- a measure of parallelism between the offset
 vectors (and thus of the internal reliability of the estimated relation)
@@ -46,6 +85,11 @@ Boutyline and Johnston only consider analyst specified pairs. However,
 if \code{all = TRUE}, all pairwise combinations of terms between each set
 are evaluated. This can allow for unequal sets of anchors, however this
 increases computational complexity considerably.
+
+Relco (anchor reliability coefficient) evaluates how well individual anchors
+index a given semantic relation in comparison to a set of non-anchor words.
+This can be used on semantic directions, semantic relations, or compound concepts.
+See Taylor et al (2025) for details; see also the \code{CMDist()} function.
 }
 \examples{
 
@@ -58,14 +102,33 @@ df_anchors <- data.frame(
   z = c("coming", "embarked", "fast", "move")
 )
 
-test_anchors(df_anchors, ft_wv_sample)
+# test pairdir
+test_anchors(df_anchors, ft_wv_sample, method = "pairdir")
+test_anchors(df_anchors, ft_wv_sample, method = "pairdir", all = TRUE)
 
-test_anchors(df_anchors, ft_wv_sample, all = TRUE)
-
+# test relco
+non_anchors <- c("writ", "alloys", "ills", "atlas", "saturn", "cape", "unfolds")
+## centroid
+test_anchors(df_anchors[, 1], ft_wv_sample, method = "relco", 
+             type = "centroid", non_anchors = non_anchors)
+## compound
+test_anchors(df_anchors$a, ft_wv_sample, method = "relco", 
+             type = "compound", non_anchors = non_anchors)
+## direction
+test_anchors(df_anchors, ft_wv_sample, method = "relco", 
+             type = "direction", dir_method = "paired", 
+             non_anchors = non_anchors)
+test_anchors(df_anchors, ft_wv_sample, method = "relco", 
+             type = "direction", dir_method = "pooled", 
+             non_anchors = non_anchors)
 }
 \references{
 Boutyline, Andrei, and Ethan Johnston. 2023.
 “Forging Better Axes: Evaluating and Improving
 the Measurement of Semantic Dimensions in Word Embeddings.”
 \doi{10.31235/osf.io/576h3}
+
+Taylor, Marshall, et al. 2025. "A Simulation-Based Slope Metric
+for Anchor List Reliability in Word Embedding Spaces."
+\doi{10.31235/osf.io/sc2ub_v3}
 }

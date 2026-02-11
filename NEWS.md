@@ -1,3 +1,11 @@
+# text2map 0.2.3
+
+## Additions
+- adding `relco` method to `test_anchor`
+
+## Corrections
+- fix error in calculating sig cutoff values for CoCA (Thanks to Bianca Kang!)
+
 # text2map 0.2.0
 
 - fix testing Suggests for CRAN
@@ -30,7 +38,7 @@ Fix encoding issue for non-ASCII characters to work with `fastmatch`
 Add functionality 
 - `perm_tester` for Monte Carlo Permutation Tests for Model P-Values
 - `rancor_builder` creates random corpus based on provided term probabilities 
-- `rancors_builder` creates multiple random corpora]
+- `rancors_builder` creates multiple random corpora
 
 Include additional tests, updated documentation and vignettes
 

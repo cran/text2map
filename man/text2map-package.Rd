@@ -13,7 +13,7 @@ This is a collection of functions optimized for working with with various kinds 
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://gitlab.com/culturalcartography/text2map}
+  \item \url{https://culturalcartography.gitlab.io/text2map}
   \item Report bugs at \url{https://gitlab.com/culturalcartography/text2map/-/issues}
 }
 

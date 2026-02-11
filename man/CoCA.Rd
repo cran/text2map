@@ -79,26 +79,32 @@ dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 
 # create semantic directions
 gen <- data.frame(
-  add = c("woman"),
-  subtract = c("man")
+  pole1 = c("woman"),
+  pole2 = c("man")
 )
 
 die <- data.frame(
-  add = c("alive"),
-  subtract = c("die")
+  pole1 = c("alive"),
+  pole2 = c("die")
+)
+
+hot <- data.frame(
+  pole1 = c("hot"),
+  pole2 = c("icebergs")
 )
 
 gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
 die_dir <- get_direction(anchors = die, wv = ft_wv_sample)
+hot_dir <- get_direction(anchors = hot, wv = ft_wv_sample)
 
-sem_dirs <- rbind(gen_dir, die_dir)
+sem_dirs <- rbind(gen_dir, die_dir, hot_dir)
 
 classes <- CoCA(
   dtm = dtm,
   wv = ft_wv_sample,
   directions = sem_dirs,
   filter_sig = TRUE,
-  filter_value = 0.05,
+  filter_value = 0.1,
   zero_action = "drop"
 )
 
