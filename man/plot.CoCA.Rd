@@ -7,10 +7,10 @@
 \method{plot}{CoCA}(
   x,
   module = NULL,
-  cutoff = 0.05,
-  repulse = 1.86,
   min = 0.15,
   max = 1,
+  label.cex = 1.2,
+  seed = 123,
   main = NULL,
   ...
 )
@@ -18,24 +18,50 @@
 \arguments{
 \item{x}{CoCA object returned by \code{\link[=CoCA]{CoCA()}}}
 
-\item{module}{index for which module to plot (default = NULL)}
-
-\item{cutoff}{minimum absolute value of correlations to plot}
-
-\item{repulse}{repulse radius in the spring layout}
+\item{module}{Integer, which schematic class to plot. Defaults to \code{NULL},
+but a value is effectively required: omitting it or passing
+\code{NULL} errors, prompting you to specify one. Must be a
+single whole number between 1 and the number of modules
+found in \code{x} (\code{length(x$modules)}), else errors with a
+message stating the valid range.}
 
 \item{min}{edges with absolute weights under this value are
 not shown (default = 0.15)}
 
 \item{max}{highest weight to scale the edge widths too (default = 1)}
 
+\item{label.cex}{label size scaling factor (default = 1.2)}
+
+\item{seed}{random seed for layout reproducibility (default = 123)}
+
 \item{main}{title for plot (default = NULL)}
 
 \item{...}{Arguments to be passed to methods}
 }
 \value{
-returns \code{qgraph} object
+invisibly returns the igraph object
 }
 \description{
 Plot CoCA
+}
+\examples{
+\donttest{
+data(ft_wv_sample)
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+
+gen <- data.frame(pole1 = c("man", "new", "choose"), pole2 = c("nation", "world", "peace"))
+space <- data.frame(pole1 = c("space", "moon", "science"), pole2 = c("nation", "world", "freedom"))
+power <- data.frame(pole1 = c("great", "power", "new"), pole2 = c("peace", "freedom", "world"))
+
+gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
+space_dir <- get_direction(anchors = space, wv = ft_wv_sample)
+power_dir <- get_direction(anchors = power, wv = ft_wv_sample)
+directions <- rbind(gen_dir, space_dir, power_dir)
+
+classes <- CoCA(dtm, wv = ft_wv_sample, directions = directions)
+}
+
 }

@@ -23,10 +23,13 @@ terms are removed. Missing terms will be printed as a message.}
 
 \item{n_dirs}{If \code{method = "PCA"}, an integer indicating how many directions
 to return. Default = \code{1L}, indicating a single,
-bipolar, direction.}
+bipolar, direction. Cannot exceed the number of anchor pairs
+provided in \code{anchors}; errors with a message naming the
+maximum available if it does.}
 }
 \value{
-returns a one row matrix
+Returns a matrix with one row per direction (\code{n_dirs} rows when
+\code{method = "PCA"}; one row otherwise).
 }
 \description{
 \code{get_direction()} outputs a vector corresponding to one pole of a
@@ -67,20 +70,29 @@ gen <- data.frame(
 
 dir <- get_direction(anchors = gen, wv = ft_wv_sample)
 
+# method = "PCA" requires at least two anchor pairs
+gen2 <- data.frame(
+  pole1 = c("woman", "stay"),
+  pole2 = c("man", "move")
+)
+
 dir <- get_direction(
-  anchors = gen, wv = ft_wv_sample,
-  method = "PCA", n = 1L
+  anchors = gen2, wv = ft_wv_sample,
+  method = "PCA", n_dirs = 1L
+)
+
+# method = "PCA" can return more than one direction, up to the
+# number of anchor pairs provided
+dirs <- get_direction(
+  anchors = gen2, wv = ft_wv_sample,
+  method = "PCA", n_dirs = 2L
 )
 }
 \references{
-Bolukbasi, T., Chang, K. W., Zou, J., Saligrama, V., and Kalai, A. (2016).
-Quantifying and reducing stereotypes in word embeddings. arXiv preprint
-\url{https://arxiv.org/abs/1606.06121v1}.\cr
 Bolukbasi, Tolga, Kai-Wei Chang, James Zou, Venkatesh Saligrama,
 Adam Kalai (2016). 'Man Is to Computer Programmer as Woman Is to Homemaker?
-Debiasing Word Embeddings.' Proceedings of the 30th International Conference
-on Neural Information Processing Systems. 4356-4364.
-\doi{10.5555/3157382.3157584}.\cr
+Debiasing Word Embeddings.' Advances in Neural Information Processing
+Systems, 29. \doi{10.48550/arXiv.1606.06121}.\cr
 Taylor, Marshall A., and Dustin S. Stoltz. (2020)
 'Concept Class Analysis: A Method for Identifying Cultural
 Schemas in Texts.' \emph{Sociological Science} 7:544-569.

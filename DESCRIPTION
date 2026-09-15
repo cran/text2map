@@ -1,20 +1,23 @@
 Type: Package
 Package: text2map
 Title: R Tools for Text Matrices, Embeddings, and Networks
-Version: 0.2.3
+Version: 0.4.0
 Authors@R: 
-   c(person(given = "Dustin", 
-            family = "Stoltz", 
-            email = c("dss219@lehigh.edu"), 
-            role = c("aut", "cre"),
-            comment = c(ORCID = "0000-0002-4774-0765")),
-     person(given = "Marshall", 
-            family = "Taylor", 
-            email = "mtaylor2@nmsu.edu", 
-            role = c("aut"),
-            comment = c(ORCID = "0000-0002-7440-0723")))
+    c(person(given = "Dustin", 
+             family = "Stoltz", 
+             email = c("dss219@lehigh.edu"), 
+             role = c("aut", "cre"),
+             comment = c(ORCID = "0000-0002-4774-0765")),
+      person(given = "Marshall", 
+             family = "Taylor", 
+             email = "mtaylor2@nmsu.edu", 
+             role = c("aut"),
+             comment = c(ORCID = "0000-0002-7440-0723")))
+Author: Dustin Stoltz [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-4774-0765>),
+  Marshall Taylor [aut] (ORCID: <https://orcid.org/0000-0002-7440-0723>)
 Description: This is a collection of functions optimized for working with
-             with various kinds of text matrices. Focusing on 
+             various kinds of text matrices. Focusing on 
              the text matrix as the primary object - represented 
              either as a base R dense matrix or a 'Matrix' package sparse 
              matrix - allows for a consistent and intuitive interface 
@@ -29,21 +32,19 @@ Description: This is a collection of functions optimized for working with
 URL: https://culturalcartography.gitlab.io/text2map
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+Language: en-US
 BugReports: https://gitlab.com/culturalcartography/text2map/-/issues
-RoxygenNote: 7.3.3
 Depends: R (>= 4.1.0), Matrix (>= 1.4.2)
-Imports: text2vec, parallel, doParallel, foreach, stringi, dplyr, kit,
-        fastmatch, methods, qgraph (>= 1.6.9), igraph (>= 1.2.6),
-        rlang, ClusterR, tibble, rsvd, permute, cli, pillar
-Suggests: testthat (>= 3.0.0), tm, quanteda, knitr, rmarkdown
+Imports: parallel, doParallel, foreach, stringi, dplyr, kit, fastmatch,
+        methods, rlang, tibble, rsvd, permute, cli, pillar, tidyselect,
+        text2vec, igraph (>= 1.2.6), RhpcBLASctl
+Suggests: testthat (>= 3.2.0), covr, spelling, lintr, tm, quanteda,
+        knitr, rmarkdown, ClusterR, RSpectra
 Config/testthat/edition: 3
 Config/Needs/website: rmarkdown
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-02-11 11:54:39 UTC; dss
-Author: Dustin Stoltz [aut, cre] (ORCID:
-    <https://orcid.org/0000-0002-4774-0765>),
-  Marshall Taylor [aut] (ORCID: <https://orcid.org/0000-0002-7440-0723>)
+Packaged: 2026-09-15 00:40:01 UTC; dss
 Maintainer: Dustin Stoltz <dss219@lehigh.edu>
 Repository: CRAN
-Date/Publication: 2026-02-11 14:50:02 UTC
+Date/Publication: 2026-09-15 11:00:02 UTC

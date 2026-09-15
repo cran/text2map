@@ -7,11 +7,20 @@
 \format{
 A data frame with 1775 rows and 2 variables.
 }
-\usage{
-stoplists
+\source{
+\itemize{
+\item tiny2020: Stoltz and Taylor (2020)
+\item snowball2001: Porter (2001) Snowball stemming algorithm
+\item snowball2014: Porter (2014) updated Snowball stoplist
+\item van1979: van Rijsbergen (1979) "Information Retrieval"
+\item fox1990: Fox (1990) "A Stop List for General Text"
+\item smart1993: Salton and Buckley (1993) SMART retrieval system
+\item onix2000: ONIX (2000) "Oxford English Dictionary" stoplist
+\item nltk2009: Bird, Loper and Klein (2009) NLTK
+}
 }
 \description{
-A dataset containing eight English stoplist. Is used
+A dataset containing eight English stoplists. Is used
 with the \code{\link[=get_stoplist]{get_stoplist()}} function.
 }
 \details{
@@ -24,7 +33,7 @@ The stoplists include:
 \item "fox1990": Christopher Fox's (1990) list of 421 words
 \item "smart1993": Original SMART (1993) list of 570 words
 \item "onix2000": ONIX (2000) list of 196 words
-\item "nltk2001": Python's NLTK (2009) list of 179 words
+\item "nltk2009": Python's NLTK (2009) list of 179 words
 }
 
 Tiny 2020, is a very small stop list of the most frequent

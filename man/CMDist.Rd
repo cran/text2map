@@ -50,13 +50,13 @@ produced by any popular text analysis package, or using the
 with rows as words.}
 
 \item{missing}{Indicates what action to take if words are not in embeddings.
-If \code{action = "stop"} (default), the function is stopped
+If \code{missing = "stop"} (default), the function is stopped
 and an error messages states which words are missing.
-If \code{action = "remove"},  output is the same as terms but
+If \code{missing = "remove"},  output is the same as terms but
 missing words or rows with missing words are removed.
 Missing words will be printed as a message.}
 
-\item{scale}{Logical (default = \code{FALSE}) uses \code{scale()} on output. This will
+\item{scale}{Logical (default = \code{TRUE}) uses \code{scale()} on output. This will
 set zero to the mean of the estimates, and scale by the
 standard deviation of the estimates. Document estimates will,
 therefore, be relative to other documents within that specific
@@ -85,10 +85,12 @@ attempts to connect to master before failing.}
 attempts to connect to master before failing.}
 }
 \value{
-Returns a data frame with the first column as document ids and each
-subsequent column as the CMD engagement corresponding to each
-concept word or concept vector. The upper and lower bound
-estimates will follow each unique CMD if \code{sens_interval = TRUE}.
+Returns a data frame (class \code{CMDist}) with the first column as
+document ids and each subsequent column as the CMD engagement
+corresponding to each concept word or concept vector. The upper
+and lower bound estimates will follow each unique CMD if
+\code{sens_interval = TRUE}. The \code{CMDist} class has \code{\link[=print.CMDist]{print.CMDist()}}
+and \code{\link[=plot.CMDist]{plot.CMDist()}} methods.
 }
 \description{
 Concept Mover's Distance classifies documents of any length along a
@@ -168,7 +170,7 @@ Schemas in Texts.' \emph{Sociological Science} 7:544-569.
 \doi{10.15195/v7.a23}.\cr
 }
 \seealso{
-\link{CoCA}, \link{get_direction}, \link{get_centroid}
+\link{CoCA}, \link{get_direction}, \link{get_centroid}, \link{print.CMDist}, \link{plot.CMDist}
 }
 \author{
 Dustin Stoltz and Marshall Taylor

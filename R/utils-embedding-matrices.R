@@ -18,9 +18,20 @@
 #' @return A new word embedding matrix,
 #'         each row of which is parallel to vector.
 #'
+#' @examples
+#' \donttest{
+#' data(ft_wv_sample)
+#'
+#' vec <- ft_wv_sample["space", ]
+#' proj <- find_projection(wv = ft_wv_sample, vec = vec)
+#' }
+#'
 #' @export
 find_projection <- function(wv, vec) {
   stopifnot(ncol(wv) == length(vec))
+  if (all(vec == 0)) {
+    cli::cli_abort("{.arg vec} is a zero vector; projection is undefined.")
+  }
 
   # provides the projection of one vector
   # to another vector (as opposed to a matrix)
@@ -53,6 +64,14 @@ find_projection <- function(wv, vec) {
 #'
 #' @return A new word embedding matrix,
 #'         each row of which is rejected from vector.
+#'
+#' @examples
+#' \donttest{
+#' data(ft_wv_sample)
+#'
+#' vec <- ft_wv_sample["space", ]
+#' rej <- find_rejection(wv = ft_wv_sample, vec = vec)
+#' }
 #'
 #' @export
 find_rejection <- function(wv, vec) {
@@ -95,7 +114,7 @@ find_rejection <- function(wv, vec) {
 #'
 #' Alignment is asymmetrical, and only outputs the transformed source matrix,
 #' \eqn{B}. Therefore, it is typically recommended to align \eqn{B} to \eqn{A},
-#' and then \eqn{A} to \eqn{B}. However, simplying centering and norming
+#' and then \eqn{A} to \eqn{B}. However, simply centering and norming
 #' \eqn{A} after may be sufficient.
 #'
 #' @references
@@ -118,7 +137,7 @@ find_rejection <- function(wv, vec) {
 #' Schlechtweg et al. (2019). 'A Wind of Change: Detecting and
 #' Evaluating Lexical Semantic Change across Times and Domains.'
 #' \url{https://arxiv.org/abs/1906.02979v1}.
-#' Shoemark et a. (2019). 'Room to Glo: A Systematic Comparison
+#' Shoemark et al. (2019). 'Room to Glo: A Systematic Comparison
 #' of Semantic Change Detection Approaches with Word Embeddings.'
 #' \emph{Proceedings of the 2019 Conference on Empirical Methods in
 #' Natural Language Processing}. 66-76. \doi{10.18653/v1/D19-1007}
@@ -133,11 +152,23 @@ find_rejection <- function(wv, vec) {
 #'            toward which the source matrix is to be aligned.
 #' @param method Character vector indicating the method to use for
 #'               the transformation. Current methods include: "align",
-#'               "norm", "center", and "refrofit" -- see details.
+#'               "norm", "center", and "retrofit" -- see details.
 #'
 #'
 #' @return A new word embedding matrix,
 #'         transformed using the specified method.
+#'
+#' @examples
+#' \donttest{
+#' data(ft_wv_sample)
+#'
+#' # center and normalize
+#' wv_centered <- find_transformation(ft_wv_sample, method = "center")
+#' wv_normed <- find_transformation(ft_wv_sample, method = "norm")
+#'
+#' # align requires a reference matrix (e.g. from a different time period)
+#' # wv_aligned <- find_transformation(wv_source, ref = wv_ref, method = "align")
+#' }
 #'
 #' @export
 find_transformation <- function(wv,
@@ -148,6 +179,10 @@ find_transformation <- function(wv,
                                 )) {
   stopifnot(inherits(wv, "matrix") || inherits(wv, "sparseMatrix"))
   method <- match.arg(method)
+
+  if (method %in% c("align", "retrofit") && is.null(ref)) {
+    cli::cli_abort("{.arg ref} is required when {.arg method} is {.val {method}}.")
+  }
 
   RESULT <- switch(method,
     align = .procustes_align(wv, ref),
@@ -164,6 +199,9 @@ find_transformation <- function(wv,
 
 .procustes_align <- function(wv, ref) {
   stopifnot(ncol(wv) == ncol(ref))
+  if (nrow(wv) != nrow(ref)) {
+    cli::cli_abort("{.arg wv} and {.arg ref} must have the same number of rows (the same terms, in the same order) to align; got {nrow(wv)} and {nrow(ref)}.")
+  }
 
   # scaling (scale to unit length)
   wv <- .l2_normalize(wv)
@@ -209,8 +247,14 @@ find_transformation <- function(wv,
 .retrofit <- function(wv, ref) {
   # only keep shared vocab (this could be tweaked later)
   vocab <- base::intersect(rownames(wv), rownames(ref))
-  wv <- wv[vocab, ]
-  ref <- ref[vocab, vocab]
+  if (length(vocab) == 0) {
+    cli::cli_abort("{.arg wv} and {.arg ref} share no vocabulary (no common rownames); retrofitting requires at least some overlapping terms.")
+  }
+  if (length(vocab) < ncol(wv)) {
+    cli::cli_abort("{.arg wv} and {.arg ref} share only {length(vocab)} term{?s}, fewer than {.arg wv}'s {ncol(wv)} dimensions; retrofitting requires at least as many shared terms as {.arg wv} has dimensions.")
+  }
+  wv <- wv[vocab, , drop = FALSE]
+  ref <- ref[vocab, vocab, drop = FALSE]
 
   # get SVD embeddings for TCM
   ref <- find_transformation(ref, method = "norm")
@@ -256,6 +300,7 @@ find_transformation <- function(wv,
 #'         missing terms or rows with missing terms removed
 #' @noRd
 .check_term_in_embeddings <- function(terms, wv, action = "stop") {
+  action <- match.arg(action, c("stop", "remove"))
   vocab <- kit::funique(unlist(strsplit(unlist(terms), " ")))
   bad_words <- unlist(vocab)[!(unlist(vocab) %in% rownames(wv))]
 
@@ -268,18 +313,18 @@ find_transformation <- function(wv,
   if (length(bad_words) > 10L) {
     n_words <- length(bad_words) - 10L
     bad_words_msg <- paste(bad_words[seq_len(10)], collapse = "; ")
-    bad_words_msg <- paste(bad_words_msg, " and ", n_words, " more term(s)")
+    bad_words_msg <- paste0(bad_words_msg, " and ", n_words, " more term(s)")
   } else {
-    bad_words_msg <- bad_words
+    bad_words_msg <- paste(bad_words, collapse = "; ")
   }
 
   stop_msg <- paste0(
     "The following have no matching word vectors: ",
-    paste(bad_words, collapse = "; ")
+    bad_words_msg
   )
 
   if (action == "stop") {
-    stop(stop_msg)
+    cli::cli_abort(stop_msg)
   }
 
   ### If we want to remove the missing terms ###
@@ -293,7 +338,7 @@ find_transformation <- function(wv,
         terms <- terms[!grepl(any_words, unlist(terms[, 2])), ]
         # stop if removing term creates an empty list
         if (nrow(terms) == 0) {
-          stop(stop_msg)
+          cli::cli_abort(stop_msg)
         }
       }
 
@@ -304,7 +349,7 @@ find_transformation <- function(wv,
         # stop if removing term creates an empty list
         if (identical(terms, character(0)) ||
           nrow(terms) == 0) {
-          stop(stop_msg)
+          cli::cli_abort(stop_msg)
         }
       }
     }
@@ -322,10 +367,10 @@ find_transformation <- function(wv,
 
         # stop if removing term creates an empty list
         if (identical(terms[[1]], character(0))) {
-          stop(stop_msg)
+          cli::cli_abort(stop_msg)
         }
         if (identical(terms[[2]], character(0))) {
-          stop(stop_msg)
+          cli::cli_abort(stop_msg)
         }
       }
 
@@ -333,17 +378,26 @@ find_transformation <- function(wv,
         terms <- list(terms[[1]][!terms[[1]] %in% bad_words])
         # stop if removing term creates an empty list
         if (identical(terms[[1]], character(0))) {
-          stop(stop_msg)
+          cli::cli_abort(stop_msg)
         }
       }
     }
 
-    # if VECTOR
-    if (is.vector(terms)) {
-      terms <- terms[!terms %in% bad_words]
+    # if VECTOR (character; lists are handled above and are also
+    # `is.vector()`, so this must exclude them explicitly)
+    if (is.character(terms)) {
+      # each element may be a multi-word phrase (e.g. "critical thinking");
+      # drop the whole phrase if any of its constituent words is missing,
+      # since a phrase can't be represented if part of it has no vector
+      has_bad_word <- vapply(
+        strsplit(terms, " ", fixed = TRUE),
+        function(x) any(x %in% bad_words),
+        logical(1)
+      )
+      terms <- terms[!has_bad_word]
       # stop if removing term creates an vector
       if (length(unlist(terms)) == 0) {
-        stop(stop_msg)
+        cli::cli_abort(stop_msg)
       }
     }
   }
@@ -352,10 +406,99 @@ find_transformation <- function(wv,
   message(
     "The following (and any associated terms) removed
 because there are no matching word vectors: ",
-    paste0(paste(bad_words, collapse = "; "))
+    bad_words_msg
   )
 
   return(terms)
 }
 
 
+#' Positive Pointwise Mutual Information Weighting
+#'
+#' Computes the positive pointwise mutual information (PPMI) weighting of a
+#' term co-occurrence matrix (TCM). PPMI is a standard transformation applied
+#' prior to building word embeddings via matrix factorization (e.g. SVD): it
+#' down-weights chance co-occurrences and clips negative associations to
+#' zero, yielding a non-negative matrix amenable to factorization.
+#'
+#' The estimator uses marginal probabilities (row and column sums) rather
+#' than a diagonal-count proxy, following the standard formulation of Levy
+#' & Goldberg (2014). Smoothing, if requested, is applied to the raw counts
+#' (including zero cells) before estimating probabilities.
+#'
+#' @param tcm A term co-occurrence matrix; either a dense `matrix` or a
+#'   sparse `Matrix::dgCMatrix`. Row and column names are preserved.
+#' @param smooth A non-negative numeric scalar added to every cell of `tcm`
+#'   (including zeros) before estimating probabilities. Defaults to `0`,
+#'   yielding standard PPMI. Values greater than zero nudge the whole
+#'   distribution and reduce the influence of rare co-occurrences.
+#' @return A sparse `dgCMatrix` of the same dimensions as `tcm` containing
+#'   PPMI weights, with row and column names preserved.
+#' @references Levy, O., & Goldberg, Y. (2014). Neural word embedding as
+#'   implicit matrix factorization. *Advances in Neural Information
+#'   Processing Systems (NeurIPS)*.
+#' @author Dustin Stoltz
+#' @examples
+#' \donttest{
+#' tcm <- matrix(c(2, 1, 0, 1, 3, 1, 0, 1, 2), nrow = 3,
+#'               dimnames = list(c("a", "b", "c"), c("a", "b", "c")))
+#' weight_ppmi(tcm)
+#' }
+#' @export
+weight_ppmi <- function(tcm, smooth = 0) {
+
+  if (!is.matrix(tcm) && !inherits(tcm, "sparseMatrix")) {
+    cli::cli_abort(
+      "{.arg tcm} must be a matrix or sparse Matrix, not {typeof(tcm)}."
+    )
+  }
+
+  if (!is.numeric(smooth) || length(smooth) != 1L ||
+      is.na(smooth) || smooth < 0) {
+    cli::cli_abort(
+      "{.arg smooth} must be a non-negative numeric scalar."
+    )
+  }
+
+  if (!inherits(tcm, "dgCMatrix")) {
+    tcm <- methods::as(tcm, "CsparseMatrix")
+  }
+
+  if (smooth > 0) {
+    tcm <- methods::as(tcm + smooth, "CsparseMatrix")
+  }
+
+  N <- sum(tcm)
+  if (N == 0) {
+    out <- Matrix::Matrix(0, nrow = nrow(tcm), ncol = ncol(tcm),
+                          sparse = TRUE)
+    dimnames(out) <- dimnames(tcm)
+    return(out)
+  }
+
+  rsum <- Matrix::rowSums(tcm)
+  csum <- Matrix::colSums(tcm)
+
+  i0 <- tcm@i
+  p  <- tcm@p
+  x  <- tcm@x
+
+  col_idx <- rep(seq_along(csum), diff(p))
+  row_idx <- i0 + 1L
+
+  pmi_x <- log(x * N / (rsum[row_idx] * csum[col_idx]))
+  pmi_x[!is.finite(pmi_x)] <- 0
+  pmi_x[pmi_x < 0] <- 0
+
+  keep <- pmi_x > 0
+  out <- Matrix::sparseMatrix(
+    i = row_idx[keep],
+    j = col_idx[keep],
+    x = pmi_x[keep],
+    dims = tcm@Dim,
+    dimnames = tcm@Dimnames,
+    index1 = TRUE
+  )
+
+  out
+}

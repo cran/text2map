@@ -22,6 +22,18 @@ packages \code{melt} function, but works on a sparse matrix.
 The resulting data frame is also equivalent to the
 \code{tidytext} triplet tibble.
 }
+\examples{
+\donttest{
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+
+dtm_melted <- dtm_melter(dtm)
+head(dtm_melted)
+}
+
+}
 \author{
 Dustin Stoltz
 }

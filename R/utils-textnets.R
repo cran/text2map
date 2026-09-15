@@ -9,9 +9,7 @@
 #' Document similarity methods include:
 #' - projection: finds the one-mode projection matrix from the two-mode DTM
 #' using `tcrossprod()` which measures the shared vocabulary overlap
-#' - cosine: compares row vectors using cosine  similarity
-#' - jaccard: compares proportion of common words to unique words in
-#' both documents
+#' - cosine: compares row vectors using cosine similarity
 #' - wmd: word mover's distance to compare documents (requires word
 #' embedding vectors), using linear-complexity relaxed word mover's distance
 #' - centroid: represents each document as a centroid of their respective
@@ -20,19 +18,18 @@
 #'
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowSums
-#' @importFrom text2vec sim2
-#' @importFrom text2vec RWMD
 #'
 #' @name doc_similarity
 #' @author Dustin Stoltz
 #'
 #' @param x Document-term matrix with terms as columns.
-#' @param y Optional second matrix (default = `NULL`).
 #' @param method Character vector indicating similarity method, including
 #'               projection, cosine, wmd, and centroid (see Details).
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words. Required for "wmd" and "centroid"
 #'           similarities.
+#'
+#' @return A symmetric matrix of document-document similarities.
 #'
 #' @examples
 #'
@@ -56,14 +53,10 @@
 #'
 #' @export
 doc_similarity <- function(x,
-                           y = NULL,
                            method,
                            wv = NULL) {
+    method <- match.arg(method, c("projection", "cosine", "wmd", "centroid"))
     x <- .convert_mat_to_dgCMatrix(x)
-
-    if (!is.null(y)) {
-        y <- .convert_mat_to_dgCMatrix(y)
-    }
 
     dsm <- switch(method,
         projection = Matrix::tcrossprod(x),
@@ -87,14 +80,19 @@ doc_similarity <- function(x,
 #' If a document-term matrix is provided, the function obtains the one-mode
 #' document-level projection to get the document-similarity matrix using
 #' `tcrossprod()`. If a one-mode document-similarity matrix is provided, then
-#' this step is skipped. This way document similiarities may be obtained
+#' this step is skipped. This way document similarities may be obtained
 #' using other methods, such as Word-Mover's Distance (see `doc_similarity`).
 #' The diagonal is ignored in all calculations.
 #'
 #' Document centrality methods include:
 #' - degree: Opsahl's weighted degree centrality with tuning parameter "alpha"
 #' - between: vertex betweenness centrality using Brandes' method
-#' - eigen: eigenvector centrality using Freeman's method
+#' - eigen: eigenvector centrality using Freeman's method. When the top two
+#'   eigenvalues are tied or nearly tied (e.g. a corpus with duplicate or
+#'   highly symmetric documents), the leading eigenvector is only defined up
+#'   to an arbitrary rotation within that tied subspace, and results can be
+#'   unstable under tiny perturbations to the similarity matrix; prefer
+#'   "degree" or "between" for such corpora.
 #' - span: Modified Burt's constraint following Stoltz and Taylor's method,
 #'   uses a tuning parameter "alpha" and the output is scaled.
 #'
@@ -113,9 +111,6 @@ doc_similarity <- function(x,
 #'
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowSums
-#' @importFrom igraph graph_from_adjacency_matrix
-#' @importFrom igraph betweenness
-#' @importFrom igraph E
 #'
 #' @name doc_centrality
 #' @author Dustin Stoltz
@@ -145,7 +140,9 @@ doc_similarity <- function(x,
 #' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 #'
 #' ddeg <- doc_centrality(dtm, method = "degree")
-#' deig <- doc_centrality(dtm, method = "eigen")
+#' if (requireNamespace("RSpectra", quietly = TRUE)) {
+#'   deig <- doc_centrality(dtm, method = "eigen")
+#' }
 #' dbet <- doc_centrality(dtm, method = "between")
 #' dspa <- doc_centrality(dtm, method = "span")
 #'
@@ -159,11 +156,19 @@ doc_centrality <- function(mat,
                            method,
                            alpha = 1L,
                            two_mode = TRUE) {
+    method <- match.arg(method, c("degree", "between", "eigen", "span"))
     mat <- .convert_mat_to_dgCMatrix(mat)
+
+    if (method == "eigen" && !requireNamespace("RSpectra", quietly = TRUE)) {
+        cli::cli_abort("Package {.pkg RSpectra} is required for method '{method}'. Install it with {.code install.packages('RSpectra')}")
+    }
 
     if (two_mode) {
         mat <- Matrix::tcrossprod(mat)
+    } else if (nrow(mat) != ncol(mat)) {
+        cli::cli_abort("{.arg mat} must be a square document-document matrix when {.code two_mode = FALSE}; got {nrow(mat)} rows and {ncol(mat)} columns.")
     }
+    mat <- as(mat, "generalMatrix")
     diag(mat) <- 0
 
 
@@ -196,16 +201,15 @@ doc_centrality <- function(mat,
 .doc_centrality.degree <- function(mat, alpha) {
     non <- Matrix::rowSums(mat != 0)
     den <- Matrix::rowSums(mat)
+    if (any(non == 0)) {
+      cli::cli_warn("{sum(non == 0)} document(s) have no ties to any other document; their centrality is undefined ({.val NaN}).")
+    }
     res <- (non) * ((den / (non))^alpha)
 
     return(res)
 }
 
 #' Weighted betweenness centrality
-#'
-#' @importFrom igraph betweenness
-#' @importFrom igraph E
-#' @importFrom igraph graph_from_adjacency_matrix
 #'
 #' @param mat Input matrix
 #'
@@ -226,8 +230,13 @@ doc_centrality <- function(mat,
 #' @keywords internal
 #' @noRd
 .doc_centrality.eigen <- function(mat) {
-    # first eigenvector of the adjacency matrix
-    res <- abs(eigen(mat)$vector[, 1])
+    if (!requireNamespace("RSpectra", quietly = TRUE)) {
+        cli::cli_abort("Package {.pkg RSpectra} is required for eigenvector centrality. Install it with {.code install.packages('RSpectra')}")
+    }
+    if (inherits(mat, "sparseMatrix")) {
+        mat <- as(mat, "generalMatrix")
+    }
+    res <- abs(RSpectra::eigs_sym(mat, k = 1)$vectors[, 1])
     return(res)
 }
 
@@ -258,7 +267,6 @@ doc_centrality <- function(mat,
 
 #' Centroid Similarity
 #'
-#' @importFrom text2vec sim2
 #'
 #' @param x Input matrix
 #' @param wv Matrix of word embedding vectors
@@ -282,8 +290,6 @@ doc_centrality <- function(mat,
 
 #' Word Mover's Distance (Similarity)
 #'
-#' @importFrom text2vec RWMD
-#' @importFrom text2vec sim2
 #'
 #' @param x Input matrix
 #' @param wv Matrix of word embedding vectors
@@ -298,6 +304,6 @@ doc_centrality <- function(mat,
     # Remove words in the DTM without word vectors
     x <- x[, intersect(colnames(x), rownames(wem))]
 
-    res <- text2vec::RWMD$new(x, wem)$sim2(x)
+    res <- .with_single_threaded_blas(text2vec::RWMD$new(x, wem)$sim2(x))
     return(res)
 }

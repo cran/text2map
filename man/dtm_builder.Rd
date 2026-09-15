@@ -37,7 +37,7 @@ mostly zero cells. This is much more memory efficient.
 Setting dense to \code{TRUE} will return a normal base \code{R} matrix.}
 
 \item{omit_empty}{Logical (default = \code{FALSE}) indicating whether to omit rows
-that are empty after stopping any terms.}
+that have zero tokens.}
 }
 \value{
 returns a document-term matrix of class "dgCMatrix"

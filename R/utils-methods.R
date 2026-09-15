@@ -3,7 +3,16 @@
 #' Get methods and classes from Matrix
 #'
 #' @import methods
-#' @import Matrix
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix colSums
+#' @importFrom Matrix rowSums
+#' @importFrom Matrix colMeans
+#' @importFrom Matrix rowMeans
+#' @importFrom Matrix sparseMatrix
+#' @importFrom Matrix summary
+#' @importFrom Matrix tcrossprod
+#' @importFrom Matrix crossprod
+#' @importFrom Matrix t
 #' @importMethodsFrom Matrix colSums
 #' @importMethodsFrom Matrix t
 #' @importMethodsFrom Matrix colMeans
@@ -28,6 +37,5 @@
 #' @importMethodsFrom Matrix [
 #' @importClassesFrom Matrix dgCMatrix dgTMatrix
 #' @keywords internal
-#' @export
 #' @name Matrix
 NULL

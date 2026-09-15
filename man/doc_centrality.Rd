@@ -33,7 +33,7 @@ spanning.
 If a document-term matrix is provided, the function obtains the one-mode
 document-level projection to get the document-similarity matrix using
 \code{tcrossprod()}. If a one-mode document-similarity matrix is provided, then
-this step is skipped. This way document similiarities may be obtained
+this step is skipped. This way document similarities may be obtained
 using other methods, such as Word-Mover's Distance (see \code{doc_similarity}).
 The diagonal is ignored in all calculations.
 
@@ -41,7 +41,12 @@ Document centrality methods include:
 \itemize{
 \item degree: Opsahl's weighted degree centrality with tuning parameter "alpha"
 \item between: vertex betweenness centrality using Brandes' method
-\item eigen: eigenvector centrality using Freeman's method
+\item eigen: eigenvector centrality using Freeman's method. When the top two
+eigenvalues are tied or nearly tied (e.g. a corpus with duplicate or
+highly symmetric documents), the leading eigenvector is only defined up
+to an arbitrary rotation within that tied subspace, and results can be
+unstable under tiny perturbations to the similarity matrix; prefer
+"degree" or "between" for such corpora.
 \item span: Modified Burt's constraint following Stoltz and Taylor's method,
 uses a tuning parameter "alpha" and the output is scaled.
 }
@@ -59,7 +64,9 @@ jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
 dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
 
 ddeg <- doc_centrality(dtm, method = "degree")
-deig <- doc_centrality(dtm, method = "eigen")
+if (requireNamespace("RSpectra", quietly = TRUE)) {
+  deig <- doc_centrality(dtm, method = "eigen")
+}
 dbet <- doc_centrality(dtm, method = "between")
 dspa <- doc_centrality(dtm, method = "span")
 

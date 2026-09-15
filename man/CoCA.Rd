@@ -64,7 +64,7 @@ semantic directions as output from the \code{\link[=get_direction]{get_direction
 }
 \examples{
 
-#' # load example word embeddings
+# load example word embeddings
 data(ft_wv_sample)
 
 # load example text

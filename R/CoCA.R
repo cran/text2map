@@ -22,7 +22,7 @@
 #' @name CoCA
 #' @author Dustin Stoltz and Marshall Taylor
 #'
-#' @importFrom igraph leading.eigenvector.community graph_from_adjacency_matrix
+#' @importFrom graphics par
 #'
 #' @param dtm Document-term matrix with words as columns. Works with DTMs
 #'            produced by any popular text analysis package, or you can use the
@@ -41,7 +41,7 @@
 #'                    rows and all other rows is set 0, and the correlations
 #'                    between all pairs of 0-var rows are set to 1
 #'
-#' @returns Returns a named list object of class `CoCA`. List elements include:
+#' @return Returns a named list object of class `CoCA`. List elements include:
 #' \itemize{
 #' \item membership: document memberships
 #' \item modules: schematic classes
@@ -52,7 +52,7 @@
 #'
 #' @examples
 #'
-#' #' # load example word embeddings
+#' # load example word embeddings
 #' data(ft_wv_sample)
 #'
 #' # load example text
@@ -103,6 +103,15 @@ CoCA <- function(dtm, wv = NULL, directions = NULL,
                  filter_sig = TRUE, filter_value = 0.05,
                  zero_action = c("drop", "ownclass")) {
 
+  zero_action <- match.arg(zero_action)
+
+  if (is.null(directions)) {
+    cli::cli_abort("{.arg directions} is required. Provide semantic direction vectors from {.fn get_direction}.")
+  }
+  if (is.null(wv)) {
+    cli::cli_abort("{.arg wv} is required. Provide a word embedding matrix.")
+  }
+
   # get CMDs for multiple semantic directions
   cmds <- CMDist(
     dtm = dtm,
@@ -111,9 +120,16 @@ CoCA <- function(dtm, wv = NULL, directions = NULL,
     scale = TRUE
   )
 
-  if(ncol(cmds) < 3) {
-    if(filter_sig) 
-    message("N directions must be >= 3 to calculate significance. Setting `filter_sig = FALSE`")
+  n_dirs <- ncol(cmds) - 1
+
+  if (n_dirs < 2) {
+    cli::cli_abort("{.arg directions} must provide at least 2 directions to compute document correlations; only {n_dirs} {?was/were} provided.")
+  }
+
+  if (n_dirs < 3) {
+    if (isTRUE(filter_sig)) {
+      cli::cli_warn("N directions must be >= 3 to calculate significance. Setting `filter_sig = FALSE`.")
+    }
     filter_sig <- FALSE
   }
 
@@ -144,7 +160,28 @@ coca <- CoCA
 #' @param ... Arguments to be passed to methods
 #' @method print CoCA
 #'
-#' @return prints a message indicating the classes and sizes
+#' @return Invisibly returns NULL
+#'
+#' @examples
+#' \donttest{
+#' data(ft_wv_sample)
+#' data(jfk_speech)
+#' jfk_speech$sentence <- tolower(jfk_speech$sentence)
+#' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+#'
+#' gen <- data.frame(pole1 = c("man", "new", "choose"), pole2 = c("nation", "world", "peace"))
+#' space <- data.frame(pole1 = c("space", "moon", "science"), pole2 = c("nation", "world", "freedom"))
+#' power <- data.frame(pole1 = c("great", "power", "new"), pole2 = c("peace", "freedom", "world"))
+#'
+#' gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
+#' space_dir <- get_direction(anchors = space, wv = ft_wv_sample)
+#' power_dir <- get_direction(anchors = power, wv = ft_wv_sample)
+#' directions <- rbind(gen_dir, space_dir, power_dir)
+#'
+#' classes <- CoCA(dtm, wv = ft_wv_sample, directions = directions)
+#' print(classes)
+#' }
 #'
 #' @export
 print.CoCA <- function(x, ...) {
@@ -173,69 +210,129 @@ print.CoCA <- function(x, ...) {
 ## Modified from Boutyline's plot.cca function in the corclass package
 #' Plot CoCA
 #'
-#' @importFrom qgraph qgraph
-#'
 #' @param x CoCA object returned by [CoCA()]
-#' @param module index for which module to plot (default = NULL)
-#' @param cutoff minimum absolute value of correlations to plot
-#' @param repulse repulse radius in the spring layout
+#' @param module Integer, which schematic class to plot. Defaults to `NULL`,
+#'               but a value is effectively required: omitting it or passing
+#'               `NULL` errors, prompting you to specify one. Must be a
+#'               single whole number between 1 and the number of modules
+#'               found in `x` (`length(x$modules)`), else errors with a
+#'               message stating the valid range.
 #' @param min edges with absolute weights under this value are
 #'            not shown (default = 0.15)
 #' @param max highest weight to scale the edge widths too (default = 1)
+#' @param label.cex label size scaling factor (default = 1.2)
+#' @param seed random seed for layout reproducibility (default = 123)
 #' @param main title for plot (default = NULL)
 #' @param ... Arguments to be passed to methods
 #'
-#' @return returns `qgraph` object
+#' @return invisibly returns the igraph object
+#'
+#' @examples
+#' \donttest{
+#' data(ft_wv_sample)
+#' data(jfk_speech)
+#' jfk_speech$sentence <- tolower(jfk_speech$sentence)
+#' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+#'
+#' gen <- data.frame(pole1 = c("man", "new", "choose"), pole2 = c("nation", "world", "peace"))
+#' space <- data.frame(pole1 = c("space", "moon", "science"), pole2 = c("nation", "world", "freedom"))
+#' power <- data.frame(pole1 = c("great", "power", "new"), pole2 = c("peace", "freedom", "world"))
+#'
+#' gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
+#' space_dir <- get_direction(anchors = space, wv = ft_wv_sample)
+#' power_dir <- get_direction(anchors = power, wv = ft_wv_sample)
+#' directions <- rbind(gen_dir, space_dir, power_dir)
+#'
+#' classes <- CoCA(dtm, wv = ft_wv_sample, directions = directions)
+#' }
 #'
 #' @method plot CoCA
 #'
 #' @export
-plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
-                      min = .15, max = 1, main = NULL, ...) {
-  if (missing(module)) {
-    stop("Please specify the schematic class you'd
-             like to plot using the 'module = ' argument.")
+plot.CoCA <- function(x, module = NULL, min = .15, max = 1,
+                      label.cex = 1.2, seed = 123, main = NULL, ...) {
+  if (missing(module) || is.null(module)) {
+    cli::cli_abort("Please specify the schematic class you'd like to plot using the {.arg module} argument.")
+  }
+  n_modules <- length(x$modules)
+  if (!is.numeric(module) || length(module) != 1 ||
+      module != as.integer(module) || module < 1 || module > n_modules) {
+    cli::cli_abort("{.arg module} must be a single whole number between 1 and {n_modules} (the number of schematic classes found).")
   }
 
-  if (x$modules[[module]]$degenerate == TRUE) {
-    stop(paste("Module #", module,
-      " is degenerate (one or more column
-                    correlations are undefined).",
-      sep = ""
-    ))
+  if (isTRUE(x$modules[[module]]$degenerate)) {
+    cli::cli_abort("Module #{module} is degenerate (one or more column correlations are undefined).")
   }
 
-  if (is.null(main)) {
-    samp <- nrow(x$modules[[module]]$cmds)
+  cormat <- x$modules[[module]]$cormat
 
-    qgraph::qgraph(x$modules[[module]]$cormat,
-      graph = "cor",
-      minimum = min, maximum = max, threshold = "sig",
-      sampleSize = samp,
-      alpha = cutoff, layout = "spring", repulsion = repulse,
-      label.cex = 2,
-      posCol = "black", negCol = "black", negDashed = TRUE,
-      borders = TRUE, shape = "circle", label.prop = 0.75,
-      curveAll = FALSE, edge.labels = FALSE, edge.label.cex = 0.45, esize = 8,
-      title = paste("Class #", module),
-      labels = rownames(x$modules[[module]]$cormat)
-    )
+  # Filter small correlations
+  cormat[abs(cormat) < min] <- 0
+
+  # Build igraph object
+  g <- igraph::graph_from_adjacency_matrix(
+    cormat,
+    mode = "undirected",
+    weighted = TRUE,
+    diag = FALSE
+  )
+
+  # Remove isolated vertices
+  isolated <- igraph::degree(g) == 0
+  if (any(isolated)) {
+    g <- igraph::delete_vertices(g, which(isolated))
+  }
+
+  # If graph is empty (no edges), warn and return
+  if (igraph::ecount(g) == 0) {
+    cli::cli_warn("No edges remain after filtering. Try lowering the {.arg min} parameter.")
+    return(invisible(NULL))
+  }
+
+  # Edge width scaled by absolute correlation
+  ew <- abs(igraph::E(g)$weight)
+  if (length(ew) > 1 && diff(range(ew)) > 0) {
+    igraph::E(g)$width <- 1 + (ew - min(ew)) / diff(range(ew)) * 9
   } else {
-    samp <- nrow(x$modules[[module]]$cmds)
-
-    qgraph::qgraph(x$modules[[module]]$cormat,
-      graph = "cor",
-      minimum = min, maximum = max, threshold = "sig",
-      sampleSize = samp,
-      alpha = cutoff, layout = "spring", repulsion = repulse,
-      label.cex = 2,
-      posCol = "black", negCol = "black", negDashed = TRUE,
-      borders = TRUE, shape = "circle", label.prop = 0.75,
-      curveAll = FALSE, edge.labels = FALSE, edge.label.cex = 0.45, esize = 8,
-      title = main,
-      labels = rownames(x$modules[[module]]$cormat)
-    )
+    igraph::E(g)$width <- 5
   }
+
+  # Edge color and line type
+  igraph::E(g)$color <- "darkgray"
+  igraph::E(g)$lty <- "solid"
+  igraph::E(g)$lty[igraph::E(g)$weight < 0] <- "dashed"
+  igraph::E(g)$color[igraph::E(g)$weight < 0] <- "lightgray"
+
+  # Vertex attributes
+  igraph::V(g)$shape <- "circle"
+  igraph::V(g)$label.cex <- label.cex
+  igraph::V(g)$label.color <- "black"
+  igraph::V(g)$frame.color <- "black"
+  igraph::V(g)$color <- "white"
+
+  # Scale vertex size to fit labels
+  label_lens <- nchar(igraph::V(g)$name)
+  igraph::V(g)$size <- 22 + label_lens * 3.5
+
+  # Layout: Fruchterman-Reingold requires positive weights
+  g_layout <- igraph::delete_edges(g, which(is.na(igraph::E(g)$weight)))
+  igraph::E(g_layout)$weight <- abs(igraph::E(g_layout)$weight)
+  if (!is.null(seed)) {
+    restore_rng <- .rng_guard() # nolint: object_usage_linter. defined in utils-perm.R; lintr's per-file usage check doesn't see cross-file package-internal helpers
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
+  }
+  lay <- igraph::layout_with_fr(g_layout, niter = 500)
+
+  # Plot
+  title <- if (is.null(main)) paste("Class #", module) else main
+  oldmar <- par("mar")
+  par(mar = c(2, 2, 3, 2))
+  on.exit(par(mar = oldmar))
+  plot(g, layout = lay, main = title)
+
+  invisible(g)
 }
 
 # INTERNAL FUNCTIONS -----------------------------------------------------------
@@ -245,9 +342,6 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
 #' Modified from Boutyline's cca function in the `corclass` package
 #' Divides matrix into schematic classes based on row correlations.
 #'
-#' @importFrom utils capture.output
-#' @importFrom igraph graph_from_adjacency_matrix
-#' @importFrom igraph cluster_leading_eigen
 #'
 #' @param cmds CMD scores on multiple semantic directions for a set of documents
 #'             as output from [CMDist()]
@@ -270,7 +364,7 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
   
   cormat <- .make_cormat(cmds, zero_action)
 
-  if (filter_sig == TRUE) {
+  if (isTRUE(filter_sig)) {
     cormat <- .filter.insignif(cormat,
       n_dirs = ncol(cmds),
       filter_value = filter_value
@@ -292,9 +386,6 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
     modules = modules,
     cormat = cormat
   )
-  class(val) <- "cca"
-
-  paste(utils::capture.output(print(val)), collapse = "\n")
 
   return(invisible(val))
 }
@@ -365,12 +456,11 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
   isolates_post <- sum(apply(cormat, 1, sum) == 0)
 
   if (isolates_post > isolates_pre) {
-    warn1 <- paste(
+    cli::cli_warn(paste(
       "Significance filtering left", isolates_post - isolates_pre,
-      "rows with no non-zero ties. The CCA result will contain at
-         least one small degenerate class."
-    )
-    warning(warn1)
+      "rows with no non-zero ties.",
+      "The CCA result will contain at least one small degenerate class."
+    ))
   }
 
   return(cormat)
@@ -389,12 +479,12 @@ plot.CoCA <- function(x, module = NULL, cutoff = 0.05, repulse = 1.86,
   ids <- sort(unique(membership))
   modules <- list()
 
-  for (i in seq_len(length(ids))) {
+  for (i in seq_along(ids)) {
     curmod <- list()
     class(curmod) <- "cca.module"
     curmod$cmds <- cmds[membership == ids[i], ]
     curmod$cormat <- stats::cor(curmod$cmds)
-    curmod$degenerate <- any(is.na(curmod$cormat))
+    curmod$degenerate <- anyNA(curmod$cormat)
     modules[[i]] <- curmod
   }
 

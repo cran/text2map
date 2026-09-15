@@ -4,12 +4,10 @@
 \alias{doc_similarity}
 \title{Find a similarities between documents}
 \usage{
-doc_similarity(x, y = NULL, method, wv = NULL)
+doc_similarity(x, method, wv = NULL)
 }
 \arguments{
 \item{x}{Document-term matrix with terms as columns.}
-
-\item{y}{Optional second matrix (default = \code{NULL}).}
 
 \item{method}{Character vector indicating similarity method, including
 projection, cosine, wmd, and centroid (see Details).}
@@ -17,6 +15,9 @@ projection, cosine, wmd, and centroid (see Details).}
 \item{wv}{Matrix of word embedding vectors (a.k.a embedding model)
 with rows as words. Required for "wmd" and "centroid"
 similarities.}
+}
+\value{
+A symmetric matrix of document-document similarities.
 }
 \description{
 Given a document-term matrix (DTM) this function returns the
@@ -29,9 +30,7 @@ Document similarity methods include:
 \itemize{
 \item projection: finds the one-mode projection matrix from the two-mode DTM
 using \code{tcrossprod()} which measures the shared vocabulary overlap
-\item cosine: compares row vectors using cosine  similarity
-\item jaccard: compares proportion of common words to unique words in
-both documents
+\item cosine: compares row vectors using cosine similarity
 \item wmd: word mover's distance to compare documents (requires word
 embedding vectors), using linear-complexity relaxed word mover's distance
 \item centroid: represents each document as a centroid of their respective

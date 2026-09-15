@@ -22,6 +22,16 @@ input to \code{dtm_builder()} to standardize the vocabulary (i.e. the columns)
 across multiple DTMs. Prior to building the vocabulary, texts should have
 whitespace trimmed, if desired, punctuation removed and terms lowercased.
 }
+\examples{
+\donttest{
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+vocab <- vocab_builder(jfk_speech, sentence)
+head(vocab)
+}
+
+}
 \author{
 Dustin Stoltz
 }

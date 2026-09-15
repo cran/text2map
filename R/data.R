@@ -1,6 +1,6 @@
 #' A dataset of stoplists
 #'
-#' A dataset containing eight English stoplist. Is used
+#' A dataset containing eight English stoplists. Is used
 #' with the [get_stoplist()] function.
 #'
 #' @details
@@ -14,7 +14,7 @@
 #' - "fox1990": Christopher Fox's (1990) list of 421 words
 #' - "smart1993": Original SMART (1993) list of 570 words
 #' - "onix2000": ONIX (2000) list of 196 words
-#' - "nltk2001": Python's NLTK (2009) list of 179 words
+#' - "nltk2009": Python's NLTK (2009) list of 179 words
 #'
 #' Tiny 2020, is a very small stop list of the most frequent
 #' English conjunctions, articles, prepositions, and
@@ -35,16 +35,24 @@
 #'
 #' @docType data
 #' @name stoplists
-#' @usage stoplists
 #' @keywords datasets
 #' @format A data frame with 1775 rows and 2 variables.
+#' @source
+#' - tiny2020: Stoltz and Taylor (2020)
+#' - snowball2001: Porter (2001) Snowball stemming algorithm
+#' - snowball2014: Porter (2014) updated Snowball stoplist
+#' - van1979: van Rijsbergen (1979) "Information Retrieval"
+#' - fox1990: Fox (1990) "A Stop List for General Text"
+#' - smart1993: Salton and Buckley (1993) SMART retrieval system
+#' - onix2000: ONIX (2000) "Oxford English Dictionary" stoplist
+#' - nltk2009: Bird, Loper and Klein (2009) NLTK
 NULL
 
 
 #' A dataset of anchor lists
 #'
 #' A dataset containing juxtaposing pairs of English words
-#' for 26 semantic relations. These anchors are used with
+#' for 30 semantic relations. These anchors are used with
 #' the [get_anchors()] function, which can then be used with
 #' the [get_direction()] function. These have been collected
 #' from previously published articles and should be used
@@ -56,7 +64,7 @@ NULL
 #' \itemize{
 #' \item pole1. words to be added (or the positive direction)
 #' \item pole2. words to be subtracted (or the negative direction)
-#' \item relation. the relation to be extracted, 26 relations available
+#' \item relation. the relation to be extracted, 30 relations available
 #' \item domain. 6 broader categories within which each relation falls
 #'
 #' }
@@ -64,9 +72,13 @@ NULL
 #'
 #' @docType data
 #' @name anchor_lists
-#' @usage anchor_lists
 #' @keywords datasets
 #' @format A data frame with 303 rows and 4 variables.
+#' @source
+#' Curated from previously published semantic direction anchor sets.
+#' See: Kozlowski et al. (2019) "The Geometry of Culture";
+#' Garg et al. (2018) "Word Embeddings Quantify 100 Years of Gender and Ethnic Stereotypes";
+#' Bolukbasi et al. (2016) "Man is to Computer Programmer as Woman is to Homemaker".
 NULL
 
 #' Full Text of JFK's Rice Speech
@@ -84,9 +96,11 @@ NULL
 #'
 #' @docType data
 #' @name jfk_speech
-#' @usage jfk_speech
 #' @keywords datasets
-#' @format A data frame with 2 columns
+#' @format A data frame with 84 rows and 2 columns
+#' @source
+#' John F. Kennedy, "We choose to go to the Moon" speech,
+#' Rice University, September 12, 1962. Public domain.
 NULL
 
 #' Sample of fastText embeddings
@@ -97,9 +111,12 @@ NULL
 #'
 #' @docType data
 #' @name ft_wv_sample
-#' @usage ft_wv_sample
 #' @keywords datasets
 #' @format A matrix of 770 rows and 300 columns
+#' @source
+#' Subsample of English fastText word embeddings.
+#' Bojanowski et al. (2017) "Enriching Word Vectors with Subword Information."
+#' \doi{10.1162/tacl_a_00051}. Available at \url{https://fasttext.cc}.
 NULL
 
 
@@ -125,7 +142,11 @@ NULL
 #'
 #' @docType data
 #' @name meta_shakespeare
-#' @usage meta_shakespeare
 #' @keywords datasets
-#' @format A matrix of 37 rows and 8 columns
+#' @format A data frame with 37 rows and 8 columns
+#' @source
+#' Shakespeare's First Folio plays, obtained via Project Gutenberg
+#' (\url{https://www.gutenberg.org}). Body counts compiled by
+#' Stoltz and Taylor (2021) "Integrating Semantic Contrast with
+#' Concept Mover's Distance" \doi{10.1016/j.poetic.2021.101567}.
 NULL

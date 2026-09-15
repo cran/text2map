@@ -78,6 +78,16 @@ test_that("dtm_stopper works with stop_termprop", {
     )
 })
 
+test_that("dtm_stopper errors on out-of-range stop_termprop and names the right argument", {
+    # .terms_stop_termprop's error message previously named `stop_termfreq`
+    # (copy-pasted from the sibling function) instead of `stop_termprop`
+    expect_error(
+        dtm_stopper(dtm_dgc, stop_termprop = c(0.01, 5)),
+        "`stop_termprop`",
+        fixed = TRUE
+    )
+})
+
 test_that("dtm_stopper works with stop_docfreq", {
     expect_identical(
         dim(dtm_stopper(dtm_dgc, stop_docfreq = c(1L, 3L))),
@@ -167,6 +177,19 @@ test_that("dtm_stopper works with stoprank", {
     expect_identical(
         dim(dtm_stopper(dtm_dgc, stop_termrank = 20L)),
         as.integer(c(10, 24))
+    )
+})
+
+test_that("dtm_stopper warns when stop_termrank removes the entire vocabulary", {
+    expect_warning(
+        out <- dtm_stopper(dtm_dgc, stop_termrank = ncol(dtm_dgc)),
+        "entire vocabulary"
+    )
+    expect_equal(ncol(out), 0L)
+
+    expect_warning(
+        dtm_stopper(dtm_dgc, stop_termrank = ncol(dtm_dgc) + 10L),
+        "entire vocabulary"
     )
 })
 

@@ -50,6 +50,18 @@ on size (total documents, total unique terms, total tokens),
 (2) lexical richness, (3) distribution information,
 (4) central tendency, and (5) character-level information.
 }
+\examples{
+\donttest{
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+
+dtm_stats(dtm)
+dtm_stats(dtm, simplify = TRUE)
+}
+
+}
 \author{
 Dustin Stoltz
 }

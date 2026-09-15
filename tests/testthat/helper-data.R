@@ -1,5 +1,4 @@
 # Helper functions for testhat
-#' @importFrom tidytext unnest_tokens cast_dtm cast_dfm
 #' @importFrom dplyr count pipe
 #' @importFrom stringi stri_trim_both
 #' @importFrom testthat
@@ -25,7 +24,7 @@ sentences <- stringi::stri_trim_both(gsub("[\n]", "", sentences))
 jfk_corpus <- data.frame(
     text = sentences,
     clean_text = tolower(gsub("'", "", sentences)),
-    doc_id = LETTERS[seq_len(length(sentences))]
+    doc_id = LETTERS[seq_along(sentences)]
 )
 
 
@@ -64,8 +63,8 @@ my_corpus$clean_text <- tolower(gsub("'", "", my_corpus$text))
 # fake_word_vectors <- readRDS("tests/testthat/fake_word_vectors.Rds")
 # fake_word_vectors_oov <- readRDS("tests/testthat/fake_word_vectors_oov.Rds")
 
-fake_word_vectors <- readRDS("fake_word_vectors.Rds")
-fake_word_vectors_oov <- readRDS("fake_word_vectors_oov.Rds")
+fake_word_vectors <- readRDS(testthat::test_path("fake_word_vectors.Rds"))
+fake_word_vectors_oov <- readRDS(testthat::test_path("fake_word_vectors_oov.Rds"))
 
 # Create fake word vectors with out of vocab words
 # set.seed(46556);rnorm(400) |> round(6) -> rnums
@@ -73,7 +72,7 @@ fake_word_vectors_oov <- readRDS("fake_word_vectors_oov.Rds")
 # rownames(fake_word_vectors_coca) <- c(words[1:30], new_words)
 # saveRDS(fake_word_vectors_coca, "tests/testthat/fake_word_vectors_coca.Rds")
 # fake_word_vectors_coca <- readRDS("tests/testthat/fake_word_vectors_coca.Rds")
-fake_word_vectors_coca <- readRDS("fake_word_vectors_coca.Rds")
+fake_word_vectors_coca <- readRDS(testthat::test_path("fake_word_vectors_coca.Rds"))
 
 
 # create concept word vector
@@ -266,16 +265,20 @@ sem_dirs <- rbind(sd_01, sd_02, sd_03)
 # dtm_tdm<- tidytext_tdm(jfk_corpus)
 # saveRDS(dtm_tdm, "tests/testthat/fake_dtm_tdm.Rds")
 
-dtm_bse <- readRDS("fake_dtm_bse.Rds")
-dtm_dgc <- readRDS("fake_dtm_dgc.Rds")
+dtm_bse <- readRDS(testthat::test_path("fake_dtm_bse.Rds"))
+dtm_dgc <- readRDS(testthat::test_path("fake_dtm_dgc.Rds"))
+
+dtm_dfm <- NULL
+dtm_tm <- NULL
+dtm_tdm <- NULL
 
 if (requireNamespace("quanteda", quietly = TRUE)) {
-    dtm_dfm <- readRDS("fake_dtm_dfm.Rds")
+    dtm_dfm <- readRDS(testthat::test_path("fake_dtm_dfm.Rds"))
 }
 
 if (requireNamespace("tm", quietly = TRUE)) {
-    dtm_tm  <- readRDS("fake_dtm_tm.Rds")
-    dtm_tdm <- readRDS("fake_dtm_tdm.Rds")
+    dtm_tm  <- readRDS(testthat::test_path("fake_dtm_tm.Rds"))
+    dtm_tdm <- readRDS(testthat::test_path("fake_dtm_tdm.Rds"))
 }
 
 
@@ -311,7 +314,7 @@ if (requireNamespace("tm", quietly = TRUE)) {
 # tcm <- readRDS("tests/testthat/fake_tcm_quanteda.Rds")
 
 # tcm <- readRDS("fake_tcm_quanteda.Rds")
-tcm_dgc <- readRDS("fake_tcm_quanteda.Rds")
+tcm_dgc <- readRDS(testthat::test_path("fake_tcm_quanteda.Rds"))
 
 
 # -----------------------------------------------------------------------------

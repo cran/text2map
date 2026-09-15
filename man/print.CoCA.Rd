@@ -12,8 +12,30 @@
 \item{...}{Arguments to be passed to methods}
 }
 \value{
-prints a message indicating the classes and sizes
+Invisibly returns NULL
 }
 \description{
 Prints CoCA class information
+}
+\examples{
+\donttest{
+data(ft_wv_sample)
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+
+gen <- data.frame(pole1 = c("man", "new", "choose"), pole2 = c("nation", "world", "peace"))
+space <- data.frame(pole1 = c("space", "moon", "science"), pole2 = c("nation", "world", "freedom"))
+power <- data.frame(pole1 = c("great", "power", "new"), pole2 = c("peace", "freedom", "world"))
+
+gen_dir <- get_direction(anchors = gen, wv = ft_wv_sample)
+space_dir <- get_direction(anchors = space, wv = ft_wv_sample)
+power_dir <- get_direction(anchors = power, wv = ft_wv_sample)
+directions <- rbind(gen_dir, space_dir, power_dir)
+
+classes <- CoCA(dtm, wv = ft_wv_sample, directions = directions)
+print(classes)
+}
+
 }

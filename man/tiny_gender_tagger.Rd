@@ -14,6 +14,13 @@ Provides a small dictionary which matches common English pronouns
 and nouns to conventional gender categories ("masculine" or
 "feminine"). There are 20 words in each category.
 }
+\examples{
+\donttest{
+tags <- tiny_gender_tagger()
+head(tags)
+}
+
+}
 \author{
 Dustin Stoltz
 }

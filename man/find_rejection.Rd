@@ -23,3 +23,12 @@ embedding space. The vector can be a single word, or a concept
 vector obtained from \code{\link[=get_centroid]{get_centroid()}}, \code{\link[=get_direction]{get_direction()}},
 or \code{\link[=get_regions]{get_regions()}}.
 }
+\examples{
+\donttest{
+data(ft_wv_sample)
+
+vec <- ft_wv_sample["space", ]
+rej <- find_rejection(wv = ft_wv_sample, vec = vec)
+}
+
+}

@@ -45,6 +45,9 @@ cen2 <- get_centroid(anchors = space2, wv = ft_wv_sample)
 
 identical(cen1, cen2)
 }
+\seealso{
+\code{\link[=get_centroids]{get_centroids()}}
+}
 \author{
 Dustin Stoltz
 }

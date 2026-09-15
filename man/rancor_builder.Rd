@@ -37,7 +37,17 @@ in the parent normal sampling distribution}
 \item{len_max}{Integer indicating the maximum of the document lengths
 in the parent normal sampling distribution}
 
-\item{seed}{Optional seed for reproducibility}
+\item{seed}{Optional seed for reproducibility. If \code{NULL} (default), a seed
+is derived from the system clock/process id rather than from
+the global RNG stream, so the caller's \code{.Random.seed} is left
+untouched and repeated unseeded calls still differ from one
+another. Whichever seed is actually used (supplied or
+auto-generated) is attached to the output via
+\code{attr(x, "seed")}, so an unseeded run can still be reproduced.}
+}
+\value{
+A sparse document-term matrix (dgCMatrix), with the seed actually
+used (supplied or auto-generated) attached as \code{attr(x, "seed")}.
 }
 \description{
 \code{rancor_builder()} generates a random corpus (rancor) based on a user
@@ -83,6 +93,9 @@ df$probs <- df$freqs / sum(df$freqs)
 # create random DTM
 rDTM <- df |>
   rancor_builder(terms, probs)
+
+# recover the seed used, even when not supplied
+attr(rDTM, "seed")
 
 }
 \author{

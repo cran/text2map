@@ -42,7 +42,7 @@ Below are stoplists available with \link{get_stoplist}:
 \item "fox1990": Christopher Fox's (1990) list of 421 words
 \item "smart1993": Original SMART (1993) list of 570 words
 \item "onix2000": ONIX (2000) list of 196 words
-\item "nltk2001": Python's NLTK (2009) list of 179 words
+\item "nltk2009": Python's NLTK (2009) list of 179 words
 }
 
 The Snowball (2014) stoplist is likely the most commonly, it is the default
@@ -51,6 +51,16 @@ in the \code{stopwords} package, which is used by \code{quanteda}, \code{tidytex
 the default in the \code{tm} package. The word counts for SMART (1993) and
 ONIX (2000) are slightly different than in other places because of
 duplicate words.
+}
+\examples{
+\donttest{
+stops <- get_stoplist("snowball2014")
+head(stops)
+
+stops_tb <- get_stoplist("snowball2014", tidy = TRUE)
+head(stops_tb)
+}
+
 }
 \author{
 Dustin Stoltz

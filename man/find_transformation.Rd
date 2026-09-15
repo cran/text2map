@@ -19,7 +19,7 @@ toward which the source matrix is to be aligned.}
 
 \item{method}{Character vector indicating the method to use for
 the transformation. Current methods include: "align",
-"norm", "center", and "refrofit" -- see details.}
+"norm", "center", and "retrofit" -- see details.}
 }
 \value{
 A new word embedding matrix,
@@ -56,8 +56,21 @@ sum of squared differences, using singular value decomposition
 
 Alignment is asymmetrical, and only outputs the transformed source matrix,
 \eqn{B}. Therefore, it is typically recommended to align \eqn{B} to \eqn{A},
-and then \eqn{A} to \eqn{B}. However, simplying centering and norming
+and then \eqn{A} to \eqn{B}. However, simply centering and norming
 \eqn{A} after may be sufficient.
+}
+\examples{
+\donttest{
+data(ft_wv_sample)
+
+# center and normalize
+wv_centered <- find_transformation(ft_wv_sample, method = "center")
+wv_normed <- find_transformation(ft_wv_sample, method = "norm")
+
+# align requires a reference matrix (e.g. from a different time period)
+# wv_aligned <- find_transformation(wv_source, ref = wv_ref, method = "align")
+}
+
 }
 \references{
 Mikel Artetxe, Gorka Labaka, and Eneko Agirre. (2018).
@@ -79,7 +92,7 @@ Chinese Computing}. 749-60. \doi{10.1007/978-3-030-32233-5_58}.\cr
 Schlechtweg et al. (2019). 'A Wind of Change: Detecting and
 Evaluating Lexical Semantic Change across Times and Domains.'
 \url{https://arxiv.org/abs/1906.02979v1}.
-Shoemark et a. (2019). 'Room to Glo: A Systematic Comparison
+Shoemark et al. (2019). 'Room to Glo: A Systematic Comparison
 of Semantic Change Detection Approaches with Word Embeddings.'
 \emph{Proceedings of the 2019 Conference on Empirical Methods in
 Natural Language Processing}. 66-76. \doi{10.18653/v1/D19-1007}

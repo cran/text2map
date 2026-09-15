@@ -41,8 +41,11 @@ test_that("CMDist works on tm/quanteda DTMtypes", {
   expect_type(cmd_out_dfm[, 2], "double")
   expect_identical(cmd_out_dfm$doc_id, rownames(dtm_dfm))
 
-  ## all are identical
-  expect_identical(cmd_out_bse, cmd_out_dgc, cmd_out_dfm)
+  ## bse and dgc are identical (same row ordering)
+  expect_identical(cmd_out_bse, cmd_out_dgc)
+  ## dfm produces same structure and same doc_ids
+  expect_identical(sort(cmd_out_bse$doc_id), sort(cmd_out_dfm$doc_id))
+  expect_identical(colnames(cmd_out_bse), colnames(cmd_out_dfm))
 })
 
 ## TM tests
@@ -82,8 +85,11 @@ test_that("CMDist works on tm/quanteda DTMtypes", {
   expect_type(cmd_out_tm[, 2], "double")
   expect_identical(cmd_out_tm$doc_id, rownames(dtm_tm))
 
-  ## all are identical
-  expect_identical(cmd_out_bse, cmd_out_dgc, cmd_out_tm)
+  ## bse and dgc are identical (same row ordering)
+  expect_identical(cmd_out_bse, cmd_out_dgc)
+  ## tm produces same structure and same doc_ids
+  expect_identical(sort(cmd_out_bse$doc_id), sort(cmd_out_tm$doc_id))
+  expect_identical(colnames(cmd_out_bse), colnames(cmd_out_tm))
 })
 
 ## ----------------------------------------------------------------------------

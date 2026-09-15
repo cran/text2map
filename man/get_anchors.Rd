@@ -7,7 +7,7 @@
 get_anchors(relation)
 }
 \arguments{
-\item{relation}{String indicating a semantic relation, 26 relations are
+\item{relation}{String indicating a semantic relation, 30 relations are
 available in the dataset (see details).}
 }
 \value{
@@ -29,13 +29,24 @@ Available relations include:
 \item affluence
 \item age
 \item attractiveness
+\item authority
 \item borders
 \item concreteness
 \item cultivation
 \item dominance
 \item education
+\item fairness
 \item gender
 \item government
+\item health
+\item immigration
+\item ingroup
+\item labor
+\item legality
+\item morality
+\item organization
+\item partisan
+\item policy
 \item purity
 \item safety
 \item sexuality

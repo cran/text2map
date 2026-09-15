@@ -7,12 +7,15 @@
 \format{
 A data frame with 303 rows and 4 variables.
 }
-\usage{
-anchor_lists
+\source{
+Curated from previously published semantic direction anchor sets.
+See: Kozlowski et al. (2019) "The Geometry of Culture";
+Garg et al. (2018) "Word Embeddings Quantify 100 Years of Gender and Ethnic Stereotypes";
+Bolukbasi et al. (2016) "Man is to Computer Programmer as Woman is to Homemaker".
 }
 \description{
 A dataset containing juxtaposing pairs of English words
-for 26 semantic relations. These anchors are used with
+for 30 semantic relations. These anchors are used with
 the \code{\link[=get_anchors]{get_anchors()}} function, which can then be used with
 the \code{\link[=get_direction]{get_direction()}} function. These have been collected
 from previously published articles and should be used
@@ -25,7 +28,7 @@ Variables:
 \itemize{
 \item pole1. words to be added (or the positive direction)
 \item pole2. words to be subtracted (or the negative direction)
-\item relation. the relation to be extracted, 26 relations available
+\item relation. the relation to be extracted, 30 relations available
 \item domain. 6 broader categories within which each relation falls
 
 }

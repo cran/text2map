@@ -5,10 +5,11 @@
 \alias{jfk_speech}
 \title{Full Text of JFK's Rice Speech}
 \format{
-A data frame with 2 columns
+A data frame with 84 rows and 2 columns
 }
-\usage{
-jfk_speech
+\source{
+John F. Kennedy, "We choose to go to the Moon" speech,
+Rice University, September 12, 1962. Public domain.
 }
 \description{
 This is a data frame for the text of JFK's Rice Speech "We choose to go to

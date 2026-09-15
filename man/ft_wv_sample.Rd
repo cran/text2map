@@ -7,8 +7,10 @@
 \format{
 A matrix of 770 rows and 300 columns
 }
-\usage{
-ft_wv_sample
+\source{
+Subsample of English fastText word embeddings.
+Bojanowski et al. (2017) "Enriching Word Vectors with Subword Information."
+\doi{10.1162/tacl_a_00051}. Available at \url{https://fasttext.cc}.
 }
 \description{
 These are a sample of the English fastText embeddings

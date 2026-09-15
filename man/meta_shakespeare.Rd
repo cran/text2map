@@ -5,10 +5,13 @@
 \alias{meta_shakespeare}
 \title{Metadata for Shakespeare's First Folio}
 \format{
-A matrix of 37 rows and 8 columns
+A data frame with 37 rows and 8 columns
 }
-\usage{
-meta_shakespeare
+\source{
+Shakespeare's First Folio plays, obtained via Project Gutenberg
+(\url{https://www.gutenberg.org}). Body counts compiled by
+Stoltz and Taylor (2021) "Integrating Semantic Contrast with
+Concept Mover's Distance" \doi{10.1016/j.poetic.2021.101567}.
 }
 \description{
 Metadata related to Shakespeare's First Folio

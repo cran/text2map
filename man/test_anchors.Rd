@@ -50,12 +50,12 @@ method for calculating direction ("paired", "pooled", "L2",
 
 \item{null}{For 'relco', null hypothesis, default is 0.}
 
-\item{alpha}{For 'relco', significance level}
+\item{alpha}{For 'relco', term selection weighting (default is 0.5)}
 
 \item{seed}{For 'relco', set sampling seed}
 
-\item{order_non_anchors}{Logical (default \code{FALSE}). For 'relco', should the order of
-the non-anchor terms be fixed between each run}
+\item{order_non_anchors}{Logical (default \code{FALSE}). For 'relco', if TRUE the
+subset of non-anchor terms is fixed across runs.}
 
 \item{summarize}{Logical (default \code{TRUE}). Returns a dataframe with AVERAGE
 scores for input pairs along with each pairs' contribution.
@@ -69,7 +69,7 @@ dataframe or list
 This function evaluates how well an anchor set
 defines a semantic relations using one of two methods:
 pairdir (which only evaluates semantic directions) or relco
-which evaluations semantic directions, semantic centroids
+which evaluates semantic directions, semantic centroids
 and compound concepts). See details.
 }
 \details{

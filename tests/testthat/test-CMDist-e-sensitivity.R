@@ -108,7 +108,7 @@ test_that("check internal .get_sensitivity_intervals()", {
         scale = FALSE
     )
 
-    # expect_s3_class(out.sen, "data.frame")
+    expect_s3_class(out.sen, "data.frame")
     expect_type(out.sen[, 2], "double")
     expect_identical(out.sen$doc_id, rownames(dtm_dgc))
     expect_identical(ncol(out.sen), 4L)

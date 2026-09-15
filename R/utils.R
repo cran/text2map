@@ -23,7 +23,7 @@
 #' - "fox1990": Christopher Fox's (1990) list of 421 words
 #' - "smart1993": Original SMART (1993) list of 570 words
 #' - "onix2000": ONIX (2000) list of 196 words
-#' - "nltk2001": Python's NLTK (2009) list of 179 words
+#' - "nltk2009": Python's NLTK (2009) list of 179 words
 #'
 #' The Snowball (2014) stoplist is likely the most commonly, it is the default
 #' in the `stopwords` package, which is used by `quanteda`, `tidytext` and
@@ -45,6 +45,15 @@
 #' @return Character vector of words to be stopped,
 #'         if tidy = TRUE, a tibble is returned
 #'
+#' @examples
+#' \donttest{
+#' stops <- get_stoplist("snowball2014")
+#' head(stops)
+#'
+#' stops_tb <- get_stoplist("snowball2014", tidy = TRUE)
+#' head(stops_tb)
+#' }
+#'
 #' @export
 #'
 #'
@@ -57,17 +66,19 @@ get_stoplist <- function(source = "tiny2020", language = "en", tidy = FALSE) {
     "tiny2020", "nltk2009"
   )) {
     if (language != "en") {
-      stop(paste0(source, " stoplist is currently only available for 'en'"))
+      cli::cli_abort("{.val {source}} stoplist is currently only available for {.val en}.")
     }
 
     # this allows the data to be accessed without attaching the package
-    slists <- eval(parse(text = "text2map::stoplists"))
-    stop_list <- slists[slists[, source] == TRUE, "word", drop = TRUE]
+    slists_env <- new.env(parent = emptyenv())
+    utils::data(list = "stoplists", package = "text2map", envir = slists_env)
+    slists <- slists_env$stoplists
+    stop_list <- slists[slists[, source], "word", drop = TRUE]
   } else {
-    stop(paste0(source, " stoplist is not currently available"))
+    cli::cli_abort("{.val {source}} stoplist is not currently available.")
   }
 
-  if (tidy == TRUE) {
+  if (isTRUE(tidy)) {
     stop_list <- tibble(
       word = stop_list,
       lexicon = source
@@ -91,6 +102,13 @@ get_stoplist <- function(source = "tiny2020", language = "en", tidy = FALSE) {
 #' @author Dustin Stoltz
 #'
 #' @return returns a tibble with two columns
+#'
+#' @examples
+#' \donttest{
+#' tags <- tiny_gender_tagger()
+#' head(tags)
+#' }
+#'
 #' @export
 tiny_gender_tagger <- function() {
   tb1 <- tibble::tibble(
@@ -127,37 +145,25 @@ tiny_gender_tagger <- function() {
 ## ----------------------------------------------------------------------------
 # given list, gives confidence intervals
 ## ----------------------------------------------------------------------------
-
+#' Confidence interval for a numeric vector
+#'
+#' @param x Numeric vector
+#' @param ci Confidence level (default 0.95)
+#' @return Named numeric vector with elements mean, lower_ci, upper_ci.
+#'         Returns NA for CIs when fewer than 2 observations.
+#' @noRd
 .conf_int <- function(x, ci = .95) {
-  a <- mean(x)
-  s <- sd(x)
   n <- length(x)
+  a <- mean(x)
+  if (n < 2) {
+    cli::cli_warn("Cannot compute confidence interval with fewer than 2 observations")
+    return(c(mean = a, lower_ci = NA_real_, upper_ci = NA_real_))
+  }
+  s <- sd(x)
   error <- qt(ci+(1-ci)/2, df = n-1)*s/sqrt(n)
   return(c(mean = a, lower_ci = a-error, upper_ci = a+error))
 }
 
-
-#' Fast-match `%fin%` operator masking base R `%in%`
-#'
-#' Returns the elements of `x` that are "in" `y`, uses `fastmatch`'s
-#' matching backend.
-#'
-#' @import fastmatch
-#' @importFrom fastmatch %fin%
-#' @importFrom fastmatch fmatch
-#'
-#' @usage x \%fin\% y
-#'
-#' @param x vector of all items
-#' @param y vector of set of items to be not-matched
-#'
-#' @return logical vector of items in x not in y
-#'
-#' @author Dustin Stoltz
-#'
-#' @keywords internal
-#' @noRd
-`%in%` <- fastmatch::`%fin%`
 
 
 #' Fast-not-match `%fnin%` operator
@@ -169,7 +175,7 @@ tiny_gender_tagger <- function() {
 #' @importFrom fastmatch %fin%
 #' @importFrom fastmatch fmatch
 #'
-#' @usage x \%fin\% y
+#' @usage x \%fnin\% y
 #'
 #' @param x vector of all items
 #' @param y vector of set of items to be not-matched
@@ -180,25 +186,6 @@ tiny_gender_tagger <- function() {
 #'
 #' @noRd
 `%fnin%` <- Negate(fastmatch::`%fin%`)
-
-# #' Fast-not-match `%fnin%` operator
-# #'
-# #' Complement of the operator \code{\%in\%}. Returns the elements of `x` that
-# #'
-# #'
-# #'
-# #' @usage x \%fin\% y
-# #'
-# #' @param x vector of all items
-# #' @param y vector of set of items to be not-matched
-# #'
-# #' @return logical vector of items in x not in y
-# #'
-# #' @author Dustin Stoltz
-# #'
-# #' @noRd
-# `%fnin%` <- Negate(base::`%in%`)
-
 
 #' Measure .kurtosis
 #'
@@ -239,11 +226,12 @@ tiny_gender_tagger <- function() {
 #' Counts the number of decimal places. Code from
 #' https://stackoverflow.com/a/5173906/15855390
 #'
-#' @param x a vector of numbers
+#' @param x a single number
 #'
 #' @keywords internal
 #' @noRd
 .n_decimal_places <- function(x) {
+  stopifnot(length(x) == 1L)
   if (abs(x - round(x)) > .Machine$double.eps^0.5) {
     nchar(strsplit(
       sub(
@@ -262,14 +250,14 @@ tiny_gender_tagger <- function() {
 #' Checks if numbers are integers/whole numbers
 #'
 #' @param x a vector of numbers
-#' @param any logical (default FALSE), return any TRUE
+#'
+#' @return A logical vector of the same length as `x`,
+#'         TRUE where the corresponding element of `x` is a whole number.
 #'
 #' @keywords internal
 #' @noRd
 .check_whole_num <- function(x) {
-  out <- is.integer(x)
-
-  return(isTRUE(out))
+  return(x == floor(x))
 }
 
 
@@ -297,6 +285,30 @@ tiny_gender_tagger <- function() {
   )
 
   return(stats::qnorm(u, mean = mean, sd = sd))
+}
+
+#' Evaluate an expression with BLAS/OpenMP pinned to a single thread
+#'
+#' `text2vec::RWMD`'s compiled code can deadlock when R is linked against a
+#' multi-threaded BLAS (e.g. OpenBLAS): its own OpenMP parallel region
+#' contends with BLAS's, and unlike an environment variable set at runtime,
+#' this can only be fixed by controlling the BLAS/OpenMP thread count
+#' directly (an env var set after the process starts, and after BLAS has
+#' already spun up its thread pool, has no effect).
+#'
+#' @param expr An expression to evaluate.
+#'
+#' @keywords internal
+#' @noRd
+.with_single_threaded_blas <- function(expr) {
+  old_omp <- RhpcBLASctl::omp_get_max_threads()
+  on.exit({
+    RhpcBLASctl::blas_set_num_threads(RhpcBLASctl::blas_get_num_procs())
+    RhpcBLASctl::omp_set_num_threads(old_omp)
+  }, add = TRUE)
+  RhpcBLASctl::blas_set_num_threads(1)
+  RhpcBLASctl::omp_set_num_threads(1)
+  expr
 }
 
 #' quiets concerns of R CMD check re: i in loops and lapply

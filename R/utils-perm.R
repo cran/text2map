@@ -62,13 +62,13 @@
 #' 'Visualization Strategies for Regression Estimates with Randomization
 #' Inference' \emph{Stata Journal} 20(2):309-335.
 #' \doi{10.1177/1536867X20930999}.\cr
-#'
-#' #' Darlington, Richard B. and Andrew F. Hayes (2016)
+#' 
+#' Darlington, Richard B. and Andrew F. Hayes (2016)
 #' \emph{Regression analysis and linear models: Concepts, applications, and implementation}.
 #' Guilford Publications.\cr
 #'
 #' Ernst, Michael D. (2004)
-#' 'permutation methods: a basis for exact inference' \emph{Statistical Scicence}
+#' 'permutation methods: a basis for exact inference' \emph{Statistical Science}
 #' 19(4):676-685.
 #' \doi{10.1214/088342304000000396}.\cr
 #'
@@ -93,13 +93,15 @@
 #'
 #' @param statistic The name of the model statistic you want to "grab" after
 #'                  re-running the model with each permutation to compare to
-#'                  the original model statistic.
+#'                  the original model statistic. Must be a single string
+#'                  matching one of `names(model)` (e.g. `"coefficients"` for
+#'                  an `lm` object); errors listing the model's actual
+#'                  component names if it doesn't.
 #'
 #' @param perm_n The total number of permutations. Defaults to 1000.
 #'
-#' @param alternative The alternative hypothesis. One of `"two.sided"` 
-#'                     (default),
-#'                    `"left"`, `"right"`, and `"all"`. Defaults to `"all"`,
+#' @param alternative The alternative hypothesis. One of `"two.sided"`,
+#'                    `"left"`, `"right"`, and `"all"` (default). Defaults to `"all"`,
 #'                    which reports the p-value statistics for all three
 #'                    alternative hypotheses.
 #'
@@ -108,7 +110,7 @@
 #' @param seed Optional seed for reproducibility of the p-value statistics.
 #'             Defaults to null.
 #'
-#' @returns Returns a data frame with the observed statistic (`stat`), the
+#' @return Returns a data frame with the observed statistic (`stat`), the
 #'          p-values (`P_left`, for left-tailed, `P_right` for right-tailed, 
 #'          and/or
 #'          `P_two` for two-tailed), and the standard errors and confidence
@@ -119,20 +121,20 @@
 #' @importFrom permute shuffle
 #' @importFrom tibble as_tibble
 #' @importFrom tibble rownames_to_column
-#' @importFrom Matrix update
+#' @importFrom stats update
 #' @importFrom stats qnorm
 #'
 #' @seealso [CMDist], [CoCA], [get_direction]
 #'
 #' @examples
 #' \donttest{
-#' data <- text2map::meta_shakespeare
+#' data(meta_shakespeare)
 #'
-#' model <- lm(body_count ~ boas_problem_plays + year + genre, data = data)
+#' model <- lm(body_count ~ boas_problem_plays + year + genre, data = meta_shakespeare)
 #'
 #' # without stratified permutations, two-sided test
 #' out1 <- perm_tester(
-#'   data = data,
+#'   data = meta_shakespeare,
 #'   model = model,
 #'   statistic = "coefficients",
 #'   perm_n = 40,
@@ -143,7 +145,7 @@
 #'
 #' # with stratified permutations, two-sided test
 #' out2 <- perm_tester(
-#'   data = data,
+#'   data = meta_shakespeare,
 #'   model = model,
 #'   strat_var = "boas_problem_plays",
 #'   statistic = "coefficients",
@@ -165,23 +167,34 @@ perm_tester <- function(data,
                         alpha = 0.05,
                         seed = NULL) {
   if (length(stats::coef(model)) == 1L) {
-    stop("The intercept for an intercept-only model is
-    the univariate mean of the outcome variable, so
-    permutations will not lead to different and
-    the p-values will intercepts always equal 1.")
+    cli::cli_abort(c(
+      "The intercept for an intercept-only model is the univariate mean of the outcome variable.",
+      "i" = "Permutations will not lead to different values, and the p-values will always equal 1."
+    ))
+  }
+
+  alternative <- match.arg(alternative, c("two.sided", "left", "right", "all"))
+
+  if (!is.character(statistic) || length(statistic) != 1 || !statistic %in% names(model)) {
+    cli::cli_abort(
+      "`statistic` = {.val {paste(statistic, collapse = ', ')}} is not a component of `model`. Available components include: {.val {names(model)}}."
+    )
   }
 
   if (is.null(perm_var)) {
-    # extract Y if no terms provided
     perm_var <- as.character(attributes(model$terms)$variables[[2]])
   }
 
-  set.seed(seed)
+  restore_rng <- .rng_guard()
+  on.exit(restore_rng(), add = TRUE)
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   perms <- data.frame(matrix(ncol = perm_n, nrow = nrow(data)))
   colnames(perms) <- rep(perm_var, perm_n)
   perm_list <- list()
 
-  if (is.null(strat_var) == FALSE) {
+  if (!is.null(strat_var)) {
     control <- permute::how(plots = permute::Plots(strata = data[[strat_var]]))
 
     for (i in seq_len(perm_n)) {
@@ -189,22 +202,22 @@ perm_tester <- function(data,
         control = control
       )]
 
-      perm_list[[i]] <- cbind(perms[i], data[, !names(data) %in% perm_var])
+      perm_list[[i]] <- cbind(perms[i], data[, !names(data) %in% perm_var, drop = FALSE])
     }
   }
 
-  if (is.null(strat_var) == TRUE) {
+  if (is.null(strat_var)) {
     for (i in seq_len(perm_n)) {
       perms[, i] <- data[[perm_var]][permute::shuffle(length(data[[perm_var]]))]
 
-      perm_list[[i]] <- cbind(perms[i], data[, !names(data) %in% perm_var])
+      perm_list[[i]] <- cbind(perms[i], data[, !names(data) %in% perm_var, drop = FALSE])
     }
   }
 
   models <- list()
 
   for (i in seq_along(perm_list)) {
-    models[[i]] <- Matrix::update(model, . ~ ., data = perm_list[[i]])
+    models[[i]] <- stats::update(model, . ~ ., data = perm_list[[i]])
   }
 
   perm_mat <- do.call(cbind, lapply(models, FUN = `[[`, statistic))
@@ -299,7 +312,13 @@ perm_tester <- function(data,
 #'                 in the parent normal sampling distribution
 #' @param len_max Integer indicating the maximum of the document lengths
 #'                 in the parent normal sampling distribution
-#' @param seed Optional seed for reproducibility
+#' @param seed Optional seed for reproducibility. If `NULL` (default), a seed
+#'             is derived from the system clock/process id rather than from
+#'             the global RNG stream, so the caller's `.Random.seed` is left
+#'             untouched and repeated unseeded calls still differ from one
+#'             another. Whichever seed is actually used (supplied or
+#'             auto-generated) is attached to the output via
+#'             `attr(x, "seed")`, so an unseeded run can still be reproduced.
 #'
 #' @examples
 #' # create corpus and DTM
@@ -335,6 +354,12 @@ perm_tester <- function(data,
 #' rDTM <- df |>
 #'   rancor_builder(terms, probs)
 #'
+#' # recover the seed used, even when not supplied
+#' attr(rDTM, "seed")
+#'
+#' @return A sparse document-term matrix (dgCMatrix), with the seed actually
+#'         used (supplied or auto-generated) attached as `attr(x, "seed")`.
+#'
 #' @export
 rancor_builder <- function(data,
                            vocab,
@@ -345,14 +370,15 @@ rancor_builder <- function(data,
                            len_min = 20L,
                            len_max = 1000L,
                            seed = NULL) {
-  if (is.null(seed)) {
-    seed <- as.integer(runif(1, 1, 1000000))
-  }
-
   vocab <- dplyr::pull(data, {{ vocab }})
   probs <- dplyr::pull(data, {{ probs }})
 
-  # set the seed for the doc length distribution
+  restore_rng <- .rng_guard()
+  on.exit(restore_rng(), add = TRUE)
+
+  if (is.null(seed)) {
+    seed <- .random_seed_value()
+  }
   set.seed(seed)
   # get a distribution of document lengths
   doc_lens <- .rnorm_trunc(
@@ -411,7 +437,7 @@ rancor_builder <- function(data,
 #' Build Multiple Random Corpora
 #'
 #' `rancors_builder()` generates multiple random corpus (rancor) based on a user
-#' defined term probabilities and vocabulary. sers can set the number of
+#' defined term probabilities and vocabulary. Users can set the number of
 #' documents, as well as the mean, standard deviation, minimum, and maximum
 #' document lengths (i.e., number of tokens) of the parent normal distribution
 #' from which the document lengths are randomly sampled. The output is a list of
@@ -446,10 +472,16 @@ rancor_builder <- function(data,
 #'                in the parent normal sampling distribution. If two numbers
 #'                are provided, number will be randomly sampled within the
 #'                range for each corpora.
-#' @param seed Optional seed for reproducibility
+#' @param seed Optional seed for reproducibility. If `NULL` (default), a seed
+#'             is derived from the system clock/process id rather than from
+#'             the global RNG stream, so the caller's `.Random.seed` is left
+#'             untouched and repeated unseeded calls still differ from one
+#'             another. Whichever seed is actually used (supplied or
+#'             auto-generated) is attached to the output via
+#'             `attr(x, "seed")`, so an unseeded run can still be reproduced.
 #'
 #' @examples
-#' 
+#'
 #' \donttest{
 #' # create corpus and DTM
 #' my_corpus <- data.frame(
@@ -493,7 +525,15 @@ rancor_builder <- function(data,
 #'     seed = 59801
 #'   )
 #' length(ls_dtms)
+#'
+#' # recover the seed used, even when not supplied
+#' attr(ls_dtms, "seed")
 #' }
+#'
+#' @return A list of sparse document-term matrices (dgCMatrix), with the seed
+#'         actually used (supplied or auto-generated) attached as
+#'         `attr(x, "seed")`.
+#'
 #' @export
 rancors_builder <- function(data,
                             vocab,
@@ -505,10 +545,12 @@ rancors_builder <- function(data,
                             len_min,
                             len_max,
                             seed = NULL) {
-  if (is.null(seed)) {
-    seed <- as.integer(runif(1, 1, 1000000))
-  }
+  restore_rng <- .rng_guard()
+  on.exit(restore_rng(), add = TRUE)
 
+  if (is.null(seed)) {
+    seed <- .random_seed_value()
+  }
   set.seed(seed)
   vec_ndocs <- .rc_seq(n_docs, n_cors)
   vec_len_mean <- .rc_seq(len_mean, n_cors)
@@ -535,10 +577,38 @@ rancors_builder <- function(data,
 
     # assure new seed must be greater
     # than the number of docs
-    seed <- as.integer(seed + (max(n_docs) * i))
+    seed <- as.integer((seed + max(n_docs) * i) %% .Machine$integer.max)
   }
 
   return(ls_rdtms)
+}
+
+#' Capture/restore the global RNG state around a block that must not leak
+#' its own random draws to the caller
+#'
+#' @keywords internal
+#' @noRd
+.rng_guard <- function() {
+  had_seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  old_seed <- if (had_seed) get(".Random.seed", envir = .GlobalEnv) else NULL
+  function() {
+    if (had_seed) {
+      assign(".Random.seed", old_seed, envir = .GlobalEnv)
+    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    }
+  }
+}
+
+#' A seed value drawn from wall-clock time/process id rather than from
+#' `runif()`, so auto-generating one doesn't consume the global RNG stream
+#' `.rng_guard()` is about to restore (and so repeated unseeded calls still
+#' differ from one another)
+#'
+#' @keywords internal
+#' @noRd
+.random_seed_value <- function() {
+  as.integer((as.numeric(Sys.time()) * 1e6 + Sys.getpid()) %% .Machine$integer.max)
 }
 
 #' @keywords internal

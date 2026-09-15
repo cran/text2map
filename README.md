@@ -30,13 +30,13 @@ There are four related packages hosted on GitLab:
 - [`text2map.corpora`](https://culturalcartography.gitlab.io/text2map.corpora/): 13+ text datasets
 - [`text2map.dictionaries`](https://culturalcartography.gitlab.io/text2map.dictionaries/): norm dictionaries and word frequency lists
 - [`text2map.pretrained`](https://culturalcartography.gitlab.io/text2map.pretrained/): pretrained embeddings and topic models
-- [`text2map.theme`](https://culturalcartography.gitlab.io/text2map.theme): changes `ggplot2` aesthetics and loads viridis color scheme as default
+- [`ggastrum`](https://culturalcartography.gitlab.io/ggastrum/): changes `ggplot2` aesthetics and loads viridis color scheme as default
 
 The above packages can be installed using the following:
 
 ```r
 library(remotes)
-install_gitlab("culturalcartography/text2map.theme")
+install_gitlab("culturalcartography/ggastrum")
 install_gitlab("culturalcartography/text2map.corpora")
 install_gitlab("culturalcartography/text2map.pretrained")
 install_gitlab("culturalcartography/text2map.dictionaries")
@@ -58,11 +58,11 @@ Any questions and requests for support can also be directed to the package maint
 
 [![DOI](https://img.shields.io/badge/DOI-10.32614/CRAN.package.text2map-1f57b6?style=flat&link=https://doi.org/10.32614/CRAN.package.text2map)](https://cran.r-project.org/package=text2map)
 
-[![pipeline](https://gitlab.com/culturalcartography/text2map/badges/master/pipeline.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/master)
+[![pipeline](https://gitlab.com/culturalcartography/text2map/badges/main/pipeline.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/main)
 
 [![Joss DOI](https://joss.theoj.org/papers/10.21105/joss.03741/status.svg)](https://doi.org/10.21105/joss.03741)
 
-[![coverage](https://gitlab.com/culturalcartography/text2map/badges/master/coverage.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/master)
+[![coverage](https://gitlab.com/culturalcartography/text2map/badges/main/coverage.svg)](https://gitlab.com/culturalcartography/text2map/-/commits/main)
 
 [![repo status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 

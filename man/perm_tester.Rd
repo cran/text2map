@@ -30,13 +30,15 @@ Defaults to \code{NULL}.}
 
 \item{statistic}{The name of the model statistic you want to "grab" after
 re-running the model with each permutation to compare to
-the original model statistic.}
+the original model statistic. Must be a single string
+matching one of \code{names(model)} (e.g. \code{"coefficients"} for
+an \code{lm} object); errors listing the model's actual
+component names if it doesn't.}
 
 \item{perm_n}{The total number of permutations. Defaults to 1000.}
 
-\item{alternative}{The alternative hypothesis. One of \code{"two.sided"}
-(default),
-\code{"left"}, \code{"right"}, and \code{"all"}. Defaults to \code{"all"},
+\item{alternative}{The alternative hypothesis. One of \code{"two.sided"},
+\code{"left"}, \code{"right"}, and \code{"all"} (default). Defaults to \code{"all"},
 which reports the p-value statistics for all three
 alternative hypotheses.}
 
@@ -111,13 +113,13 @@ variable to be he grouping variable.
 }
 \examples{
 \donttest{
-data <- text2map::meta_shakespeare
+data(meta_shakespeare)
 
-model <- lm(body_count ~ boas_problem_plays + year + genre, data = data)
+model <- lm(body_count ~ boas_problem_plays + year + genre, data = meta_shakespeare)
 
 # without stratified permutations, two-sided test
 out1 <- perm_tester(
-  data = data,
+  data = meta_shakespeare,
   model = model,
   statistic = "coefficients",
   perm_n = 40,
@@ -128,7 +130,7 @@ out1 <- perm_tester(
 
 # with stratified permutations, two-sided test
 out2 <- perm_tester(
-  data = data,
+  data = meta_shakespeare,
   model = model,
   strat_var = "boas_problem_plays",
   statistic = "coefficients",
@@ -146,12 +148,12 @@ Taylor, Marshall A. (2020)
 Inference' \emph{Stata Journal} 20(2):309-335.
 \doi{10.1177/1536867X20930999}.\cr
 
-#' Darlington, Richard B. and Andrew F. Hayes (2016)
+Darlington, Richard B. and Andrew F. Hayes (2016)
 \emph{Regression analysis and linear models: Concepts, applications, and implementation}.
 Guilford Publications.\cr
 
 Ernst, Michael D. (2004)
-'permutation methods: a basis for exact inference' \emph{Statistical Scicence}
+'permutation methods: a basis for exact inference' \emph{Statistical Science}
 19(4):676-685.
 \doi{10.1214/088342304000000396}.\cr
 

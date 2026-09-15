@@ -50,11 +50,22 @@ in the parent normal sampling distribution. If two numbers
 are provided, number will be randomly sampled within the
 range for each corpora.}
 
-\item{seed}{Optional seed for reproducibility}
+\item{seed}{Optional seed for reproducibility. If \code{NULL} (default), a seed
+is derived from the system clock/process id rather than from
+the global RNG stream, so the caller's \code{.Random.seed} is left
+untouched and repeated unseeded calls still differ from one
+another. Whichever seed is actually used (supplied or
+auto-generated) is attached to the output via
+\code{attr(x, "seed")}, so an unseeded run can still be reproduced.}
+}
+\value{
+A list of sparse document-term matrices (dgCMatrix), with the seed
+actually used (supplied or auto-generated) attached as
+\code{attr(x, "seed")}.
 }
 \description{
 \code{rancors_builder()} generates multiple random corpus (rancor) based on a user
-defined term probabilities and vocabulary. sers can set the number of
+defined term probabilities and vocabulary. Users can set the number of
 documents, as well as the mean, standard deviation, minimum, and maximum
 document lengths (i.e., number of tokens) of the parent normal distribution
 from which the document lengths are randomly sampled. The output is a list of
@@ -106,7 +117,11 @@ ls_dtms <- df |>
     seed = 59801
   )
 length(ls_dtms)
+
+# recover the seed used, even when not supplied
+attr(ls_dtms, "seed")
 }
+
 }
 \author{
 Dustin Stoltz and Marshall Taylor

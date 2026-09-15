@@ -48,6 +48,7 @@ We use the \code{KMeans_arma} function from the \code{ClusterR} package which
 uses the Armadillo library.
 }
 \examples{
+\dontshow{if (requireNamespace("ClusterR", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 
 # load example word embeddings
 data(ft_wv_sample)
@@ -58,6 +59,7 @@ my_regions <- get_regions(
   max_iter = 10L,
   seed = 01984
 )
+\dontshow{\}) # examplesIf}
 }
 \references{
 Butnaru, Andrei M., and Radu Tudor Ionescu.  (2017)

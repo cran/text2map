@@ -27,3 +27,12 @@ All the vectors in the matrix \eqn{A} are projected onto the a vector,
 \eqn{v}, to find the projection matrix, \eqn{P}, defined as:
 \deqn{P = \frac{A \cdot v}{v \cdot v} * v}
 }
+\examples{
+\donttest{
+data(ft_wv_sample)
+
+vec <- ft_wv_sample["space", ]
+proj <- find_projection(wv = ft_wv_sample, vec = vec)
+}
+
+}

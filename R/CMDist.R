@@ -50,8 +50,6 @@
 #' @author Dustin Stoltz and Marshall Taylor
 #'
 #' @importFrom Matrix sparseMatrix
-#' @importFrom text2vec RWMD
-#' @importFrom text2vec sim2
 #' @importFrom methods as
 #'
 #' @param dtm Document-term matrix with words as columns. Works with DTMs
@@ -66,12 +64,12 @@
 #'           with rows as words.
 #'
 #' @param missing Indicates what action to take if words are not in embeddings.
-#'               If `action = "stop"` (default), the function is stopped
+#'               If `missing = "stop"` (default), the function is stopped
 #'               and an error messages states which words are missing.
-#'               If `action = "remove"`,  output is the same as terms but
+#'               If `missing = "remove"`,  output is the same as terms but
 #'               missing words or rows with missing words are removed.
 #'               Missing words will be printed as a message.
-#' @param scale Logical (default = `FALSE`) uses `scale()` on output. This will
+#' @param scale Logical (default = `TRUE`) uses `scale()` on output. This will
 #'              set zero to the mean of the estimates, and scale by the
 #'              standard deviation of the estimates. Document estimates will,
 #'              therefore, be relative to other documents within that specific
@@ -95,12 +93,14 @@
 #' @param setup_timeout If `parallel = TRUE`, maximum number of seconds a worker
 #'                      attempts to connect to master before failing.
 #'
-#' @returns Returns a data frame with the first column as document ids and each
-#'          subsequent column as the CMD engagement corresponding to each
-#'          concept word or concept vector. The upper and lower bound
-#'          estimates will follow each unique CMD if `sens_interval = TRUE`.
+#' @return Returns a data frame (class `CMDist`) with the first column as
+#'          document ids and each subsequent column as the CMD engagement
+#'          corresponding to each concept word or concept vector. The upper
+#'          and lower bound estimates will follow each unique CMD if
+#'          `sens_interval = TRUE`. The `CMDist` class has [print.CMDist()]
+#'          and [plot.CMDist()] methods.
 #'
-#' @seealso [CoCA], [get_direction], [get_centroid]
+#' @seealso [CoCA], [get_direction], [get_centroid], [print.CMDist], [plot.CMDist]
 #'
 #' @examples
 #'
@@ -135,18 +135,37 @@
 #' @export
 #'
 CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
-                   missing = "stop", scale = TRUE,
-                   sens_interval = FALSE, alpha = 1, n_iters = 20L,
-                   parallel = FALSE, threads = 2L, setup_timeout = 120L) {
+                    missing = "stop", scale = TRUE,
+                    sens_interval = FALSE, alpha = 1, n_iters = 20L,
+                    parallel = FALSE, threads = 2L, setup_timeout = 120L) {
+  missing <- match.arg(missing, c("stop", "remove"))
+  if (is.null(cw) && is.null(cv)) {
+    cli::cli_abort("At least one concept word ({.arg cw}) or concept vector ({.arg cv}) is required.")
+  }
+  if (!is.null(cv) && nrow(cv) == 0) {
+    cli::cli_abort("{.arg cv} has 0 rows; provide at least one concept vector.")
+  }
   prep <- .prep_cmd_INPUT(dtm, cw, cv, wv, missing)
 
+  if (isTRUE(parallel)) {
+    old_omp <- Sys.getenv("OMP_THREAD_LIMIT", unset = NA_character_)
+    Sys.setenv("OMP_THREAD_LIMIT" = threads)
+    if (is.na(old_omp)) {
+      on.exit(Sys.unsetenv("OMP_THREAD_LIMIT"), add = TRUE)
+    } else {
+      on.exit(Sys.setenv("OMP_THREAD_LIMIT" = old_omp), add = TRUE)
+    }
+  }
+
   # Workhorse CMD function: Linear Complexity RWMD ----------------------------
-  if (parallel == FALSE) {
-    fullDist <- text2vec::RWMD$new(prep$DTM, prep$wem)$sim2(prep$pDTM)
+  if (isFALSE(parallel)) {
+    fullDist <- .with_single_threaded_blas(
+      text2vec::RWMD$new(prep$DTM, prep$wem)$sim2(prep$pDTM)
+    )
     fullDist <- t(fullDist[seq_len(prep$n_pd), , drop = FALSE])
   }
 
-  if (parallel == TRUE) {
+  if (isTRUE(parallel)) {
     fullDist <- .parDist2(prep, threads,
       setup_timeout,
       sens_interval = FALSE,
@@ -155,19 +174,21 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
   }
 
   # Calculate Sensitivity Intervals -------------------------------------------
-  if (sens_interval == TRUE) {
+  if (isTRUE(sens_interval)) {
     # Get CMDs from resampled DTMs
-    if (parallel == FALSE) {
+    if (isFALSE(parallel)) {
       sampList <- lapply(seq_len(n_iters), function(x) {
         sampDTM <- dtm_resampler(prep$DTM, alpha = alpha)
-        sampDist <- text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
+        sampDist <- .with_single_threaded_blas(
+          text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
+        )
         sampDist <- t(sampDist[seq_len(prep$n_pd), , drop = FALSE])
 
         return(sampDist)
       })
     }
 
-    if (parallel == TRUE) {
+    if (isTRUE(parallel)) {
       sampList <- .parDist2(
         prep = prep,
         threads = threads,
@@ -186,14 +207,15 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
       scale = scale
     )
 
+    class(dfInt) <- c("CMDist", class(dfInt))
     return(dfInt)
   }
 
   ## No Sensitivity Intervals -------------------------------------------------
-  if (sens_interval == FALSE) {
+  if (isFALSE(sens_interval)) {
     df <- as.data.frame(fullDist[, seq_len(prep$n_pd)])
 
-    if (scale == TRUE) {
+    if (isTRUE(scale)) {
       df <- as.data.frame(scale(df))
     }
 
@@ -201,6 +223,7 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
     df <- cbind.data.frame(rownames(prep$DTM), df)
     rownames(df) <- NULL
     colnames(df) <- c("doc_id", prep$labels)
+    class(df) <- c("CMDist", class(df))
     return(df)
   }
 }
@@ -209,6 +232,144 @@ CMDist <- function(dtm, cw = NULL, cv = NULL, wv,
 #' @rdname CMDist
 #' @export
 cmdist <- CMDist
+
+#' Identify concept labels in a CMDist object, and whether sensitivity
+#' interval columns are present
+#'
+#' @param x CMDist object
+#' @keywords internal
+#' @noRd
+.cmdist_concepts <- function(x) {
+  cols <- setdiff(colnames(x), "doc_id")
+  bound_cols <- grep("_(upper|lower)$", cols, value = TRUE)
+  has_sens <- length(bound_cols) > 0
+  labels <- if (has_sens) {
+    unique(sub("_(upper|lower)$", "", bound_cols))
+  } else {
+    cols
+  }
+  list(labels = labels, has_sens = has_sens)
+}
+
+#' Print CMDist estimates
+#'
+#' @param x CMDist object returned by [CMDist()]
+#' @param ... Arguments to be passed to methods
+#' @method print CMDist
+#'
+#' @return Invisibly returns `x`
+#'
+#' @seealso [CMDist], [plot.CMDist]
+#'
+#' @examples
+#' data(ft_wv_sample)
+#' data(jfk_speech)
+#' jfk_speech$sentence <- tolower(jfk_speech$sentence)
+#' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+#'
+#' out <- CMDist(dtm, cw = "space", wv = ft_wv_sample)
+#' print(out)
+#'
+#' @export
+print.CMDist <- function(x, ...) {
+  info <- .cmdist_concepts(x)
+  cat(
+    "CMDist estimates for ", length(info$labels), " concept(s) across ",
+    nrow(x), " document(s)",
+    if (info$has_sens) " (with sensitivity intervals)" else "",
+    ".\n",
+    sep = ""
+  )
+  cat("Concepts: ", paste(info$labels, collapse = ", "), "\n\n", sep = "")
+  NextMethod()
+}
+
+#' Plot CMDist estimates
+#'
+#' Plots the CMD score for each document, sorted from lowest to highest
+#' engagement, with one panel per concept. If `x` was produced with
+#' `sens_interval = TRUE`, error bars show each document's sensitivity
+#' interval.
+#'
+#' @param x CMDist object returned by [CMDist()]
+#' @param concept Character vector of one or more concept names to plot
+#'                (default = `NULL`, which plots every concept found in `x`).
+#'                Errors if any name is not one of the concepts in `x`.
+#' @param ... Arguments to be passed to methods
+#' @method plot CMDist
+#'
+#' @importFrom graphics par plot segments
+#'
+#' @return Invisibly returns `x`
+#'
+#' @seealso [CMDist], [print.CMDist]
+#'
+#' @examples
+#' \donttest{
+#' data(ft_wv_sample)
+#' data(jfk_speech)
+#' jfk_speech$sentence <- tolower(jfk_speech$sentence)
+#' jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+#' dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+#'
+#' out <- CMDist(dtm, cw = "space", wv = ft_wv_sample)
+#' plot(out)
+#'
+#' # with sensitivity intervals, plotting a single concept
+#' out_sens <- CMDist(dtm, cw = "space", wv = ft_wv_sample,
+#'                     sens_interval = TRUE, n_iters = 5)
+#' plot(out_sens, concept = "space")
+#' }
+#'
+#' @export
+plot.CMDist <- function(x, concept = NULL, ...) {
+  info <- .cmdist_concepts(x)
+  labels <- info$labels
+
+  if (!is.null(concept)) {
+    if (!all(concept %in% labels)) {
+      cli::cli_abort("{.arg concept} must be one or more of: {.val {labels}}.")
+    }
+    labels <- concept
+  }
+
+  n <- length(labels)
+  oldpar <- par(no.readonly = TRUE)
+  on.exit(par(oldpar))
+  if (n > 1) {
+    n_col <- ceiling(sqrt(n))
+    n_row <- ceiling(n / n_col)
+    par(mfrow = c(n_row, n_col))
+  }
+
+  for (lab in labels) {
+    y <- x[[lab]]
+    ord <- order(y)
+    yv <- y[ord]
+
+    up_col <- paste0(lab, "_upper")
+    lo_col <- paste0(lab, "_lower")
+    has_bounds <- info$has_sens && all(c(up_col, lo_col) %in% colnames(x))
+
+    if (has_bounds) {
+      up <- x[[up_col]][ord]
+      lo <- x[[lo_col]][ord]
+      plot(seq_along(yv), yv,
+        ylim = range(c(up, lo)), pch = 19,
+        xlab = "Documents (sorted by estimate)", ylab = lab, main = lab, ...
+      )
+      segments(seq_along(yv), lo, seq_along(yv), up, col = "gray50")
+    } else {
+      plot(seq_along(yv), yv,
+        pch = 19,
+        xlab = "Documents (sorted by estimate)", ylab = lab, main = lab, ...
+      )
+    }
+  }
+
+  invisible(x)
+}
 
 
 ### INTERNAL CMD FUNCTIONS ### ------------------------------------------------
@@ -240,9 +401,8 @@ cmdist <- CMDist
 #' @noRd
 .prep_cmd_INPUT <- function(dtm, cw = NULL, cv = NULL, wv, missing = "stop") {
   # convert all DTMs to dgCMatrix class
-  if (class(dtm)[[1]] != "dgCMatrix") {
-    dtm <- .convert_mat_to_dgCMatrix(dtm)
-  }
+  # always convert to ensure quanteda dfm, tm TDM, etc. are stripped
+  dtm <- .convert_mat_to_dgCMatrix(dtm)
 
   ## Output ##
   # Initialize list of:
@@ -281,12 +441,11 @@ cmdist <- CMDist
     st_cw <- strsplit(cw, " ", fixed = TRUE)
 
     ## add unique concept words if not in DTM already
-    for (i in vocab) {
-      if (!i %in% colnames(dtm)) {
-        new <- matrix(0, nrow = nrow(dtm))
-        colnames(new) <- i
-        dtm <- cbind(dtm, new)
-      }
+    missing_terms <- vocab[!vocab %in% colnames(dtm)]
+    if (length(missing_terms) > 0) {
+      new <- matrix(0, nrow = nrow(dtm), ncol = length(missing_terms))
+      colnames(new) <- missing_terms
+      dtm <- cbind(dtm, new)
     }
   }
 
@@ -312,17 +471,9 @@ cmdist <- CMDist
   # Find shared vocabulary
   vocab <- base::intersect(colnames(dtm), rownames(wv))
   ## Prepare vocab of Word Embeddings and DTM
-  wv <- wv[vocab, ]
+  wv <- wv[vocab, , drop = FALSE]
   # Remove words in the DTM without word vectors
-  dtm <- dtm[, vocab]
-
-  # ---- OLD method of subsetting -------
-  # ## Prepare vocab of Word Embeddings and DTM
-  # wem <- wv[intersect(rownames(wv), colnames(dtm)), ]
-  # # This is rare, but remove any NAs or RWMD won't like it
-  # wem <- wem[rowSums(is.na(wem)) != ncol(wem), ]
-  # # Remove words in the DTM without word vectors
-  # dtm <- dtm[, intersect(colnames(dtm), rownames(wem))]
+  dtm <- dtm[, vocab, drop = FALSE]
 
   ## New Concept Vocab
   # Create full list of unique vocab for each pseudo-doc
@@ -362,7 +513,7 @@ cmdist <- CMDist
 
   ## Make Labels for Each Pseudo-Doc ##
   # grabs the first word in the query for the label
-  if (!is.null(cv) & !is.null(cw)) {
+  if (!is.null(cv) && !is.null(cw)) {
     cw_labs <- gsub("(^\\w+)\\s.+", "\\1", cw)
     labs <- c(cw_labs, unlist(st_cv,
       recursive = FALSE,
@@ -370,12 +521,12 @@ cmdist <- CMDist
     ))
   }
 
-  if (is.null(cv) & !is.null(cw)) {
+  if (is.null(cv) && !is.null(cw)) {
     cw_labs <- gsub("(^\\w+)\\s.+", "\\1", cw)
     labs <- cw_labs
   }
 
-  if (!is.null(cv) & is.null(cw)) {
+  if (!is.null(cv) && is.null(cw)) {
     labs <- st_cv
   }
 
@@ -453,7 +604,7 @@ cmdist <- CMDist
         lower = bounds[, 1]
       )
 
-      if (scale == TRUE) {
+      if (isTRUE(scale)) {
         bounds <- (bounds - base::mean(bounds$actual)) /
           stats::sd(unlist(bounds,
             recursive = FALSE,
@@ -500,19 +651,25 @@ cmdist <- CMDist
 #' @noRd
 .parDist2 <- function(prep, threads, setup_timeout,
                       sens_interval, n_iters, alpha) {
-  # error checks
-  if (nrow(prep$DTM) < threads) {
-    stop(paste(
-      "More threads were input than your DTM has rows.\n",
-      "Change to `parallel=FALSE` and retry."
+  max_cores <- parallel::detectCores() - 1
+  if (!identical(Sys.getenv("NOT_CRAN"), "true") ||
+      Sys.getenv("_R_CHECK_LIMIT_CORES_") != "") {
+    max_cores <- min(max_cores, 2L)
+  }
+  if (threads > max_cores) {
+    threads <- min(as.integer(max_cores), nrow(prep$DTM))
+    if (threads < 1) threads <- 1L
+    message(paste(
+      "More threads were input than your CPU has. Reduced to",
+      threads, "threads."
     ))
   }
 
-  if ((parallel::detectCores() - 1) < threads) {
-    threads <- as.integer(parallel::detectCores() - 2)
-    message(paste(
-      "More threads were input than your CPU has! Reduced to",
-      threads, "threads."
+  # error check: still more threads than DTM rows after reduction
+  if (nrow(prep$DTM) < threads) {
+    cli::cli_abort(c(
+      "More threads were input than your DTM has rows.",
+      "i" = "Change to {.code parallel = FALSE} and retry."
     ))
   }
 
@@ -521,49 +678,57 @@ cmdist <- CMDist
   cl <- parallel::makeCluster(threads, setup_timeout = setup_timeout)
   doParallel::registerDoParallel(cl)
 
-  if (sens_interval == FALSE) {
+  if (isFALSE(sens_interval)) {
     # Compute distance in parallel threads
     outDist <- foreach::foreach(
       i = seq_len(nrow(ind)),
       .packages = c("text2vec", "text2map"),
       .combine = "rbind",
-      .export = ".parDist2",
+      .export = c(".parDist2", ".with_single_threaded_blas"),
       .inorder = TRUE, .verbose = FALSE
     ) %dopar% {
       a <- as.integer(ind[i, 1])
       b <- as.integer(ind[i, 2])
       # Linear Complexity RWMD
-      dist <- text2vec::RWMD$new(
+      dist <- .with_single_threaded_blas(text2vec::RWMD$new(
         prep$DTM[a:b, , drop = FALSE],
         prep$wem
-      )$sim2(prep$pDTM)
+      )$sim2(prep$pDTM))
       dist <- t(dist[seq_len(prep$n_pd), , drop = FALSE])
     }
   }
 
-  if (sens_interval == TRUE) {
+  if (isTRUE(sens_interval)) {
     outDist <- foreach::foreach(
       # Compute distance in parallel threads
       i = seq_len(nrow(ind)),
       .packages = c("text2vec", "text2map"),
       .combine = "cbind",
-      .export = c(".parDist2", "dtm_resampler"),
+      .export = c(".parDist2", "dtm_resampler", ".with_single_threaded_blas"),
       .inorder = TRUE, .verbose = FALSE
     ) %dopar% {
       a <- as.integer(ind[i, 1])
       b <- as.integer(ind[i, 2])
       # Linear Complexity RWMD
-      sampDist <- lapply(seq_len(n_iters), function(x) {
-        sampDTM <- dtm_resampler(prep$DTM[a:b, ], alpha = alpha)
-        sampDist <- text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
+      sampDist <- lapply(seq_len(n_iters), function(x) { # nolint: object_usage_linter. this is the %dopar% block's implicit return value, not dead code
+        sampDTM <- dtm_resampler(prep$DTM[a:b, , drop = FALSE], alpha = alpha)
+        sampDist <- .with_single_threaded_blas(
+          text2vec::RWMD$new(sampDTM, prep$wem)$sim2(prep$pDTM)
+        )
         sampDist <- t(sampDist[seq_len(prep$n_pd), , drop = FALSE])
         return(sampDist)
       })
     }
 
-    outDist <- lapply(seq_len(nrow(prep$DTM)), function(idx) {
-      do.call(rbind, outDist[idx, seq_len(nrow(ind))])
-    })
+    if (nrow(ind) == 1) {
+      outDist <- lapply(seq_len(nrow(prep$DTM)), function(idx) {
+        do.call(rbind, outDist[[idx]])
+      })
+    } else {
+      outDist <- lapply(seq_len(nrow(prep$DTM)), function(idx) {
+        do.call(rbind, outDist[idx, seq_len(nrow(ind))])
+      })
+    }
   }
 
   on.exit(parallel::stopCluster(cl))

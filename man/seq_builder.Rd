@@ -51,6 +51,17 @@ provided to the \code{vocab} argument. This kind of text
 representation is used in \href{https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer}{tensorflow}
 and \href{https://tensorflow.rstudio.com/reference/keras/texts_to_sequences}{keras}.
 }
+\examples{
+\donttest{
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+
+seqs <- seq_builder(jfk_speech, sentence, sentence_id)
+dim(seqs)
+}
+
+}
 \author{
 Dustin Stoltz
 }

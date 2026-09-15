@@ -14,13 +14,24 @@
 #' - affluence
 #' - age
 #' - attractiveness
+#' - authority
 #' - borders
 #' - concreteness
 #' - cultivation
 #' - dominance
 #' - education
+#' - fairness
 #' - gender
 #' - government
+#' - health
+#' - immigration
+#' - ingroup
+#' - labor
+#' - legality
+#' - morality
+#' - organization
+#' - partisan
+#' - policy
 #' - purity
 #' - safety
 #' - sexuality
@@ -32,7 +43,7 @@
 #' @name get_anchors
 #' @author Dustin Stoltz
 #'
-#' @param relation String indicating a semantic relation, 26 relations are
+#' @param relation String indicating a semantic relation, 30 relations are
 #'                 available in the dataset (see details).
 #'
 #' @return returns a tibble with two columns
@@ -42,8 +53,9 @@
 #' gen <- get_anchors(relation = "gender")
 #' @export
 get_anchors <- function(relation) {
-  # this allows the data to be accessed without attaching the package
-  alist <- eval(parse(text = "text2map::anchor_lists"))
+  alist_env <- new.env(parent = emptyenv())
+  utils::data(list = "anchor_lists", package = "text2map", envir = alist_env)
+  alist <- alist_env$anchor_lists
   anchor_list <- alist[alist$relation == relation, c("pole1", "pole2")]
 
   return(anchor_list)
@@ -75,14 +87,10 @@ get_anchors <- function(relation) {
 #'          the `n_dirs` parameter.
 #'
 #' @references
-#' Bolukbasi, T., Chang, K. W., Zou, J., Saligrama, V., and Kalai, A. (2016).
-#' Quantifying and reducing stereotypes in word embeddings. arXiv preprint
-#' \url{https://arxiv.org/abs/1606.06121v1}.\cr
 #' Bolukbasi, Tolga, Kai-Wei Chang, James Zou, Venkatesh Saligrama,
 #' Adam Kalai (2016). 'Man Is to Computer Programmer as Woman Is to Homemaker?
-#' Debiasing Word Embeddings.' Proceedings of the 30th International Conference
-#' on Neural Information Processing Systems. 4356-4364.
-#' \doi{10.5555/3157382.3157584}.\cr
+#' Debiasing Word Embeddings.' Advances in Neural Information Processing
+#' Systems, 29. \doi{10.48550/arXiv.1606.06121}.\cr
 #' Taylor, Marshall A., and Dustin S. Stoltz. (2020)
 #' 'Concept Class Analysis: A Method for Identifying Cultural
 #' Schemas in Texts.' \emph{Sociological Science} 7:544-569.
@@ -116,9 +124,12 @@ get_anchors <- function(relation) {
 #'               terms are removed. Missing terms will be printed as a message.
 #' @param n_dirs If `method = "PCA"`, an integer indicating how many directions
 #'               to return. Default = `1L`, indicating a single,
-#'               bipolar, direction.
+#'               bipolar, direction. Cannot exceed the number of anchor pairs
+#'               provided in `anchors`; errors with a message naming the
+#'               maximum available if it does.
 #'
-#' @return returns a one row matrix
+#' @return Returns a matrix with one row per direction (`n_dirs` rows when
+#'         `method = "PCA"`; one row otherwise).
 #'
 #' @examples
 #'
@@ -133,19 +144,38 @@ get_anchors <- function(relation) {
 #'
 #' dir <- get_direction(anchors = gen, wv = ft_wv_sample)
 #'
+#' # method = "PCA" requires at least two anchor pairs
+#' gen2 <- data.frame(
+#'   pole1 = c("woman", "stay"),
+#'   pole2 = c("man", "move")
+#' )
+#'
 #' dir <- get_direction(
-#'   anchors = gen, wv = ft_wv_sample,
-#'   method = "PCA", n = 1L
+#'   anchors = gen2, wv = ft_wv_sample,
+#'   method = "PCA", n_dirs = 1L
+#' )
+#'
+#' # method = "PCA" can return more than one direction, up to the
+#' # number of anchor pairs provided
+#' dirs <- get_direction(
+#'   anchors = gen2, wv = ft_wv_sample,
+#'   method = "PCA", n_dirs = 2L
 #' )
 #' @export
 get_direction <- function(anchors, wv,
                           method = "paired",
                           missing = "stop",
                           n_dirs = 1L) {
+  method <- match.arg(method, c("paired", "pooled", "L2", "PCA"))
+  missing <- match.arg(missing, c("stop", "remove"))
   # ensure UTF-8 encoding
   rownames(wv) <- stringi::stri_encode(rownames(wv), to = "UTF-8")
-  # check that word vectors exist for each word
-  anchors[] <- .check_term_in_embeddings(anchors[], wv, action = missing)
+  # check that word vectors exist for each word; plain reassignment, not
+  # anchors[] <- ...: .check_term_in_embeddings() already returns anchors
+  # correctly reshaped (rows dropped for data.frames) when action = "remove"
+  # drops a pair -- in-place `[<-` assignment instead errors/corrupts when
+  # the row count changes
+  anchors <- .check_term_in_embeddings(anchors, wv, action = missing)
 
   if (!is.null(ncol(anchors)) &&
     ncol(anchors) == 2) {
@@ -156,7 +186,7 @@ get_direction <- function(anchors, wv,
       anchors_a <- anchors[[1]]
       anchors_z <- anchors[[2]]
     } else {
-      stop("get_direction requires two sets of juxtaposing terms")
+      cli::cli_abort("get_direction requires two sets of juxtaposing terms.")
     }
   }
 
@@ -202,20 +232,23 @@ get_direction <- function(anchors, wv,
   # as used in Bolukbasi et al. 2016
   # Man is to Computer Programmer as Woman is to Homemaker?
   if (method == "PCA") {
+    if (length(anchors_a) < 2) {
+      cli::cli_abort("{.code method = 'PCA'} requires at least 2 anchor pairs; only {length(anchors_a)} {?was/were} provided.")
+    }
     # yes, these are inverted for a reason
     direction <- wv[anchors_z, , drop = FALSE] -
       wv[anchors_a, , drop = FALSE]
-    direction <- Matrix::t(
-      stats::prcomp(direction,
-        center = TRUE,
-        scale. = nrow(direction) > 1L,
-        rank. = n_dirs
-      )$rotation
+    pca <- stats::prcomp(direction,
+      center = TRUE,
+      scale. = nrow(direction) > 1L,
+      rank. = n_dirs
     )
-  }
-
-  if (!method %in% c("pooled", "paired", "L2", "PCA")) {
-    stop("method must be 'pooled', 'paired', 'L2' or 'PCA'")
+    if (ncol(pca$rotation) < n_dirs) {
+      cli::cli_abort(
+        "{.arg n_dirs} = {n_dirs} exceeds the number of directions available from {nrow(direction)} anchor pair(s); at most {ncol(pca$rotation)} direction(s) can be computed. Reduce {.arg n_dirs} or supply more anchor pairs."
+      )
+    }
+    direction <- Matrix::t(pca$rotation)
   }
 
   # create unique name for new vector
@@ -255,6 +288,8 @@ get_direction <- function(anchors, wv,
 #'
 #' @return returns a one row matrix
 #'
+#' @seealso [get_centroids()]
+#'
 #' @examples
 #'
 #' # load example word embeddings
@@ -270,9 +305,15 @@ get_direction <- function(anchors, wv,
 #' identical(cen1, cen2)
 #' @export
 get_centroid <- function(anchors, wv, missing = "stop") {
+  missing <- match.arg(missing, c("stop", "remove"))
   # ensure UTF-8 encoding
   rownames(wv) <- stringi::stri_encode(rownames(wv), to = "UTF-8")
-  anchors[] <- .check_term_in_embeddings(anchors[], wv, action = missing)
+  # plain reassignment, not anchors[] <- ...: .check_term_in_embeddings()
+  # already returns anchors correctly reshaped (rows dropped for data.frames,
+  # elements dropped for vectors/lists) when action = "remove" shrinks it;
+  # in-place `[<-` assignment would instead recycle the shorter result back
+  # up to the original length, silently duplicating earlier terms
+  anchors <- .check_term_in_embeddings(anchors, wv, action = missing)
 
   # if data.frame or matrix convert first column to list of terms
   if (!is.null(ncol(anchors))) {
@@ -367,8 +408,6 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #' @name get_regions
 #' @author Dustin Stoltz
 #'
-#' @importFrom ClusterR KMeans_arma
-#'
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
 #'           with rows as words.
 #' @param k_regions Integer indicating the k number of regions to return
@@ -379,7 +418,7 @@ get_centroid <- function(anchors, wv, missing = "stop") {
 #'
 #' @return returns a matrix of class "dgCMatrix" with k rows and d dimensions
 #'
-#' @examples
+#' @examplesIf requireNamespace("ClusterR", quietly = TRUE)
 #'
 #' # load example word embeddings
 #' data(ft_wv_sample)
@@ -396,6 +435,12 @@ get_regions <- function(wv,
                         k_regions = 5L,
                         max_iter = 20L,
                         seed = 0) {
+  if (!requireNamespace("ClusterR", quietly = TRUE)) {
+    cli::cli_abort("Package {.pkg ClusterR} is required for get_regions(). Install it with {.code install.packages('ClusterR')}")
+  }
+  if (k_regions > nrow(wv)) {
+    cli::cli_abort("{.arg k_regions} ({k_regions}) cannot exceed the number of rows in {.arg wv} ({nrow(wv)}).")
+  }
   regions <- ClusterR::KMeans_arma(
     data = wv,
     clusters = k_regions,
@@ -419,7 +464,7 @@ get_regions <- function(wv,
 #' This function evaluates how well an anchor set
 #' defines a semantic relations using one of two methods: 
 #' pairdir (which only evaluates semantic directions) or relco
-#' which evaluations semantic directions, semantic centroids
+#' which evaluates semantic directions, semantic centroids
 #' and compound concepts). See details.
 #' 
 #'
@@ -454,7 +499,6 @@ get_regions <- function(wv,
 #' \doi{10.31235/osf.io/sc2ub_v3}
 
 #'
-#' @importFrom text2vec sim2
 #'
 #'
 #' @param anchors A data frame or list of 'anchor' terms
@@ -475,10 +519,10 @@ get_regions <- function(wv,
 #'                   "PCA"), See `get_direction()` for details.
 #' @param n_runs For 'relco', number of runs
 #' @param null For 'relco', null hypothesis, default is 0.
-#' @param alpha For 'relco', significance level
+#' @param alpha For 'relco', term selection weighting (default is 0.5)
 #' @param seed For 'relco', set sampling seed
-#' @param order_non_anchors Logical (default `FALSE`). For 'relco', should the order of 
-#'                          the non-anchor terms be fixed between each run
+#' @param order_non_anchors Logical (default `FALSE`). For 'relco', if TRUE the
+#'                          subset of non-anchor terms is fixed across runs.
 #' @param summarize Logical (default `TRUE`). Returns a dataframe with AVERAGE
 #'                  scores for input pairs along with each pairs' contribution.
 #'                  If `summarize = FALSE`, returns a list with each
@@ -531,8 +575,9 @@ test_anchors <- function(anchors,
                          alpha =  0.5,
                          seed = NULL,
                          order_non_anchors = FALSE, 
-                         summarize = TRUE) {
+                          summarize = TRUE) {
   
+  method <- match.arg(method, c("pairdir", "relco"))
   
   res <- switch(method,
     pairdir = test_anchors.pairdir(anchors, wv, all = all, summarize = summarize),
@@ -560,7 +605,6 @@ test_anchors <- function(anchors,
 #' the Measurement of Semantic Dimensions in Word Embeddings.”
 #' \doi{10.31235/osf.io/576h3}
 #'
-#' @importFrom text2vec sim2
 #'
 #' @param anchors Anchor terms
 #' @param wv Matrix of word embedding vectors (a.k.a embedding model)
@@ -570,20 +614,21 @@ test_anchors <- function(anchors,
 #'            the input pairs are used in evaluation and anchor sets must be
 #'            of equal lengths.
 #'
-#' @return list
+#' @return A list containing average pairwise direction scores and optionally
+#'         per-pair contributions. When `summarize = FALSE`, returns a list
+#'         with offset matrices, contributions, and average score.
 #' @noRd
 test_anchors.pairdir <- function(anchors, wv, all = FALSE, summarize = TRUE) {
 
-    
-  if (class(anchors) %fin% "data.frame") {  
+  if (inherits(anchors, "data.frame")) {
 
       if(ncol(anchors) != 2) {
-        stop("`anchors` data.frame must only have 2 columns")
+        cli::cli_abort("{.arg anchors} data.frame must only have 2 columns.")
       }
-    
+
     anchors <- as.list(anchors)
 
-  } else if (length(anchors) != 2) stop("`anchors` list must be of length 2")
+  } else if (length(anchors) != 2) cli::cli_abort("{.arg anchors} list must be of length 2.")
 
   # prep
   anchors_a <- anchors[[1]]
@@ -598,16 +643,16 @@ test_anchors.pairdir <- function(anchors, wv, all = FALSE, summarize = TRUE) {
   } else {
     # must be sets of same size
     if (!identical(length(anchors_a), length(anchors_z))) {
-      warn_msg <- paste0(
-        "If method = 'pairdir' and `all = FALSE`,",
-        "anchor sets must be of equal lengths."
-      )
-      stop(warn_msg)
+      cli::cli_abort("If {.code method = 'pairdir'} and {.code all = FALSE}, anchor sets must be of equal lengths.")
     }
   }
 
+  if (length(anchors_a) < 2) {
+    cli::cli_abort("{.arg anchors} must provide at least 2 anchor pairs to compute pairwise cosine similarities; only {length(anchors_a)} {?was/were} provided.")
+  }
+
   res <- list()
-  res$offset <- wv[anchors_z, ] - wv[anchors_a, ]
+  res$offset <- wv[anchors_z, , drop = FALSE] - wv[anchors_a, , drop = FALSE]
   rownames(res$offset) <- paste0(anchors_a, "-", anchors_z)
   res$cosine <- text2vec::sim2(res$offset, method = "cosine", norm = "l2")
 
@@ -627,3 +672,92 @@ test_anchors.pairdir <- function(anchors, wv, all = FALSE, summarize = TRUE) {
   return(res)
 }
 
+
+#' Compute multiple centroids
+#'
+#' Compute multiple centroids in a single call, either from a list of anchor
+#' term sets (word-vector mode) or from a feature matrix with a grouping
+#' vector (feature-matrix mode). The plural counterpart to
+#' [get_centroid()].
+#'
+#' @param fv Matrix or sparse `Matrix::dgCMatrix` of feature vectors.
+#'   In word-vector mode this is the word embedding matrix (rows are terms);
+#'   in feature-matrix mode this is a document-by-feature matrix (rows are
+#'   documents).
+#' @param anchors List of anchor term vectors. Each element is passed to
+#'   [get_centroid()] along with `fv` and `missing`. If the list is
+#'   unnamed, integer indices are used as the rownames of the result.
+#' @param groups Vector of group labels of the same length as
+#'   `nrow(fv)`. A centroid is computed for each level via
+#'   `colMeans()`. Character vectors are preferred over factors; empty
+#'   factor levels are dropped with a message. Rows with a missing (`NA`)
+#'   label are excluded from every centroid, with a message.
+#' @param missing Character scalar. Either `"stop"` or `"remove"`.
+#'   Inherited from [get_centroid()] and applies only to the `anchors`
+#'   (word-vector) branch. See [get_centroid()].
+#' @return Matrix with one row per centroid and `ncol(fv)` columns.
+#'   Rownames are the names of `anchors` (or the levels of `groups`).
+#' @author Dustin Stoltz
+#' @seealso [get_centroid()]
+#' @examples
+#' data(ft_wv_sample)
+#'
+#' ## word-vector mode: named list of anchor sets
+#' anchors <- list(
+#'   space = c("spacecraft", "rocket", "moon"),
+#'   water = c("ocean", "sea")
+#' )
+#' cens <- get_centroids(ft_wv_sample, anchors = anchors)
+#'
+#' ## feature-matrix mode: group rows of a matrix by a label vector
+#' mat <- ft_wv_sample[1:10, , drop = FALSE]
+#' labs <- rep(c("a", "b"), each = 5)
+#' cens <- get_centroids(mat, groups = labs)
+#' @export
+get_centroids <- function(fv, anchors = NULL, groups = NULL,
+                          missing = "stop") {
+  if (is.null(anchors) && is.null(groups)) {
+    cli::cli_abort("either {.arg anchors} or {.arg groups} must be provided")
+  }
+
+  if (!is.null(anchors)) {
+    if (is.null(names(anchors))) {
+      names(anchors) <- seq_along(anchors)
+    }
+    mat_out <- do.call(
+      rbind,
+      Map(function(nm, el) {
+        cen <- get_centroid(el, fv, missing = missing)
+        rownames(cen) <- nm
+        cen
+      }, names(anchors), anchors)
+    )
+    return(mat_out)
+  }
+
+  ## groups branch
+  if (length(groups) != nrow(fv)) {
+    cli::cli_abort("{.arg groups} must be same length as {.code nrow(fv)}")
+  }
+  if (anyNA(fv)) {
+    cli::cli_abort("{.arg fv} contains NAs")
+  }
+  groups <- as.factor(groups)
+  if (anyNA(groups)) {
+    n_na <- sum(is.na(groups)) # nolint: object_usage_linter. used inside cli::cli_inform()'s glue-style below
+    cli::cli_inform("Excluding {n_na} row{?s} with a missing (NA) group label")
+    fv <- fv[!is.na(groups), , drop = FALSE]
+    groups <- groups[!is.na(groups)]
+  }
+  lv <- levels(groups)
+  empty <- sapply(lv, function(l) sum(groups == l) == 0)
+  if (any(empty)) {
+    cli::cli_inform("Dropping empty group level(s): {.val {lv[empty]}}")
+    lv <- lv[!empty]
+  }
+  mat_out <- t(vapply(lv, function(l) {
+    colMeans(fv[groups == l, , drop = FALSE])
+  }, numeric(ncol(fv))))
+  rownames(mat_out) <- lv
+  return(mat_out)
+}

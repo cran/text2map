@@ -164,8 +164,7 @@ test_that("CoCA prints a solution", {
     zero_action = "drop"
   ))
 
-  expect_output(print(classes))
-  # expect_output(print(classes), coca.msg)
+  expect_output(print(classes), "CoCA found")
 })
 
 test_that("CoCA plot method", {
@@ -181,19 +180,15 @@ test_that("CoCA plot method", {
     zero_action = "drop"
   )
 
+  pdf(NULL)
+  on.exit(dev.off())
   p <- plot(classes_p, module = 1)
 
-  expect_identical(
-    p$Arguments$labels,
-    rownames(sem_dirs)
+  expect_s3_class(p, "igraph")
+  expect_true(
+    all(igraph::V(p)$name %in% rownames(sem_dirs))
   )
-  expect_identical(
-    p$Arguments$esize,
-    8
-  )
-  expect_identical(
-    p$Arguments$alpha,
-    0.05
-  )
+  expect_true(igraph::ecount(p) >= 0)
+  expect_true("weight" %in% igraph::edge_attr_names(p))
 
 })

@@ -42,3 +42,14 @@ length. For example, \code{n = 2000L} will resample each document until they are
 length, while those longer than 2000 will be decreased in length. \code{alpha}
 and \code{n} should not be specified at the same time.
 }
+\examples{
+\donttest{
+data(jfk_speech)
+jfk_speech$sentence <- tolower(jfk_speech$sentence)
+jfk_speech$sentence <- gsub("[[:punct:]]+", " ", jfk_speech$sentence)
+dtm <- dtm_builder(jfk_speech, sentence, sentence_id)
+
+dtm_resampled <- dtm_resampler(dtm, alpha = 0.5)
+}
+
+}
